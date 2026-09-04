@@ -5,7 +5,13 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { redirect } from "@/i18n/navigation";
 import { getSession } from "@/server/auth/session";
-import { createTrip, updateTrip } from "@/server/services/trip.service";
+import {
+  addTraveler,
+  createTrip,
+  deleteTrip,
+  removeTraveler,
+  updateTrip,
+} from "@/server/services/trip.service";
 
 export interface TripFormState {
   error?: string;
@@ -112,6 +118,62 @@ export async function updateTripAction(
     });
   } catch {
     return { error: t("updateFailed") };
+  }
+
+  return redirect({ href: `/trips/${tripId}`, locale });
+}
+
+export async function deleteTripAction(tripId: string, _formData: FormData) {
+  // Signature required by <form action={...}>; this action has no fields.
+  void _formData;
+  const [session, locale] = await Promise.all([getSession(), getLocale()]);
+  if (!session) {
+    return redirect({ href: "/login", locale });
+  }
+
+  try {
+    await deleteTrip(tripId, session.userId);
+  } catch {
+    return redirect({ href: `/trips/${tripId}`, locale });
+  }
+
+  return redirect({ href: "/trips", locale });
+}
+
+export async function addTravelerAction(tripId: string, formData: FormData) {
+  const [session, locale] = await Promise.all([getSession(), getLocale()]);
+  if (!session) {
+    return redirect({ href: "/login", locale });
+  }
+
+  const name = formData.get("name")?.toString().trim();
+  if (name) {
+    const ageGroup = formData.get("ageGroup")?.toString().trim() || null;
+    try {
+      await addTraveler(tripId, session.userId, { name, ageGroup });
+    } catch {
+      // Owner-only UI renders this form, so this should basically never
+      // fire — best-effort, just fall through to the redirect below.
+    }
+  }
+
+  return redirect({ href: `/trips/${tripId}`, locale });
+}
+
+export async function removeTravelerAction(
+  tripId: string,
+  travelerId: string,
+  _formData: FormData,
+) {
+  // Signature required by <form action={...}>; this action has no fields.
+  void _formData;
+  const [session, locale] = await Promise.all([getSession(), getLocale()]);
+  if (session) {
+    try {
+      await removeTraveler(travelerId, session.userId);
+    } catch {
+      // best-effort, see addTravelerAction
+    }
   }
 
   return redirect({ href: `/trips/${tripId}`, locale });

@@ -1,10 +1,16 @@
 import { PlanVisibility, type PlanStatus } from "@prisma/client";
 import {
   createTrip as createTripRepo,
+  deleteTrip as deleteTripRepo,
   findTripById,
   findTripsByOwner,
   updateTrip as updateTripRepo,
 } from "@/server/repositories/trip.repository";
+import {
+  createTraveler,
+  deleteTraveler,
+  findTravelerById,
+} from "@/server/repositories/traveler.repository";
 
 export class TripError extends Error {}
 
@@ -42,6 +48,15 @@ export function createTrip(
   return createTripRepo({ ownerId, ...input });
 }
 
+async function assertOwner(tripId: string, ownerId: string) {
+  const trip = await findTripById(tripId);
+  if (!trip) throw new TripError("NOT_FOUND");
+  // UI only ever renders owner-only controls for the owner — this is
+  // defense-in-depth, not the primary access check.
+  if (trip.ownerId !== ownerId) throw new TripError("FORBIDDEN");
+  return trip;
+}
+
 export async function updateTrip(
   tripId: string,
   ownerId: string,
@@ -54,11 +69,27 @@ export async function updateTrip(
     status: PlanStatus;
   },
 ) {
-  const trip = await findTripById(tripId);
-  if (!trip) throw new TripError("NOT_FOUND");
-  // UI only ever renders the edit form for the owner — this is
-  // defense-in-depth, not the primary access check.
-  if (trip.ownerId !== ownerId) throw new TripError("FORBIDDEN");
-
+  await assertOwner(tripId, ownerId);
   return updateTripRepo(tripId, input);
+}
+
+export async function deleteTrip(tripId: string, ownerId: string) {
+  await assertOwner(tripId, ownerId);
+  return deleteTripRepo(tripId);
+}
+
+export async function addTraveler(
+  tripId: string,
+  ownerId: string,
+  input: { name: string; ageGroup: string | null },
+) {
+  await assertOwner(tripId, ownerId);
+  return createTraveler({ tripId, ...input });
+}
+
+export async function removeTraveler(travelerId: string, ownerId: string) {
+  const traveler = await findTravelerById(travelerId);
+  if (!traveler) throw new TripError("NOT_FOUND");
+  await assertOwner(traveler.tripId, ownerId);
+  return deleteTraveler(travelerId);
 }

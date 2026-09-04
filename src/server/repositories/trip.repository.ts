@@ -29,6 +29,7 @@ export function findTripById(id: string) {
     where: { id },
     include: {
       owner: { select: ownerSelect },
+      travelers: true,
       _count: { select: { itineraryItems: true } },
     },
   });
@@ -64,4 +65,8 @@ export function updateTrip(
   },
 ) {
   return prisma.trip.update({ where: { id }, data });
+}
+
+export function deleteTrip(id: string) {
+  return prisma.trip.delete({ where: { id } });
 }

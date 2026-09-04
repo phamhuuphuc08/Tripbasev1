@@ -27,6 +27,15 @@ export function findLocationTagsByCategory(category: TagCategory, take = 200) {
   });
 }
 
+/** Danh sách gọn cho select box khi thêm địa điểm vào itinerary (M02). */
+export function findAllLocationTagsForPicker(take = 300) {
+  return prisma.locationTag.findMany({
+    select: { id: true, title: true, category: true },
+    orderBy: { title: "asc" },
+    take,
+  });
+}
+
 export function createLocationTag(data: {
   ownerId: string;
   title: string;

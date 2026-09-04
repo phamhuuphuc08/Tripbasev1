@@ -57,20 +57,61 @@
       "createSubmitPending": "Creating…",
       "editTitle": "Edit trip",
       "editSubmit": "Save changes",
-      "editSubmitPending": "Saving…"
+      "editSubmitPending": "Saving…",
+      "deleteLink": "Delete trip"
     },
     "errors": {
       "nameRequired": "Please enter a trip name.",
       "destinationRequired": "Please enter a destination.",
       "endBeforeStart": "End date must be after the start date.",
       "updateFailed": "Couldn't update this trip."
+    },
+    "travelers": {
+      "heading": "Travelers",
+      "empty": "No one added yet.",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. Lan",
+      "ageGroupLabel": "Age group (optional)",
+      "ageGroupPlaceholder": "e.g. child, adult",
+      "addButton": "Add",
+      "removeButton": "Remove"
+    },
+    "delete": {
+      "title": "Delete trip",
+      "description": "Permanently delete \"{name}\" along with its full itinerary and traveler list. This cannot be undone.",
+      "confirm": "Delete permanently",
+      "cancel": "Cancel"
     }
   },
   "tripDetail": {
     "gateDescription": "{destination} — this plan is public, log in to see the full Timeline/Map/Budget.",
     "loginCta": "Log in to view details",
-    "meta": "Created by {owner} · {count, plural, =0 {no items yet} other {# items}} in itinerary",
-    "modulesNote": "3 views: Plan View (Timeline), Map View, Money View — module <module>src/features/itinerary</module> (not implemented yet, see docs/spec-dev-plan.md)."
+    "meta": "Created by {owner} · {count, plural, =0 {no items yet} other {# items}} in itinerary"
+  },
+  "itinerary": {
+    "heading": "Itinerary (Smart Timeline)",
+    "empty": "No items in the itinerary yet.",
+    "dayHeading": "Day {day}",
+    "addHeading": "Add to itinerary",
+    "removeButton": "Remove",
+    "form": {
+      "dayLabel": "Day",
+      "dayOption": "Day {day}",
+      "startTimeLabel": "Start time",
+      "endTimeLabel": "End time",
+      "tagLabel": "Place/tip (optional)",
+      "noTagOption": "— None —",
+      "notesLabel": "Notes",
+      "notesPlaceholder": "e.g. Lunch, rest before heading to the airport",
+      "submit": "Add to itinerary",
+      "submitPending": "Adding…"
+    },
+    "errors": {
+      "loginRequired": "You need to log in to edit the itinerary.",
+      "dayInvalid": "Day must be a whole number, 1 or greater.",
+      "endBeforeStart": "End time must be after the start time.",
+      "addFailed": "Couldn't add this item."
+    }
   },
   "auth": {
     "login": {

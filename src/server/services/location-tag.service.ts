@@ -1,6 +1,7 @@
-import type { TagCategory } from "@/features/tag-tip/categories";
+import { toTagCategory, type TagCategory } from "@/features/tag-tip/categories";
 import {
   createLocationTag,
+  findAllLocationTagsForPicker,
   findLocationTagsByCategory,
   searchLocationTags,
 } from "@/server/repositories/location-tag.repository";
@@ -8,6 +9,16 @@ import { findPossibleDuplicate } from "@/server/services/tag-dedup.service";
 
 export function searchTags(filter: { query?: string; category?: TagCategory }) {
   return searchLocationTags(filter);
+}
+
+/** Dùng cho select box khi thêm địa điểm vào itinerary — xem M02. */
+export async function listTagsForPicker() {
+  const tags = await findAllLocationTagsForPicker();
+  return tags.map((tag) => ({
+    id: tag.id,
+    title: tag.title,
+    category: toTagCategory(tag.category),
+  }));
 }
 
 export interface CreateTagInput {

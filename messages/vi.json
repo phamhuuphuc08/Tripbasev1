@@ -57,20 +57,61 @@
       "createSubmitPending": "Đang tạo…",
       "editTitle": "Chỉnh sửa trip",
       "editSubmit": "Lưu thay đổi",
-      "editSubmitPending": "Đang lưu…"
+      "editSubmitPending": "Đang lưu…",
+      "deleteLink": "Xoá trip"
     },
     "errors": {
       "nameRequired": "Vui lòng nhập tên trip.",
       "destinationRequired": "Vui lòng nhập điểm đến.",
       "endBeforeStart": "Ngày kết thúc phải sau ngày bắt đầu.",
       "updateFailed": "Không thể cập nhật trip này."
+    },
+    "travelers": {
+      "heading": "Người tham gia",
+      "empty": "Chưa có ai trong danh sách.",
+      "nameLabel": "Tên",
+      "namePlaceholder": "VD: Lan",
+      "ageGroupLabel": "Độ tuổi (tuỳ chọn)",
+      "ageGroupPlaceholder": "VD: trẻ em, người lớn",
+      "addButton": "Thêm",
+      "removeButton": "Xoá người này"
+    },
+    "delete": {
+      "title": "Xoá trip",
+      "description": "Xoá vĩnh viễn \"{name}\" cùng toàn bộ itinerary và người tham gia. Không thể hoàn tác.",
+      "confirm": "Xoá vĩnh viễn",
+      "cancel": "Huỷ"
     }
   },
   "tripDetail": {
     "gateDescription": "{destination} — plan này public, đăng nhập để xem đầy đủ Timeline/Map/Budget.",
     "loginCta": "Đăng nhập để xem chi tiết",
-    "meta": "Tạo bởi {owner} · {count, plural, =0 {chưa có điểm nào} other {# điểm}} trong itinerary",
-    "modulesNote": "3 chế độ xem: Plan View (Timeline), Map View, Money View — module <module>src/features/itinerary</module> (chưa implement, xem docs/spec-dev-plan.md)."
+    "meta": "Tạo bởi {owner} · {count, plural, =0 {chưa có điểm nào} other {# điểm}} trong itinerary"
+  },
+  "itinerary": {
+    "heading": "Itinerary (Smart Timeline)",
+    "empty": "Chưa có điểm nào trong lịch trình.",
+    "dayHeading": "Ngày {day}",
+    "addHeading": "Thêm vào lịch trình",
+    "removeButton": "Xoá mục này",
+    "form": {
+      "dayLabel": "Ngày",
+      "dayOption": "Ngày {day}",
+      "startTimeLabel": "Giờ bắt đầu",
+      "endTimeLabel": "Giờ kết thúc",
+      "tagLabel": "Địa điểm/tip (tuỳ chọn)",
+      "noTagOption": "— Không chọn —",
+      "notesLabel": "Ghi chú",
+      "notesPlaceholder": "VD: Ăn trưa, nghỉ ngơi trước khi ra sân bay",
+      "submit": "Thêm vào lịch trình",
+      "submitPending": "Đang thêm…"
+    },
+    "errors": {
+      "loginRequired": "Cần đăng nhập để chỉnh sửa itinerary.",
+      "dayInvalid": "Ngày phải là số nguyên từ 1 trở lên.",
+      "endBeforeStart": "Giờ kết thúc phải sau giờ bắt đầu.",
+      "addFailed": "Không thể thêm mục này."
+    }
   },
   "auth": {
     "login": {

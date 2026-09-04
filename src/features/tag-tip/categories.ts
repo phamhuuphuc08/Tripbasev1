@@ -22,3 +22,9 @@ export function isTagCategory(value: unknown): value is TagCategory {
     (TAG_CATEGORIES as readonly string[]).includes(value)
   );
 }
+
+/** LocationTag.category is a nullable free-text column in Prisma — coerce
+ * to our fixed UI set, falling back to OTHER for anything unexpected. */
+export function toTagCategory(value: string | null | undefined): TagCategory {
+  return isTagCategory(value) ? value : "OTHER";
+}

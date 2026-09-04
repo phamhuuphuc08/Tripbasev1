@@ -20,7 +20,7 @@ Tổng quan kiến trúc: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 | M13 | [Auth (login/register)](#m13--auth-loginregister)             | —       | ✅         | ✅      | ✅  | ✅         |
 | M14 | [i18n & UI polish](#m14--i18n--ui-polish)                     | —       | —          | ✅      | ✅  | ✅         |
 | M01 | [Trip Builder](#m01--trip-builder)                            | P0      | ✅         | ✅      | 🟨  | 🟨         |
-| M02 | [Itinerary / Smart Timeline](#m02--itinerary--smart-timeline) | P0      | ✅         | ⬜      | ⬜  | ⬜         |
+| M02 | [Itinerary / Smart Timeline](#m02--itinerary--smart-timeline) | P0      | ✅         | ✅      | 🟨  | 🟨         |
 | M03 | [Map Planner](#m03--map-planner)                              | P0      | ✅         | ⬜      | ⬜  | ⬜         |
 | M04 | [Budget Board](#m04--budget-board)                            | P0      | ✅         | ⬜      | ⬜  | ⬜         |
 | M05 | [Booking Vault](#m05--booking-vault)                          | P1      | ✅         | ⬜      | ⬜  | ⬜         |
@@ -156,7 +156,7 @@ Ghi chú kỹ thuật:
 
 - **Ưu tiên:** P0 · **Spec:** mục 4, 5, 6a
 - **Code:** `src/features/trip/`, `src/server/services/trip.service.ts`, model `Trip`, `Traveler`
-- **Trạng thái:** 🟨 Đang làm (lõi CRUD xong, chưa có Timeline/Map/Budget)
+- **Trạng thái:** 🟨 Đang làm (CRUD + travelers + xoá xong, chưa có Map/Budget)
 
 Đã làm:
 
@@ -175,34 +175,68 @@ Ghi chú kỹ thuật:
 - [x] `TripForm` dùng chung create/edit, shadcn `Select` (Base UI) —
       lưu ý: `Select.Value` không tự tra nhãn theo item như Radix, phải
       truyền render-prop map giá trị → nhãn dịch thủ công
+- [x] Số người tham gia (`Traveler`): thêm/xoá trên trip detail (chỉ chủ sở
+      hữu) — tên + độ tuổi tuỳ chọn, `addTravelerAction`/`removeTravelerAction`
+      (`src/features/trip/traveler-form.tsx`, server component thuần vì
+      không cần client state)
+- [x] Xoá trip: trang xác nhận riêng `/trips/[tripId]/delete` (không dùng
+      `window.confirm`), `deleteTripAction` — chỉ chủ sở hữu truy cập được
+      (check bằng `getTripDetail` + `isOwner`, không phải `notFound` mặc định)
 - [x] Verify qua trình duyệt thật: tạo trip → sửa status/visibility → lưu
-      → xuất hiện đúng trên dashboard **và** trên search public ở Home
-      (dữ liệu thật trong Postgres)
+      → xuất hiện đúng trên dashboard **và** trên search public ở Home;
+      thêm/xoá traveler; xoá trip → về `/trips`, biến mất khỏi danh sách
+      và DB (dữ liệu thật trong Postgres)
 
 Chưa làm:
 
-- [ ] Số người tham gia (`Traveler`), ngân sách, sở thích/nhịp độ từ form
-      lõi mục 2 của spec — data model hiện tách các field này sang module
-      khác (Traveler riêng, Budget → `Expense`), chưa có UI thêm traveler
+- [ ] Ngân sách, sở thích/nhịp độ từ form lõi mục 2 của spec — thuộc module
+      khác (Budget → `Expense`, M04), chưa có UI
 - [ ] Badge "Verified by Author" khi chuyển sang "Đã đi" — cố ý chưa làm:
       cần bằng chứng tối thiểu (ảnh/booking) theo guardrail mục 13, phụ
       thuộc Travel Memory (M12) chưa tồn tại; hiện tự do đổi status không
       bị chặn nhưng field `verifiedByAuthor` luôn `false`
-- [ ] Xoá trip
 
 ---
 
 ## M02 — Itinerary / Smart Timeline
 
 - **Ưu tiên:** P0 · **Spec:** mục 4, 5, 6a
-- **Code:** `src/features/itinerary/`, model `ItineraryItem`, `Place`
-- **Trạng thái:** ⬜ Chưa bắt đầu
+- **Code:** `src/features/itinerary/`, model `ItineraryItem`
+- **Trạng thái:** 🟨 Đang làm (thêm/xoá item theo ngày+giờ xong, chưa có kéo
+  thả/cảnh báo)
+
+Đã làm:
+
+- [x] `itinerary.service.ts`: `listItineraryItems`, `addItineraryItem`,
+      `removeItineraryItem` (check ownership qua `trip.repository.findTripById`,
+      cùng pattern với `trip.service`)
+- [x] Section "Itinerary (Smart Timeline)" trên trang chi tiết trip: nhóm
+      item theo `day`, sắp xếp theo `startTime` trong mỗi ngày; form thêm
+      item (ngày, giờ bắt đầu/kết thúc, ghi chú) chỉ hiện cho chủ sở hữu,
+      ai xem được trip thì xem được itinerary
+- [x] **Liên kết với Tag & Tip Library (M11)**: form thêm item có select
+      "Địa điểm/tip (tuỳ chọn)" liệt kê toàn bộ `LocationTag` hiện có
+      (`listTagsForPicker`) — chọn 1 tag thay vì gõ tên tự do, tránh tạo
+      trùng lặp ngay từ lúc lập itinerary (đúng tinh thần "lookup" của M11)
+- [x] Verify qua trình duyệt thật: thêm 2 item (1 có link tag, 1 không) →
+      hiện đúng thứ tự theo giờ trong đúng ngày, tag hiện icon + category +
+      tên; xoá từng item → cập nhật đúng
 
 Chưa làm:
 
-- [ ] Kéo thả item theo ngày/giờ (không AI)
-- [ ] Cảnh báo travel time/buffer, giờ mở cửa
-- [ ] Gợi ý inline "Đã có tag này — dùng lại?" khi thêm địa điểm (nối với M11)
+- [ ] Kéo thả (drag-and-drop) — MVP hiện dùng form nhập ngày/giờ + tự sắp
+      xếp theo `startTime`, **không phải** kéo thả thật; cần đánh giá có
+      đáng thêm thư viện DnD hay không trước khi làm
+- [ ] Cảnh báo travel time/buffer, giờ mở cửa — cần dữ liệu toạ độ/giờ mở
+      cửa (Place hoặc LocationTag) mà hiện chưa bắt buộc nhập
+- [ ] Gợi ý dedup **ngay trong lúc gõ** tên địa điểm mới (mục 8.1) — hiện
+      chỉ chọn từ danh sách có sẵn qua select, chưa có ô tự tạo tag mới
+      ngay tại chỗ (phải qua `/tags` riêng)
+- [ ] `startTime`/`endTime` chỉ lưu giờ-trong-ngày (anchor về 1970-01-01),
+      chưa phải timestamp thật gắn với ngày cụ thể của trip — xem comment
+      trong `src/features/itinerary/actions.ts`
+- [ ] Sửa item đã tạo (hiện chỉ thêm/xoá)
+- [ ] Vote/Comment trên từng item (model đã có, chưa có UI)
 
 ---
 
@@ -528,5 +562,31 @@ WEB_PORT=3001 docker compose up --build
   - Seed 8 location tag mẫu đa category.
   - Verify qua trình duyệt thật + kiểm tra trực tiếp trong Postgres
     (`possible_duplicate_of` trỏ đúng tag gốc sau khi force-create).
+    `lint`/`typecheck`/`build` pass. Committed vào `dev`, chưa merge
+    `main`.
+- **Hoàn thiện M01 (travelers + xoá trip) và bắt đầu M02 (itinerary)**,
+  theo yêu cầu "tiếp tục hoàn thiện M01 và start M02":
+  - M01: `Traveler` CRUD (thêm/xoá người tham gia trên trip detail, chỉ chủ
+    sở hữu), trang xác nhận xoá trip riêng (`/trips/[tripId]/delete`, không
+    dùng `window.confirm` vì tool automation bị chặn dialog gốc và UX chủ
+    động hơn cho người dùng thật).
+  - M02: `itinerary.service.ts` + section Itinerary trên trang chi tiết
+    trip — thêm/xoá item theo ngày + giờ (native `<input type="time">`,
+    neo về ngày tham chiếu 1970-01-01 vì item chưa có ngày lịch thật), tự
+    sắp xếp theo giờ trong từng ngày. Form thêm item có select chọn từ
+    `LocationTag` có sẵn (`listTagsForPicker`) — nối trực tiếp vào Tag &
+    Tip Library vừa xây, tránh gõ tay tên địa điểm trùng lặp ngay từ lúc
+    lập lịch trình.
+  - **Không làm** kéo-thả thật (chỉ nhập ngày/giờ + tự sắp xếp) và cảnh báo
+    travel-time/giờ mở cửa — ghi rõ trong mục "Chưa làm" của M02, cân nhắc
+    kỹ trước khi thêm thư viện DnD ở vòng sau.
+  - Debug đáng chú ý: nhiều lần click qua công cụ automation (browser tool)
+    không kích hoạt được nút/ô nhập dù toạ độ và `find` đều đúng — xác minh
+    đây là hạn chế của công cụ test, không phải bug app, bằng cách gọi
+    `element.click()`/set value trực tiếp qua JS và bằng `form_input`; tính
+    năng hoạt động đúng khi kiểm tra theo cách đó.
+  - Verify qua trình duyệt thật (kết hợp click UI + JS khi cần): thêm/xoá
+    traveler; thêm 2 itinerary item (1 có link tag, 1 không) → đúng thứ tự
+    theo giờ; xoá item; xoá trip → biến mất khỏi dashboard và Postgres.
     `lint`/`typecheck`/`build` pass. Committed vào `dev`, chưa merge
     `main`.
