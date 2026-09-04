@@ -7,7 +7,16 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  /* Was `var(--font-sans)` — a self-reference that never resolved, so the
+     Geist Sans variable was silently never applied and body text fell back
+     to the browser default. Fixed to point at the actual font variable,
+     with a fallback chain that already covers CJK system fonts so ja/zh
+     locales render correctly the moment they're added, with no font change
+     needed then. */
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", "Noto Sans JP", "Noto Sans SC",
+    "Hiragino Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
