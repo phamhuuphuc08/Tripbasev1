@@ -1,4 +1,15 @@
-import { BadgeCheck, CalendarRange, MapPin, Search, User } from "lucide-react";
+import {
+  BadgeCheck,
+  Bookmark,
+  CalendarRange,
+  Compass,
+  MapPin,
+  MapPinned,
+  Search,
+  Tag,
+  User,
+  type LucideIcon,
+} from "lucide-react";
 import { getTranslations, getFormatter } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +20,23 @@ import {
   searchPublicTrips,
   type TripSearchResult,
 } from "@/server/services/marketplace.service";
+
+// Icon-grid quick nav — same "circle badge + label" pattern as the
+// reference's category grid (shigoto.mhlw.go.jp), pointed at TripBase's
+// own top-level sections instead.
+type QuickLinkKey =
+  "quickLinkTrips" | "quickLinkExplore" | "quickLinkTags" | "quickLinkSaved";
+
+const QUICK_LINKS: {
+  href: string;
+  icon: LucideIcon;
+  labelKey: QuickLinkKey;
+}[] = [
+  { href: "/trips", icon: MapPinned, labelKey: "quickLinkTrips" },
+  { href: "/explore", icon: Compass, labelKey: "quickLinkExplore" },
+  { href: "/tags", icon: Tag, labelKey: "quickLinkTags" },
+  { href: "/saved", icon: Bookmark, labelKey: "quickLinkSaved" },
+];
 
 async function TripResultCard({ trip }: { trip: TripSearchResult }) {
   const [t, tStatus, format] = await Promise.all([
@@ -128,10 +156,40 @@ export default async function HomePage({
         </div>
       </div>
 
+      <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
+        <div className="flex items-baseline gap-3">
+          <span className="text-primary text-2xl font-extrabold tracking-tight sm:text-3xl">
+            {t("quickLinksWord")}
+          </span>
+          <span className="text-muted-foreground text-sm font-medium">
+            {t("quickLinksLabel")}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {QUICK_LINKS.map(({ href, icon: Icon, labelKey }) => (
+            <Link
+              key={href}
+              href={href}
+              className="group flex flex-col items-center gap-2 text-center"
+            >
+              <span className="bg-primary text-primary-foreground flex size-14 items-center justify-center rounded-full shadow-sm transition-transform group-hover:scale-105 sm:size-16">
+                <Icon className="size-5 sm:size-6" />
+              </span>
+              <span className="text-sm font-medium">{t(labelKey)}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <section className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-6 py-10">
-        <h2 className="text-muted-foreground text-sm font-medium">
-          {query ? t("matchHeading", { query }) : t("recentHeading")}
-        </h2>
+        <div className="flex items-baseline gap-3">
+          <span className="text-primary text-2xl font-extrabold tracking-tight sm:text-3xl">
+            {t("exploreWord")}
+          </span>
+          <h2 className="text-muted-foreground text-sm font-medium">
+            {query ? t("matchHeading", { query }) : t("recentHeading")}
+          </h2>
+        </div>
 
         {results.length === 0 ? (
           <p className="text-muted-foreground text-sm">

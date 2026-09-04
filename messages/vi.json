@@ -18,6 +18,13 @@
     "searchPlaceholder": "Muốn đi đâu? VD: Đà Lạt, Seoul, Phú Quốc...",
     "searchAriaLabel": "Tìm điểm đến",
     "searchButton": "Tìm plan",
+    "quickLinksWord": "PLAN",
+    "quickLinksLabel": "Bắt đầu nhanh",
+    "quickLinkTrips": "Chuyến đi của bạn",
+    "quickLinkExplore": "Khám phá",
+    "quickLinkTags": "Tag & Tip",
+    "quickLinkSaved": "Đã lưu",
+    "exploreWord": "EXPLORE",
     "recentHeading": "Plan public gần đây",
     "matchHeading": "Plan public khớp với \"{query}\"",
     "empty": "Chưa có plan public nào khớp \"{query}\". Thử từ khoá khác, hoặc <link>tạo tài khoản</link> để tự dựng plan mới."

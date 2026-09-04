@@ -135,6 +135,34 @@ theme-toggle,theme-provider,language-switcher,placeholder-screen}.tsx`
       PingFang SC, Microsoft YaHei) để JA/ZH sau này hiển thị đúng ngay
       không cần đổi font. Tiện thể fix 1 bug có sẵn: `--font-sans` bị tự
       tham chiếu chính nó nên trước giờ chưa từng áp dụng đúng font.
+- [x] Đổi màu thương hiệu từ emerald sang **xanh dương** (theo yêu cầu
+      tham khảo giao diện/bố cục/màu sắc của
+      `https://shigoto.mhlw.go.jp/` — job tag, trang tra cứu nghề nghiệp
+      của Bộ Y tế, Lao động và Phúc lợi Nhật Bản): màu chủ đạo của trang
+      đó (`#0568D3`) quy đổi sang `oklch(0.53 0.18 257)` cho light mode,
+      sáng hơn cho dark mode (`oklch(0.72 0.16 257)`) — đổi toàn bộ token
+      `--primary`/`--accent`/`--ring`/`--chart-1`/`--sidebar-*` (không đổi
+      lẻ tẻ từng chỗ) nên áp dụng tự động khắp app chỉ qua 1 file
+      `globals.css`, không phải sửa từng component. Nền light mode cũng
+      đổi từ trắng tinh sang xám rất nhạt `oklch(0.975 0.002 250)` (trang
+      tham khảo dùng `#F6F6F6`, không phải `#FFFFFF`).
+  - Mang 2 pattern bố cục đặc trưng của trang tham khảo vào trang chủ:
+    (1) lưới điều hướng nhanh dạng icon tròn + nhãn (trang tham khảo gọi
+    là "職業を調べよう" — ở đây là "PLAN · Quick start" trỏ tới
+    Trips/Explore/Tag & Tip/Saved), và (2) tiêu đề section 2 phần: chữ
+    tiếng Anh đậm cỡ lớn (giữ nguyên tiếng Anh ở cả 2 locale, đúng kiểu
+    trang gốc giữ "TOPICS"/"INFORMATION" bằng tiếng Anh ngay trên trang
+    tiếng Nhật) + nhãn mô tả nhỏ cạnh bên (áp dụng cho "EXPLORE · Recent
+    public plans").
+  - **Cố ý không làm theo** 1 số chi tiết khác của trang tham khảo: nhân
+    vật mascot minh hoạ (không hợp với TripBase), section chuyển màu
+    theo đường chéo (clip-path) giữa các block màu (rủi ro vỡ layout ở
+    mobile nếu làm ẩu, để dành làm sau nếu cần), banner thông báo màu
+    xanh nhạt dưới nav (chưa có nội dung thông báo thật để hiện).
+  - Verify qua trình duyệt thật cả light lẫn dark mode: toàn bộ badge
+    "Verified"/trust-tier, gradient thẻ hội viên, nút CTA đều tự đổi
+    sang xanh dương đúng qua token dùng chung, không cần sửa riêng từng
+    trang; không có console error mới.
 
 Chưa làm:
 
@@ -964,3 +992,13 @@ origin/main` để đưa `main` về đúng trạng thái đã push trước đ�
   Postgres thật: tạo trip 5.000.000đ, 2 traveler, 1 khoản chi 2.000.000đ
   chia đôi → tổng/còn lại/chia tiền đều đúng; xoá khoản chi đúng, không
   ảnh hưởng traveler. `lint`/`typecheck`/`build` pass. Test data đã xoá.
+- **Đổi màu thương hiệu + bố cục trang chủ tham khảo shigoto.mhlw.go.jp
+  (M14)**, theo yêu cầu "tham khảo giao diện, bố cục, màu sắc... cách
+  phân bố layout" của trang job tag (Bộ Y tế – Lao động – Phúc lợi Nhật
+  Bản): xem chi tiết ở mục [M14](#m14--i18n--ui-polish). Đã xem trực
+  tiếp trang tham khảo qua trình duyệt (không chỉ đọc mô tả) để lấy đúng
+  màu chủ đạo (`#0568D3`) và các pattern bố cục (lưới icon điều hướng
+  nhanh, tiêu đề section 2 phần). Verify qua trình duyệt thật cả light/
+  dark mode trên nhiều trang (Home, Tag & Tip, Creator Profile) — màu
+  đổi nhất quán khắp app chỉ qua token dùng chung, không sót chỗ nào còn
+  màu cũ. `lint`/`typecheck`/`build` pass.

@@ -18,6 +18,13 @@
     "searchPlaceholder": "Where do you want to go? e.g. Da Lat, Seoul, Phu Quoc...",
     "searchAriaLabel": "Search destination",
     "searchButton": "Search plans",
+    "quickLinksWord": "PLAN",
+    "quickLinksLabel": "Quick start",
+    "quickLinkTrips": "Your trips",
+    "quickLinkExplore": "Explore",
+    "quickLinkTags": "Tag & Tip",
+    "quickLinkSaved": "Saved",
+    "exploreWord": "EXPLORE",
     "recentHeading": "Recent public plans",
     "matchHeading": "Public plans matching \"{query}\"",
     "empty": "No public plan matches \"{query}\" yet. Try another search, or <link>create an account</link> to build your own."
