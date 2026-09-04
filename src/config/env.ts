@@ -14,6 +14,8 @@ const envSchema = z.object({
     .enum(["development", "test", "production"])
     .default("development"),
   DATABASE_URL: z.string().url().optional(),
+  // Signs session JWTs — see src/server/auth/session.ts.
+  AUTH_SECRET: z.string().min(16, "AUTH_SECRET must be at least 16 characters"),
 });
 
 export const env = envSchema.parse(process.env);

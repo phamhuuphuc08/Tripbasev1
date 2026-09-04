@@ -16,23 +16,29 @@ Theo gợi ý ở `PRODUCT_SPEC.md` mục 15:
 | DB         | PostgreSQL qua Prisma ORM 7 (driver adapter `@prisma/adapter-pg`, không dùng Rust engine) |
 | Validation | Zod                                                                                       |
 
-Auth, map provider, realtime, file storage chưa được chọn/cài — xem
-`src/server/auth/README.md` và mục 15 của spec khi cần quyết định.
+Auth hiện là bản tối giản tự viết (JWT trong cookie httpOnly, credentials
+email+password — xem `src/server/auth/session.ts`), **chưa phải** provider
+thật (Clerk/Supabase/Auth.js — mục 15); map provider, realtime, file storage
+vẫn chưa chọn/cài — xem `src/server/auth/README.md` khi cần quyết định
+thêm.
 
 ## Cấu trúc thư mục
 
 ```
 src/
   app/                    # Routes (Next.js App Router)
-    (app)/                # Khu vực đã đăng nhập: trips, explore, saved, creators
+    (app)/                # trips, explore, saved, creators
+    (auth)/               # login, register
     api/                  # Route handlers thuần (webhook, integration)
-    layout.tsx, page.tsx  # Root layout + landing page
+    layout.tsx            # Root layout — render SiteHeader ở mọi trang
+    page.tsx              # Home: search điểm đến + plan public khớp nhất
   components/
     ui/                   # Primitives do shadcn/ui sinh ra
     shared/                # Component dùng chung nhiều feature
   features/               # 1 thư mục / 1 module trong mục 4 của spec
     trip/ itinerary/ map/ budget/ booking/ checklist/
     share/ copy-plan/ reputation/ marketplace/ tag-tip/ travel-memory/
+    auth/                 # cross-cutting, không thuộc 12 module gốc
   server/                 # Code chỉ chạy server-side
     db/                   # Prisma client singleton
     repositories/         # Data access, 1 file / aggregate

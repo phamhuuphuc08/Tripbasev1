@@ -17,7 +17,8 @@ Tổng quan kiến trúc: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 | Mã  | Module                                                        | Ưu tiên | Data model | Service | UI  | Trạng thái |
 | --- | ------------------------------------------------------------- | ------- | ---------- | ------- | --- | ---------- |
 | M00 | [Infra/Scaffold](#m00--infrascaffold)                         | —       | ✅         | —       | —   | ✅         |
-| M01 | [Trip Builder](#m01--trip-builder)                            | P0      | ✅         | ⬜      | ⬜  | ⬜         |
+| M13 | [Auth (login/register)](#m13--auth-loginregister)             | —       | ✅         | ✅      | ✅  | ✅         |
+| M01 | [Trip Builder](#m01--trip-builder)                            | P0      | ✅         | 🟨      | 🟨  | 🟨         |
 | M02 | [Itinerary / Smart Timeline](#m02--itinerary--smart-timeline) | P0      | ✅         | ⬜      | ⬜  | ⬜         |
 | M03 | [Map Planner](#m03--map-planner)                              | P0      | ✅         | ⬜      | ⬜  | ⬜         |
 | M04 | [Budget Board](#m04--budget-board)                            | P0      | ✅         | ⬜      | ⬜  | ⬜         |
@@ -26,7 +27,7 @@ Tổng quan kiến trúc: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 | M07 | [Share & Permission](#m07--share--permission)                 | P0      | ✅         | ⬜      | ⬜  | ⬜         |
 | M08 | [CopyPlan Engine](#m08--copyplan-engine)                      | P0      | ✅         | ⬜      | ⬜  | ⬜         |
 | M09 | [Reputation Engine](#m09--reputation-engine)                  | P1      | ✅         | ⬜      | ⬜  | ⬜         |
-| M10 | [Plan Marketplace / Explore](#m10--plan-marketplace--explore) | P1      | ✅         | ⬜      | 🟨  | ⬜         |
+| M10 | [Plan Marketplace / Explore](#m10--plan-marketplace--explore) | P1      | ✅         | 🟨      | 🟨  | 🟨         |
 | M11 | [Tag & Tip Library](#m11--tag--tip-library)                   | P1      | ✅         | ⬜      | ⬜  | ⬜         |
 | M12 | [Travel Memory](#m12--travel-memory)                          | P2      | ⬜         | ⬜      | ⬜  | ⬜         |
 
@@ -46,10 +47,10 @@ migrate vào DB thật — chưa có nghĩa là service/business rule đã imple
 - [x] Cấu trúc `src/features/*` — 1 thư mục/module, mỗi thư mục có README
 - [x] Phân lớp `src/server/{db,repositories,services,auth}`
 - [x] `prisma/schema.prisma` — toàn bộ data model mục 12 của spec
-- [x] Migration đầu tiên `prisma/migrations/20260904041205_init` — đã apply
-      vào Postgres thật (18 bảng), không chỉ viết schema suông
-- [x] Route placeholder `/trips`, `/trips/[tripId]`, `/explore`, `/saved`,
-      `/creators/[creatorId]` — app build được
+- [x] Migration đầu tiên + seed script (`prisma/seed.ts`, `npm run db:seed`)
+      — 2 user demo, 5 trip public đa điểm đến
+- [x] Route `/`, `/trips`, `/trips/[tripId]`, `/explore`, `/saved`,
+      `/creators/[creatorId]`, `/login`, `/register` — app build được
 - [x] Tooling: ESLint + Prettier, `.editorconfig`, Zod env validation
 - [x] Docker: `Dockerfile` + `docker-compose.yml` (Postgres + web), chạy
       `npm run docker:up` là có localhost để test — xem
@@ -57,26 +58,60 @@ migrate vào DB thật — chưa có nghĩa là service/business rule đã imple
 
 Chưa làm:
 
-- [ ] Auth thật (chưa chọn provider — xem `src/server/auth/README.md`)
 - [ ] CI (lint/typecheck/build tự động trên PR)
+
+---
+
+## M13 — Auth (login/register)
+
+Không phải 1 trong 12 module gốc ở mục 4 của spec, nhưng là hạ tầng nền mà
+M01/M07/M08/M10 đều phụ thuộc ("cần đăng nhập để xem chi tiết plan").
+
+- **Code:** `src/features/auth/`, `src/server/auth/{password,session}.ts`,
+  `src/server/services/auth.service.ts`, field `User.passwordHash`
+- **Trạng thái:** ✅ Xong cho MVP hiện tại (2026-09-04)
+
+Đã làm:
+
+- [x] Session = JWT ký bằng `AUTH_SECRET`, lưu trong cookie httpOnly
+      (Credentials-only: email + mật khẩu qua bcryptjs) — **chưa phải OAuth
+      provider thật**, xem `src/server/auth/README.md` và mục 15 của spec
+      trước khi implement thêm
+- [x] `/login`, `/register` — Server Actions (`useActionState`), redirect về
+      `callbackUrl` sau khi login
+- [x] `SiteHeader` (server component) hiện trạng thái đăng nhập ở mọi trang
+- [x] Logout qua Server Action
+
+Chưa làm:
+
+- [ ] Quên mật khẩu / đổi mật khẩu
+- [ ] Xác thực email
+- [ ] Quyết định OAuth provider thật (Auth.js/Clerk/Supabase — mục 15) nếu
+      cần login bằng Google/Facebook
 
 ---
 
 ## M01 — Trip Builder
 
 - **Ưu tiên:** P0 · **Spec:** mục 4, 5, 6a
-- **Code:** `src/features/trip/`, model `Trip`, `Traveler`
-- **Trạng thái:** ⬜ Chưa bắt đầu
+- **Code:** `src/features/trip/`, `src/server/services/trip.service.ts`, model `Trip`, `Traveler`
+- **Trạng thái:** 🟨 Đang làm
 
-Đã làm: (chưa có)
+Đã làm:
+
+- [x] Đọc chi tiết 1 trip thật từ DB (`getTripDetail`), có gate: plan không
+      public + không phải chủ sở hữu → 404; plan public nhưng chưa đăng
+      nhập → yêu cầu login (`/trips/[tripId]`)
 
 Chưa làm:
 
 - [ ] Form tạo trip (điểm đến, ngày, số người, ngân sách, style)
-- [ ] Server action `createTrip` / `updateTrip` (`src/server/services/trip.service.ts`)
-- [ ] Trip dashboard (danh sách trip của user) — thay `src/app/(app)/trips/page.tsx`
-- [ ] Trạng thái plan: Ý tưởng / Đã lên lịch / Đã đi + badge "Verified by Author"
-- [ ] Visibility: Riêng tư / Bạn bè-nhóm / Public
+- [ ] Server action `createTrip` / `updateTrip`
+- [ ] Trip dashboard thật (danh sách trip của user đăng nhập) — hiện
+      `src/app/(app)/trips/page.tsx` vẫn là placeholder tĩnh
+- [ ] Trạng thái plan: chuyển Ý tưởng / Đã lên lịch / Đã đi + badge
+      "Verified by Author" (hiện chỉ đọc, không đổi được)
+- [ ] Đổi visibility: Riêng tư / Bạn bè-nhóm / Public
 
 ---
 
@@ -161,7 +196,8 @@ Chưa làm:
 - [ ] Invite đích danh (viewer/editor)
 - [ ] View Link / Edit Link — tạo, revoke, tạo lại
 - [ ] Expiry cho Edit Link (guardrail mục 13)
-- [ ] Auth/permission check theo `visibility` + `Collaborator.role`
+- [ ] Auth/permission check theo `visibility` + `Collaborator.role` (hiện
+      `trip.service.ts` mới chỉ tự check owner, chưa check Collaborator)
 
 ---
 
@@ -199,16 +235,25 @@ Chưa làm:
 ## M10 — Plan Marketplace / Explore
 
 - **Ưu tiên:** P1 · **Spec:** mục 4, 5, 6b, 11
-- **Code:** `src/features/marketplace/`, model `Interaction`, `Trip` (visibility/status)
-- **Trạng thái:** ⬜ Chưa bắt đầu (route placeholder đã có)
+- **Code:** `src/server/services/marketplace.service.ts`, `src/app/page.tsx`, model `Interaction`, `Trip` (visibility/status)
+- **Trạng thái:** 🟨 Đang làm
 
 Đã làm:
 
-- [x] Route `/explore`, `/saved` placeholder (chưa có data thật)
+- [x] Home page (`/`) có ô search theo điểm đến (`?q=`), query thật vào
+      DB (`Trip.visibility = PUBLIC`, `destination` chứa từ khoá, không
+      phân biệt hoa/thường), xếp hạng rule-based: khớp chính xác > khớp
+      đầu chuỗi > chứa từ khoá — **không dùng AI**, đúng tinh thần mục 8.1
+- [x] Không có từ khoá → hiện danh sách plan public gần nhất thay vì rỗng
+- [x] Route `/explore`, `/saved` vẫn placeholder — logic search thật hiện
+      nằm ở Home page, **chưa di chuyển/hợp nhất vào `/explore`**
 
 Chưa làm:
 
-- [ ] Feed plan public, filter theo điểm đến/ngân sách/CopyPlan Score/trạng thái
+- [ ] Hợp nhất search ở Home vào đúng trang Explore/Marketplace (mục 4),
+      hoặc quyết định Home page = Explore rút gọn
+- [ ] Filter theo ngân sách/CopyPlan Score/trạng thái (hiện chỉ lọc theo
+      điểm đến)
 - [ ] Like / Bookmark (không tính điểm uy tín — mục 3.2)
 - [ ] Saved Library thật (query theo `Interaction.type = BOOKMARK`)
 - [ ] Rate-limit Like/Bookmark theo thiết bị/tài khoản (mục 13)
@@ -260,6 +305,9 @@ generate` → `next build` → `next start`. Chưa tối ưu size (chưa dùng
   chiếm 3000.
 - **`docker-entrypoint.sh`** — chạy `prisma migrate deploy` trước khi start
   app, nên container luôn tự đồng bộ schema mới nhất khi khởi động.
+- Seed data (`npm run db:seed`) chạy tay, **không** tự động trong
+  entrypoint — tránh insert lại demo data mỗi lần container restart trên
+  môi trường không phải local.
 
 Cách dùng:
 
@@ -269,9 +317,15 @@ npm run docker:up      # = docker compose up --build
 WEB_PORT=3001 docker compose up --build
 ```
 
-**Đã verify (2026-09-04):** `docker compose up -d db` → healthy → `prisma
-migrate dev --name init` chạy thật, tạo 18 bảng → build `web` qua Docker →
-xem log build/run trong Changelog bên dưới.
+**Đã verify (2026-09-04):**
+
+- `docker compose up -d db` → healthy → `prisma migrate dev --name init`
+  chạy thật, tạo 18 bảng → build `web` qua Docker → `HTTP 200` cho `/`,
+  `/trips`, `/explore` từ trong container.
+- Sau khi thêm Auth + Home search: `prisma migrate dev
+--name add_user_password_hash` → `npm run db:seed` (2 user, 5 trip
+  public) → rebuild `docker compose up -d --build web` → verify lại qua
+  trình duyệt (xem log Changelog bên dưới).
 
 ---
 
@@ -280,15 +334,28 @@ xem log build/run trong Changelog bên dưới.
 ### 2026-09-04
 
 - Scaffold toàn bộ cấu trúc thư mục + Prisma schema (commit `e7a258f`, đã push `main`).
-- Viết `docs/spec-dev-plan.md` này.
-- Thêm `Dockerfile`, `docker-compose.yml`, `docker-entrypoint.sh`, `.dockerignore`.
-- Chạy `docker compose up -d db` → container `tripbase-db-1` healthy.
-- Chạy `prisma migrate dev --name init` với `DATABASE_URL` trỏ vào DB Docker
-  → migration `prisma/migrations/20260904041205_init` được tạo và apply,
-  18 bảng lên đúng theo schema (verify bằng `\dt`).
-- Build + chạy service `web` qua `docker compose up --build` để verify
-  localhost: build image thành công, `docker-entrypoint.sh` tự chạy `prisma
-migrate deploy` ("No pending migrations to apply" — đúng vì đã migrate ở
-  bước trên), app start trong container và trả `HTTP 200` thật cho `/`,
-  `/trips`, `/explore` (test qua `WEB_PORT=3001` vì cổng 3000 trên máy đang
-  bị container khác chiếm). Đã `docker compose down` sau khi verify xong.
+- Viết `docs/spec-dev-plan.md` này; thêm Docker local deploy + migration đầu
+  tiên (commit `80f89b5`).
+- **Auth (M13) + Home search (M10, một phần):**
+  - Thêm `User.passwordHash`, migration `add_user_password_hash`.
+  - Session JWT trong cookie httpOnly (`jose` + `bcryptjs`), Server Actions
+    login/register/logout, `SiteHeader` hiện trạng thái đăng nhập.
+  - `src/app/page.tsx` viết lại: ô search điểm đến → query
+    `marketplace.service.searchPublicTrips` (rule-based rank, không AI) →
+    card kết quả link tới `/trips/[id]`.
+  - `/trips/[tripId]` viết lại: đọc trip thật qua `trip.service.getTripDetail`;
+    plan public nhưng chưa đăng nhập → chặn, hiện nút "Đăng nhập để xem chi
+    tiết"; plan private không phải chủ → 404.
+  - `prisma/seed.ts` + `npm run db:seed`: 2 user demo
+    (`demo@tripbase.vn` / `password123`), 5 trip public đa điểm đến để
+    search có dữ liệu thật.
+  - Xoá `src/app/(app)/layout.tsx` (header trùng với `SiteHeader` mới ở
+    root layout).
+  - Verify: `lint`, `typecheck`, `build` pass. Rebuild Docker image (phải
+    thêm `AUTH_SECRET` vào build args/env — `next build` cần nó vì
+    `SiteHeader` gọi `getSession()` ở mọi trang). Test qua trình duyệt thật
+    (Chrome automation): search "Đà Lạt" → đúng 1 kết quả khớp; click vào
+    card → chặn, hiện "Đăng nhập để xem chi tiết"; login
+    `demo@tripbase.vn` → redirect đúng `callbackUrl`, hiện đầy đủ chi tiết
+    trip; logout → quay lại trạng thái chưa đăng nhập. Toàn bộ luồng chạy
+    đúng với dữ liệu thật trong Postgres, không phải mock.

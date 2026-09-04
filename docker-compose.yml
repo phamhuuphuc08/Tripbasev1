@@ -20,10 +20,12 @@ services:
     build:
       context: .
       args:
-        # Only used so `prisma generate` has a syntactically valid URL at
-        # build time — no connection is actually made during build. The
-        # real value comes from `environment:` below at container start.
+        # Only used so `prisma generate`/`next build` see a syntactically
+        # valid value at build time (env.ts requires both to be set) — no
+        # DB connection or session signing happens during build. The real
+        # values come from `environment:` below at container start.
         DATABASE_URL: postgresql://tripbase:tripbase@db:5432/tripbase
+        AUTH_SECRET: ${AUTH_SECRET:-dev-only-secret-change-me-please-32chars}
     restart: unless-stopped
     depends_on:
       db:
@@ -31,6 +33,7 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://tripbase:tripbase@db:5432/tripbase
+      AUTH_SECRET: ${AUTH_SECRET:-dev-only-secret-change-me-please-32chars}
     ports:
       # Override with `WEB_PORT=3001 docker compose up` if 3000 is taken.
       - "${WEB_PORT:-3000}:3000"

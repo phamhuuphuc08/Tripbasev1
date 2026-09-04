@@ -10,7 +10,9 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 ARG DATABASE_URL
+ARG AUTH_SECRET
 ENV DATABASE_URL=${DATABASE_URL}
+ENV AUTH_SECRET=${AUTH_SECRET}
 ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY package.json package-lock.json ./

@@ -62,12 +62,15 @@ enum TargetType {
 // ---------------------------------------------------------------------------
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  image     String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  image        String?
+  // Credentials-based auth for this stage (see src/server/auth). Nullable so
+  // a future OAuth provider can create users without a local password.
+  passwordHash String?  @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   trips              Trip[]             @relation("TripOwner")
   locationTags       LocationTag[]      @relation("TagOwner")
