@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tripbase
+      POSTGRES_PASSWORD: tripbase
+      POSTGRES_DB: tripbase
+    ports:
+      - "5432:5432"
+    volumes:
+      - tripbase_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tripbase -d tripbase"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  web:
+    build:
+      context: .
+      args:
+        # Only used so `prisma generate` has a syntactically valid URL at
+        # build time — no connection is actually made during build. The
+        # real value comes from `environment:` below at container start.
+        DATABASE_URL: postgresql://tripbase:tripbase@db:5432/tripbase
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://tripbase:tripbase@db:5432/tripbase
+    ports:
+      # Override with `WEB_PORT=3001 docker compose up` if 3000 is taken.
+      - "${WEB_PORT:-3000}:3000"
+
+volumes:
+  tripbase_db_data:

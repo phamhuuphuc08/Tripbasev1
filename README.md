@@ -7,7 +7,8 @@ Score.
 
 > Bản đầy đủ của định vị sản phẩm, data model, cơ chế tính điểm và roadmap:
 > xem [`docs/PRODUCT_SPEC.md`](docs/PRODUCT_SPEC.md). Tổng quan kiến trúc
-> code: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+> code: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Tiến độ từng module
+> (đã làm/chưa làm): [`docs/spec-dev-plan.md`](docs/spec-dev-plan.md).
 
 Giai đoạn hiện tại **không dùng AI** — toàn bộ tính năng là thao tác thủ
 công/rule-based.
@@ -29,18 +30,29 @@ npm run dev
 
 Mở [http://localhost:3000](http://localhost:3000).
 
+### Chạy bằng Docker (app + Postgres, tự migrate)
+
+```bash
+npm run docker:up      # = docker compose up --build
+# nếu cổng 3000 trên máy đang bận:
+WEB_PORT=3001 docker compose up --build
+```
+
+Container `web` tự chạy `prisma migrate deploy` trước khi start — không cần
+thao tác tay nào khác để có localhost test được.
+
 ## Scripts
 
-| Script | Chức năng |
-|---|---|
-| `npm run dev` | Chạy dev server |
-| `npm run build` / `npm start` | Build & chạy production |
-| `npm run lint` | ESLint |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run format` / `format:check` | Prettier |
-| `npm run db:generate` | Sinh Prisma Client từ `prisma/schema.prisma` |
-| `npm run db:migrate` | Chạy migration (dev) |
-| `npm run db:studio` | Mở Prisma Studio |
+| Script                            | Chức năng                                    |
+| --------------------------------- | -------------------------------------------- |
+| `npm run dev`                     | Chạy dev server                              |
+| `npm run build` / `npm start`     | Build & chạy production                      |
+| `npm run lint`                    | ESLint                                       |
+| `npm run typecheck`               | `tsc --noEmit`                               |
+| `npm run format` / `format:check` | Prettier                                     |
+| `npm run db:generate`             | Sinh Prisma Client từ `prisma/schema.prisma` |
+| `npm run db:migrate`              | Chạy migration (dev)                         |
+| `npm run db:studio`               | Mở Prisma Studio                             |
 
 ## Cấu trúc thư mục
 

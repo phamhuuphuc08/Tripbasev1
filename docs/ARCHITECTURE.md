@@ -8,13 +8,13 @@ vào các thư mục dưới đây.
 
 Theo gợi ý ở `PRODUCT_SPEC.md` mục 15:
 
-| Layer | Lựa chọn |
-|---|---|
-| Framework | Next.js (App Router) + TypeScript |
-| UI | Tailwind CSS v4 + shadcn/ui |
-| Backend | Next.js Server Actions/Route Handlers (không tách service riêng ở giai đoạn này) |
-| DB | PostgreSQL qua Prisma ORM 7 (driver adapter `@prisma/adapter-pg`, không dùng Rust engine) |
-| Validation | Zod |
+| Layer      | Lựa chọn                                                                                  |
+| ---------- | ----------------------------------------------------------------------------------------- |
+| Framework  | Next.js (App Router) + TypeScript                                                         |
+| UI         | Tailwind CSS v4 + shadcn/ui                                                               |
+| Backend    | Next.js Server Actions/Route Handlers (không tách service riêng ở giai đoạn này)          |
+| DB         | PostgreSQL qua Prisma ORM 7 (driver adapter `@prisma/adapter-pg`, không dùng Rust engine) |
+| Validation | Zod                                                                                       |
 
 Auth, map provider, realtime, file storage chưa được chọn/cài — xem
 `src/server/auth/README.md` và mục 15 của spec khi cần quyết định.
