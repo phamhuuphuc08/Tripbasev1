@@ -18,6 +18,7 @@ Tổng quan kiến trúc: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 | --- | ------------------------------------------------------------- | ------- | ---------- | ------- | --- | ---------- |
 | M00 | [Infra/Scaffold](#m00--infrascaffold)                         | —       | ✅         | —       | —   | ✅         |
 | M13 | [Auth (login/register)](#m13--auth-loginregister)             | —       | ✅         | ✅      | ✅  | ✅         |
+| M14 | [i18n & UI polish](#m14--i18n--ui-polish)                     | —       | —          | ✅      | ✅  | ✅         |
 | M01 | [Trip Builder](#m01--trip-builder)                            | P0      | ✅         | 🟨      | 🟨  | 🟨         |
 | M02 | [Itinerary / Smart Timeline](#m02--itinerary--smart-timeline) | P0      | ✅         | ⬜      | ⬜  | ⬜         |
 | M03 | [Map Planner](#m03--map-planner)                              | P0      | ✅         | ⬜      | ⬜  | ⬜         |
@@ -88,6 +89,62 @@ Chưa làm:
 - [ ] Xác thực email
 - [ ] Quyết định OAuth provider thật (Auth.js/Clerk/Supabase — mục 15) nếu
       cần login bằng Google/Facebook
+
+---
+
+## M14 — i18n & UI polish
+
+Không phải module nghiệp vụ — đây là hạ tầng trình bày (presentation) áp
+dụng cho toàn bộ app, làm lại theo yêu cầu "giao diện xấu, không hiện đại,
+định hướng song ngữ vi/en".
+
+- **Code:** `src/i18n/*`, `src/proxy.ts`, `messages/{vi,en}.json`,
+  `global.d.ts`, `src/app/[locale]/*`, `src/components/shared/{site-header,
+theme-toggle,theme-provider,language-switcher,placeholder-screen}.tsx`
+- **Trạng thái:** ✅ Xong cho phạm vi hiện có (2026-09-04)
+
+Đã làm:
+
+- [x] Chuyển toàn bộ route sang `src/app/[locale]/...` — `next-intl`
+      (`localePrefix: "as-needed"`): vi mặc định không prefix (`/`, `/trips`),
+      en có prefix (`/en`, `/en/trips`). Locale detect qua `Accept-Language`
+      nếu chưa có cookie/lựa chọn trước đó (hành vi mặc định của next-intl).
+- [x] `LanguageSwitcher` (client) đổi locale giữ nguyên trang đang xem.
+- [x] Dark mode qua `next-themes`, theo `system` mặc định, toggle thủ công
+      bằng `ThemeToggle`; toàn bộ palette (kể cả `.dark`) định nghĩa trong
+      `globals.css` bằng CSS variables (oklch) — đổi theme không cần đổi class
+      Tailwind ở từng component.
+- [x] Đổi màu nhấn thương hiệu từ xám trung tính (mặc định shadcn) sang
+      emerald, thêm icon (`lucide-react`) cho location/calendar/user/status/
+      verified khắp Home, Trip Detail, Placeholder screens; hero có gradient
+      nhẹ; header sticky + backdrop-blur.
+- [x] Toàn bộ chuỗi hiển thị (nav, home, trip status, trip detail, auth
+      form + **lỗi validate/login**, placeholder screens) đi qua
+      `messages/vi.json` / `messages/en.json` — không còn chuỗi hard-code.
+      Lỗi từ Server Action (`AuthError`) mang **mã lỗi**, dịch sang locale hiện
+      tại ở boundary `actions.ts`, giữ `auth.service.ts` locale-agnostic.
+- [x] Format ngày/giờ dùng `next-intl`'s `getFormatter().dateTimeRange`
+      (tự đổi theo locale: `dd/mm` cho vi, `mm/dd` cho en), không hard-code
+      `Intl.DateTimeFormat("vi-VN", ...)` nữa.
+- [x] Next.js 16: đổi `middleware.ts` (deprecated) → `src/proxy.ts` theo
+      convention mới.
+
+Chưa làm:
+
+- [ ] Explore/Saved/Trips/Creator vẫn là `PlaceholderScreen` — chưa có UI
+      thật để đánh giá redesign trên các trang đó
+- [ ] Chưa có cách người dùng tự chọn/khoá 1 ngôn ngữ lâu dài qua UI settings
+      (hiện chỉ đổi tức thời bằng nút, next-intl tự set cookie `NEXT_LOCALE`)
+- [ ] Chưa test responsive mobile kỹ (mới verify ở viewport desktop)
+
+Ghi chú kỹ thuật:
+
+- Base UI `Button` khi dùng `render={<Link .../>}` (render ra `<a>`) phải
+  set thêm `nativeButton={false}`, nếu không sẽ có console warning (Base UI
+  mong đợi native `<button>` khi `nativeButton` mặc định `true`).
+- `next-themes` tự inject 1 `<script>` để tránh flash sai theme — React 19
+  log 1 console warning dev-only ("Encountered a script tag...") vô hại,
+  không xuất hiện ở production build, không phải bug của TripBase.
 
 ---
 
@@ -359,3 +416,21 @@ WEB_PORT=3001 docker compose up --build
     `demo@tripbase.vn` → redirect đúng `callbackUrl`, hiện đầy đủ chi tiết
     trip; logout → quay lại trạng thái chưa đăng nhập. Toàn bộ luồng chạy
     đúng với dữ liệu thật trong Postgres, không phải mock.
+- **i18n (vi/en) + làm mới giao diện (M14)** — theo yêu cầu "giao diện xấu,
+  không hiện đại, định hướng song ngữ":
+  - Chuyển route sang `src/app/[locale]/...`, thêm `next-intl`
+    (`src/i18n/{routing,navigation,request}.ts`, `messages/{vi,en}.json`,
+    `src/proxy.ts` thay `middleware.ts` theo convention Next.js 16).
+  - Thêm dark mode (`next-themes`) + đổi màu nhấn thương hiệu sang emerald,
+    thêm icon `lucide-react` cho card/nav/gate, header sticky backdrop-blur,
+    hero có gradient — áp dụng cho Home, Trip Detail, Auth, Placeholder
+    screens.
+  - Toàn bộ chuỗi UI (kể cả lỗi từ Server Action) qua `next-intl`; ngày giờ
+    format theo locale bằng `getFormatter().dateTimeRange`.
+  - Fix dọc đường: `nativeButton={false}` cho `Button render={<Link/>}`
+    (Base UI cảnh báo khi render ra `<a>` mà không set cờ này);
+    `middleware.ts` → `src/middleware.ts` → `src/proxy.ts` (2 lần đổi vị
+    trí/tên do quy ước Next.js với `src/` dir và Next 16's proxy rename).
+  - Verify qua trình duyệt thật: search + gate + login + logout lặp lại ở
+    cả 2 theme (sáng/tối) và cả 2 locale (vi mặc định không prefix, en có
+    `/en`); `lint`/`typecheck`/`build` đều pass.

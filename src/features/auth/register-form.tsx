@@ -1,15 +1,17 @@
 "use client";
 
 import { useActionState } from "react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Link } from "@/i18n/navigation";
 import { registerAction, type AuthFormState } from "@/features/auth/actions";
 
 const initialState: AuthFormState = {};
 
 export function RegisterForm() {
+  const t = useTranslations("auth");
   const [state, formAction, pending] = useActionState(
     registerAction,
     initialState,
@@ -18,12 +20,12 @@ export function RegisterForm() {
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="name">Tên</Label>
+        <Label htmlFor="name">{t("register.nameLabel")}</Label>
         <Input id="name" name="name" type="text" autoComplete="name" required />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t("emailLabel")}</Label>
         <Input
           id="email"
           name="email"
@@ -34,7 +36,7 @@ export function RegisterForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="password">Mật khẩu</Label>
+        <Label htmlFor="password">{t("passwordLabel")}</Label>
         <Input
           id="password"
           name="password"
@@ -43,7 +45,9 @@ export function RegisterForm() {
           minLength={8}
           required
         />
-        <p className="text-muted-foreground text-xs">Ít nhất 8 ký tự.</p>
+        <p className="text-muted-foreground text-xs">
+          {t("register.passwordHint")}
+        </p>
       </div>
 
       {state.error && (
@@ -53,13 +57,13 @@ export function RegisterForm() {
       )}
 
       <Button type="submit" disabled={pending} className="w-full">
-        {pending ? "Đang tạo tài khoản…" : "Đăng ký"}
+        {pending ? t("register.submitPending") : t("register.submit")}
       </Button>
 
       <p className="text-muted-foreground text-center text-sm">
-        Đã có tài khoản?{" "}
+        {t("register.haveAccount")}{" "}
         <Link href="/login" className="text-foreground underline">
-          Đăng nhập
+          {t("register.loginLink")}
         </Link>
       </p>
     </form>

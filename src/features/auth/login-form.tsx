@@ -1,15 +1,17 @@
 "use client";
 
 import { useActionState } from "react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Link } from "@/i18n/navigation";
 import { loginAction, type AuthFormState } from "@/features/auth/actions";
 
 const initialState: AuthFormState = {};
 
 export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
+  const t = useTranslations("auth");
   const [state, formAction, pending] = useActionState(
     loginAction,
     initialState,
@@ -20,7 +22,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
       <input type="hidden" name="callbackUrl" value={callbackUrl ?? ""} />
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t("emailLabel")}</Label>
         <Input
           id="email"
           name="email"
@@ -31,7 +33,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="password">Mật khẩu</Label>
+        <Label htmlFor="password">{t("passwordLabel")}</Label>
         <Input
           id="password"
           name="password"
@@ -48,13 +50,13 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
       )}
 
       <Button type="submit" disabled={pending} className="w-full">
-        {pending ? "Đang đăng nhập…" : "Đăng nhập"}
+        {pending ? t("login.submitPending") : t("login.submit")}
       </Button>
 
       <p className="text-muted-foreground text-center text-sm">
-        Chưa có tài khoản?{" "}
+        {t("login.noAccount")}{" "}
         <Link href="/register" className="text-foreground underline">
-          Đăng ký
+          {t("login.registerLink")}
         </Link>
       </p>
     </form>

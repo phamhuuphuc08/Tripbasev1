@@ -15,8 +15,9 @@ công/rule-based.
 
 ## Stack
 
-Next.js (App Router) + TypeScript · Tailwind CSS v4 + shadcn/ui · PostgreSQL
-qua Prisma ORM 7 · Zod.
+Next.js (App Router) + TypeScript · Tailwind CSS v4 + shadcn/ui · dark mode
+(`next-themes`) · song ngữ vi/en (`next-intl`) · PostgreSQL qua Prisma
+ORM 7 · Zod.
 
 ## Bắt đầu
 

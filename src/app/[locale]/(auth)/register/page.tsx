@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import {
   Card,
   CardContent,
@@ -7,12 +8,14 @@ import {
 } from "@/components/ui/card";
 import { RegisterForm } from "@/features/auth/register-form";
 
-export default function RegisterPage() {
+export default async function RegisterPage() {
+  const t = await getTranslations("auth.register");
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Tạo tài khoản TripBase</CardTitle>
-        <CardDescription>Miễn phí, dùng để lưu và xem plan.</CardDescription>
+        <CardTitle>{t("title")}</CardTitle>
+        <CardDescription>{t("subtitle")}</CardDescription>
       </CardHeader>
       <CardContent>
         <RegisterForm />

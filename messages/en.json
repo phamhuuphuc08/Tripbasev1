@@ -1,0 +1,87 @@
+{
+  "nav": {
+    "trips": "Trips",
+    "explore": "Explore",
+    "saved": "Saved",
+    "login": "Log in",
+    "register": "Sign up",
+    "logout": "Log out"
+  },
+  "common": {
+    "languageSwitcher": "Language",
+    "themeToggle": "Toggle light/dark theme",
+    "moduleLabel": "Module"
+  },
+  "home": {
+    "subtitle": "A trip operating system + reputation network for independent travelers, groups, and creators.",
+    "searchPlaceholder": "Where do you want to go? e.g. Da Lat, Seoul, Phu Quoc...",
+    "searchAriaLabel": "Search destination",
+    "searchButton": "Search plans",
+    "recentHeading": "Recent public plans",
+    "matchHeading": "Public plans matching \"{query}\"",
+    "empty": "No public plan matches \"{query}\" yet. Try another search, or <link>create an account</link> to build your own."
+  },
+  "tripStatus": {
+    "IDEA": "💭 Idea",
+    "SCHEDULED": "📅 Scheduled",
+    "COMPLETED": "✅ Completed"
+  },
+  "tripCard": {
+    "verified": "Verified",
+    "by": "by {name}"
+  },
+  "tripDetail": {
+    "gateDescription": "{destination} — this plan is public, log in to see the full Timeline/Map/Budget.",
+    "loginCta": "Log in to view details",
+    "meta": "Created by {owner} · {count, plural, =0 {no items yet} other {# items}} in itinerary",
+    "modulesNote": "3 views: Plan View (Timeline), Map View, Money View — module <module>src/features/itinerary</module> (not implemented yet, see docs/spec-dev-plan.md)."
+  },
+  "auth": {
+    "login": {
+      "title": "Log in to TripBase",
+      "subtitle": "Log in to view plan details and use CopyPlan.",
+      "submit": "Log in",
+      "submitPending": "Logging in…",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Sign up"
+    },
+    "register": {
+      "title": "Create a TripBase account",
+      "subtitle": "Free — used to save and view plans.",
+      "nameLabel": "Name",
+      "passwordHint": "At least 8 characters.",
+      "submit": "Sign up",
+      "submitPending": "Creating account…",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Log in"
+    },
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "errors": {
+      "emailInvalid": "Invalid email.",
+      "passwordRequired": "Please enter your password.",
+      "nameRequired": "Please enter your name.",
+      "passwordMin": "Password must be at least 8 characters.",
+      "emailTaken": "This email is already registered.",
+      "invalidCredentials": "Incorrect email or password."
+    }
+  },
+  "placeholders": {
+    "trips": {
+      "title": "Trips",
+      "description": "Your trips — create a new one or open one to edit its Timeline/Map/Budget."
+    },
+    "explore": {
+      "title": "Explore / Plan Marketplace",
+      "description": "Public plan feed, filter by destination/budget/CopyPlan Score/status; Like, Bookmark, CopyPlan on each card."
+    },
+    "saved": {
+      "title": "Saved Library",
+      "description": "Your bookmarked plans, private per user."
+    },
+    "creator": {
+      "title": "Creator {id}",
+      "description": "Total CopyPlan received, list of plans, reputation chart over time."
+    }
+  }
+}

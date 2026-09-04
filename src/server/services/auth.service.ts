@@ -5,7 +5,21 @@ import {
 import { hashPassword, verifyPassword } from "@/server/auth/password";
 import { createSession, destroySession } from "@/server/auth/session";
 
-export class AuthError extends Error {}
+export type AuthErrorCode = "EMAIL_TAKEN" | "INVALID_CREDENTIALS";
+
+/**
+ * Carries a code rather than a display message — the message is only
+ * decided at the Server Action boundary (src/features/auth/actions.ts),
+ * which knows the current locale. Keeps this service locale-agnostic.
+ */
+export class AuthError extends Error {
+  code: AuthErrorCode;
+
+  constructor(code: AuthErrorCode) {
+    super(code);
+    this.code = code;
+  }
+}
 
 export async function registerUser(input: {
   name: string;
@@ -14,7 +28,7 @@ export async function registerUser(input: {
 }) {
   const existing = await findUserByEmail(input.email);
   if (existing) {
-    throw new AuthError("Email này đã được đăng ký.");
+    throw new AuthError("EMAIL_TAKEN");
   }
 
   const passwordHash = await hashPassword(input.password);
@@ -34,12 +48,12 @@ export async function loginWithPassword(input: {
 }) {
   const user = await findUserByEmail(input.email);
   if (!user || !user.passwordHash) {
-    throw new AuthError("Email hoặc mật khẩu không đúng.");
+    throw new AuthError("INVALID_CREDENTIALS");
   }
 
   const valid = await verifyPassword(input.password, user.passwordHash);
   if (!valid) {
-    throw new AuthError("Email hoặc mật khẩu không đúng.");
+    throw new AuthError("INVALID_CREDENTIALS");
   }
 
   await createSession({ userId: user.id, email: user.email, name: user.name });

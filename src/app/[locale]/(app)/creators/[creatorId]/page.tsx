@@ -1,3 +1,5 @@
+import { Award } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { PlaceholderScreen } from "@/components/shared/placeholder-screen";
 
 export default async function CreatorProfilePage({
@@ -6,11 +8,13 @@ export default async function CreatorProfilePage({
   params: Promise<{ creatorId: string }>;
 }) {
   const { creatorId } = await params;
+  const t = await getTranslations("placeholders.creator");
 
   return (
     <PlaceholderScreen
-      title={`Creator ${creatorId}`}
-      description="Tổng lượt CopyPlan nhận được, danh sách plan, biểu đồ uy tín theo thời gian."
+      icon={Award}
+      title={t("title", { id: creatorId })}
+      description={t("description")}
       module="reputation"
     />
   );

@@ -1,37 +1,39 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { getLocale, getTranslations } from "next-intl/server";
 import { z } from "zod";
 import {
   AuthError,
+  type AuthErrorCode,
   loginWithPassword,
   logout,
   registerUser,
 } from "@/server/services/auth.service";
+import { redirect } from "@/i18n/navigation";
 
 export interface AuthFormState {
   error?: string;
 }
 
-const loginSchema = z.object({
-  email: z.string().email("Email không hợp lệ."),
-  password: z.string().min(1, "Vui lòng nhập mật khẩu."),
-});
-
-const registerSchema = z.object({
-  name: z.string().trim().min(1, "Vui lòng nhập tên."),
-  email: z.string().email("Email không hợp lệ."),
-  password: z.string().min(8, "Mật khẩu cần ít nhất 8 ký tự."),
-});
+const ERROR_KEY = {
+  EMAIL_TAKEN: "emailTaken",
+  INVALID_CREDENTIALS: "invalidCredentials",
+} as const satisfies Record<AuthErrorCode, string>;
 
 function firstIssueMessage(error: z.ZodError): string {
-  return error.issues[0]?.message ?? "Dữ liệu không hợp lệ.";
+  return error.issues[0]?.message ?? "Invalid input.";
 }
 
 export async function loginAction(
   _prevState: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
+  const t = await getTranslations("auth.errors");
+  const loginSchema = z.object({
+    email: z.string().email(t("emailInvalid")),
+    password: z.string().min(1, t("passwordRequired")),
+  });
+
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -43,18 +45,31 @@ export async function loginAction(
   try {
     await loginWithPassword(parsed.data);
   } catch (error) {
-    if (error instanceof AuthError) return { error: error.message };
+    if (error instanceof AuthError) {
+      return { error: t(ERROR_KEY[error.code]) };
+    }
     throw error;
   }
 
   const callbackUrl = formData.get("callbackUrl");
-  redirect(typeof callbackUrl === "string" && callbackUrl ? callbackUrl : "/");
+  const locale = await getLocale();
+  return redirect({
+    href: typeof callbackUrl === "string" && callbackUrl ? callbackUrl : "/",
+    locale,
+  });
 }
 
 export async function registerAction(
   _prevState: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
+  const t = await getTranslations("auth.errors");
+  const registerSchema = z.object({
+    name: z.string().trim().min(1, t("nameRequired")),
+    email: z.string().email(t("emailInvalid")),
+    password: z.string().min(8, t("passwordMin")),
+  });
+
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -67,14 +82,18 @@ export async function registerAction(
   try {
     await registerUser(parsed.data);
   } catch (error) {
-    if (error instanceof AuthError) return { error: error.message };
+    if (error instanceof AuthError) {
+      return { error: t(ERROR_KEY[error.code]) };
+    }
     throw error;
   }
 
-  redirect("/");
+  const locale = await getLocale();
+  return redirect({ href: "/", locale });
 }
 
 export async function logoutAction() {
   await logout();
-  redirect("/");
+  const locale = await getLocale();
+  return redirect({ href: "/", locale });
 }

@@ -1,0 +1,87 @@
+{
+  "nav": {
+    "trips": "Chuyến đi",
+    "explore": "Khám phá",
+    "saved": "Đã lưu",
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "logout": "Đăng xuất"
+  },
+  "common": {
+    "languageSwitcher": "Ngôn ngữ",
+    "themeToggle": "Đổi giao diện sáng/tối",
+    "moduleLabel": "Module"
+  },
+  "home": {
+    "subtitle": "Trip operating system + mạng lưới uy tín cho nhóm/cá nhân/creator du lịch tự túc.",
+    "searchPlaceholder": "Muốn đi đâu? VD: Đà Lạt, Seoul, Phú Quốc...",
+    "searchAriaLabel": "Tìm điểm đến",
+    "searchButton": "Tìm plan",
+    "recentHeading": "Plan public gần đây",
+    "matchHeading": "Plan public khớp với \"{query}\"",
+    "empty": "Chưa có plan public nào khớp \"{query}\". Thử từ khoá khác, hoặc <link>tạo tài khoản</link> để tự dựng plan mới."
+  },
+  "tripStatus": {
+    "IDEA": "💭 Ý tưởng",
+    "SCHEDULED": "📅 Đã lên lịch",
+    "COMPLETED": "✅ Đã đi"
+  },
+  "tripCard": {
+    "verified": "Đã xác thực",
+    "by": "bởi {name}"
+  },
+  "tripDetail": {
+    "gateDescription": "{destination} — plan này public, đăng nhập để xem đầy đủ Timeline/Map/Budget.",
+    "loginCta": "Đăng nhập để xem chi tiết",
+    "meta": "Tạo bởi {owner} · {count, plural, =0 {chưa có điểm nào} other {# điểm}} trong itinerary",
+    "modulesNote": "3 chế độ xem: Plan View (Timeline), Map View, Money View — module <module>src/features/itinerary</module> (chưa implement, xem docs/spec-dev-plan.md)."
+  },
+  "auth": {
+    "login": {
+      "title": "Đăng nhập TripBase",
+      "subtitle": "Cần đăng nhập để xem chi tiết plan và dùng CopyPlan.",
+      "submit": "Đăng nhập",
+      "submitPending": "Đang đăng nhập…",
+      "noAccount": "Chưa có tài khoản?",
+      "registerLink": "Đăng ký"
+    },
+    "register": {
+      "title": "Tạo tài khoản TripBase",
+      "subtitle": "Miễn phí, dùng để lưu và xem plan.",
+      "nameLabel": "Tên",
+      "passwordHint": "Ít nhất 8 ký tự.",
+      "submit": "Đăng ký",
+      "submitPending": "Đang tạo tài khoản…",
+      "haveAccount": "Đã có tài khoản?",
+      "loginLink": "Đăng nhập"
+    },
+    "emailLabel": "Email",
+    "passwordLabel": "Mật khẩu",
+    "errors": {
+      "emailInvalid": "Email không hợp lệ.",
+      "passwordRequired": "Vui lòng nhập mật khẩu.",
+      "nameRequired": "Vui lòng nhập tên.",
+      "passwordMin": "Mật khẩu cần ít nhất 8 ký tự.",
+      "emailTaken": "Email này đã được đăng ký.",
+      "invalidCredentials": "Email hoặc mật khẩu không đúng."
+    }
+  },
+  "placeholders": {
+    "trips": {
+      "title": "Trips",
+      "description": "Danh sách chuyến đi của bạn — tạo trip mới hoặc mở một trip để chỉnh sửa Timeline/Map/Budget."
+    },
+    "explore": {
+      "title": "Explore / Plan Marketplace",
+      "description": "Feed plan public, lọc theo điểm đến/ngân sách/CopyPlan Score/trạng thái; Like, Bookmark, CopyPlan trên mỗi card."
+    },
+    "saved": {
+      "title": "Saved Library",
+      "description": "Danh sách plan đã Bookmark, riêng tư cho từng user."
+    },
+    "creator": {
+      "title": "Creator {id}",
+      "description": "Tổng lượt CopyPlan nhận được, danh sách plan, biểu đồ uy tín theo thời gian."
+    }
+  }
+}

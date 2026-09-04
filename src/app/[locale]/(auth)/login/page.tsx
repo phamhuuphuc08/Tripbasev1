@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import {
   Card,
   CardContent,
@@ -13,14 +14,13 @@ export default async function LoginPage({
   searchParams: Promise<{ callbackUrl?: string }>;
 }) {
   const { callbackUrl } = await searchParams;
+  const t = await getTranslations("auth.login");
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Đăng nhập TripBase</CardTitle>
-        <CardDescription>
-          Cần đăng nhập để xem chi tiết plan và dùng CopyPlan.
-        </CardDescription>
+        <CardTitle>{t("title")}</CardTitle>
+        <CardDescription>{t("subtitle")}</CardDescription>
       </CardHeader>
       <CardContent>
         <LoginForm callbackUrl={callbackUrl} />
