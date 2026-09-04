@@ -1,4 +1,11 @@
-import { CalendarRange, Lock, MapPin, User, X } from "lucide-react";
+import {
+  CalendarRange,
+  Lock,
+  MapPin,
+  TriangleAlert,
+  User,
+  X,
+} from "lucide-react";
 import { notFound } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { removeItineraryItemAction } from "@/features/itinerary/actions";
 import { ItineraryItemForm } from "@/features/itinerary/itinerary-item-form";
+import { detectBacktrack } from "@/features/map/geo";
+import { TripMapLoader } from "@/features/map/trip-map-loader";
 import { removeTravelerAction } from "@/features/trip/actions";
 import { TravelerForm } from "@/features/trip/traveler-form";
 import { TripForm } from "@/features/trip/trip-form";
@@ -37,7 +46,7 @@ export default async function TripDetailPage({
   if (!result) notFound();
 
   const { trip, isOwner, requiresLogin } = result;
-  const [t, tStatus, tForm, tTravelers, tItinerary, tCategory, format] =
+  const [t, tStatus, tForm, tTravelers, tItinerary, tCategory, tMap, format] =
     await Promise.all([
       getTranslations("tripDetail"),
       getTranslations("tripStatus"),
@@ -45,6 +54,7 @@ export default async function TripDetailPage({
       getTranslations("trip.travelers"),
       getTranslations("itinerary"),
       getTranslations("tagCategory"),
+      getTranslations("map"),
       getFormatter(),
     ]);
 
@@ -81,6 +91,37 @@ export default async function TripDetailPage({
   }
   const sortedDays = [...itemsByDay.keys()].sort((a, b) => a - b);
   const dayCount = sortedDays.length > 0 ? Math.max(...sortedDays) : 0;
+
+  // Map Planner (M03): only items whose linked tag has coordinates can be
+  // plotted — coordinates are optional on LocationTag, so most seed/demo
+  // data won't have any until someone fills them in on /tags.
+  const mapMarkers = items
+    .filter(
+      (item) =>
+        item.locationTag?.latitude != null &&
+        item.locationTag?.longitude != null,
+    )
+    .map((item) => ({
+      id: item.id,
+      latitude: item.locationTag!.latitude!,
+      longitude: item.locationTag!.longitude!,
+      title: item.locationTag!.title,
+      category: toTagCategory(item.locationTag!.category),
+      citeTrustScore: item.locationTag!.citeTrustScore,
+      day: item.day,
+      time: toTimeLabel(item.startTime),
+    }));
+
+  // Rule-based "đi vòng" check (mục 4/6a, không AI) — so quãng đường thực
+  // tế trong ngày với thứ tự "gần nhau trước". Chỉ áp dụng cho ngày có ≥3
+  // điểm có toạ độ.
+  const backtrackDays = sortedDays.filter((day) =>
+    detectBacktrack(
+      mapMarkers
+        .filter((marker) => marker.day === day)
+        .map(({ latitude, longitude }) => ({ latitude, longitude })),
+    ),
+  );
 
   const dateRange =
     trip.startDate && trip.endDate
@@ -246,6 +287,30 @@ export default async function TripDetailPage({
                 tagOptions={tagOptions}
               />
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{tMap("heading")}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          {mapMarkers.length === 0 ? (
+            <p className="text-muted-foreground text-sm">{tMap("empty")}</p>
+          ) : (
+            <>
+              <TripMapLoader markers={mapMarkers} />
+              {backtrackDays.map((day) => (
+                <p
+                  key={day}
+                  className="flex items-center gap-1.5 text-sm text-amber-600 dark:text-amber-400"
+                >
+                  <TriangleAlert className="size-3.5 shrink-0" />
+                  {tMap("backtrackWarning", { day })}
+                </p>
+              ))}
+            </>
           )}
         </CardContent>
       </Card>

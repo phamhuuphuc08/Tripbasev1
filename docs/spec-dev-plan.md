@@ -21,7 +21,7 @@ Tổng quan kiến trúc: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 | M14 | [i18n & UI polish](#m14--i18n--ui-polish)                     | —       | —          | ✅      | ✅  | ✅         |
 | M01 | [Trip Builder](#m01--trip-builder)                            | P0      | ✅         | ✅      | 🟨  | 🟨         |
 | M02 | [Itinerary / Smart Timeline](#m02--itinerary--smart-timeline) | P0      | ✅         | ✅      | 🟨  | 🟨         |
-| M03 | [Map Planner](#m03--map-planner)                              | P0      | ✅         | ⬜      | ⬜  | ⬜         |
+| M03 | [Map Planner](#m03--map-planner)                              | P0      | ✅         | ✅      | 🟨  | 🟨         |
 | M04 | [Budget Board](#m04--budget-board)                            | P0      | ✅         | ⬜      | ⬜  | ⬜         |
 | M05 | [Booking Vault](#m05--booking-vault)                          | P1      | ✅         | ⬜      | ⬜  | ⬜         |
 | M06 | [Checklist](#m06--checklist)                                  | P0      | ✅         | ⬜      | ⬜  | ⬜         |
@@ -243,15 +243,55 @@ Chưa làm:
 ## M03 — Map Planner
 
 - **Ưu tiên:** P0 · **Spec:** mục 4, 6a, 11
-- **Code:** `src/features/map/`, model `Place`
-- **Trạng thái:** ⬜ Chưa bắt đầu
+- **Code:** `src/features/map/`, model `LocationTag` (dùng lat/lng thay vì `Place`)
+- **Trạng thái:** 🟨 Đang làm (bản đồ + cảnh báo đi vòng xong trên Trip Detail)
+
+Quyết định (user chọn khi được hỏi): **Leaflet + OpenStreetMap**, không phải
+Mapbox/Google Maps — miễn phí, không cần API key/tài khoản.
+
+Đã làm:
+
+- [x] `react-leaflet` + `leaflet`; component tách riêng
+      (`trip-map.tsx` + `trip-map-loader.tsx` dùng `next/dynamic({ssr:false})`
+      vì Leaflet đụng `window` — bắt buộc phải nằm trong 1 Client Component
+      mới được dùng `ssr:false`, không gọi thẳng từ trang Server Component)
+- [x] Thêm input Vĩ độ/Kinh độ (tuỳ chọn) khi tạo tag ở Tag & Tip Library —
+      toạ độ là điều kiện để 1 điểm hiện lên map, chưa bắt buộc
+- [x] Section "Map Planner" trên Trip Detail: marker màu theo ngày (7 màu
+      lặp lại), popup hiện tên + ngày/giờ + badge trust tier (🟢/🟡/⚪, nối
+      với `getTrustTier` từ M11 — badge Cite Trust Score đã lên map)
+- [x] "Gom theo khu vực" hiện tại = tô màu theo ngày (rule-based, không phải
+      geo-clustering) — xem ghi chú "Chưa làm" bên dưới
+- [x] `geo.ts`: rule-based "đi vòng" (không AI) — so quãng đường thực tế
+      trong ngày (đúng thứ tự giờ) với quãng đường nếu đi theo nearest-
+      neighbor; thực tế dài hơn 30% → cảnh báo. Áp dụng từ 3 điểm có toạ độ
+      trở lên trong cùng 1 ngày
+- [x] Seed 8 location tag mẫu đã có toạ độ thật (Đà Nẵng, Hà Nội, Hội An,
+      Hạ Long, Đà Lạt, TP.HCM) để map có dữ liệu ngay
+- [x] Verify qua trình duyệt thật với dữ liệu thật: tạo trip Đà Nẵng, thêm
+      3 điểm (Bánh Xèo Bà Dưỡng 08:00, Phố cổ Hội An 11:00, Muong Thanh
+      Grand Đà Nẵng 15:00) → map hiện đúng 3 marker đúng vị trí thực tế;
+      popup đúng nội dung; **cảnh báo đi vòng xuất hiện đúng** (thứ tự giờ
+      đi xa rồi quay lại gần điểm đầu, xa hơn ~50% so với thứ tự tối ưu)
 
 Chưa làm:
 
-- [ ] Chọn provider bản đồ (Mapbox/Google Maps — mục 15) và cấu hình API key
-- [ ] Hiển thị điểm theo ngày, gom theo khu vực
-- [ ] Cảnh báo đi vòng (khoảng cách toạ độ, rule-based)
-- [ ] Badge Cite Trust Score trên điểm (nối với M09)
+- [ ] Gom theo khu vực **thật sự** (geo-clustering) — hiện chỉ tô màu theo
+      ngày, không nhóm các điểm gần nhau về mặt không gian
+- [ ] Bắt buộc/gợi ý nhập toạ độ khi tạo tag (map chọn điểm trên bản đồ
+      thay vì gõ số) — hiện phải biết số thật, UX chưa thân thiện
+- [ ] Cảnh báo giờ mở cửa (opening hours) — `Place`/`LocationTag` chưa có
+      trường giờ mở cửa được dùng ở đây
+- [ ] Hiển thị marker cho `Place` (model riêng, chưa dùng đến) — M03 hiện
+      chỉ vẽ từ `LocationTag`, phù hợp với hướng "1 nguồn dữ liệu địa điểm"
+      đã chọn từ M11 thay vì trùng lặp 2 model
+
+Ghi chú kỹ thuật:
+
+- `leaflet`/`react-leaflet` chỉ chạy được ở client (`Leaflet` đụng `window`
+  khi import) — `next/dynamic(..., { ssr: false })` **không được gọi trực
+  tiếp trong Server Component**, phải bọc qua 1 file "use client" riêng
+  (`trip-map-loader.tsx`) rồi mới import vào trang.
 
 ---
 
@@ -588,5 +628,50 @@ WEB_PORT=3001 docker compose up --build
   - Verify qua trình duyệt thật (kết hợp click UI + JS khi cần): thêm/xoá
     traveler; thêm 2 itinerary item (1 có link tag, 1 không) → đúng thứ tự
     theo giờ; xoá item; xoá trip → biến mất khỏi dashboard và Postgres.
+    `lint`/`typecheck`/`build` pass. Committed vào `dev`, chưa merge
+    `main`.
+- **Map Planner (M03)**, theo yêu cầu "Map Planner (M03) đi":
+  - `LocationTag` thêm `latitude`/`longitude` (migration), form tạo tag ở
+    `/tags` thêm 2 ô nhập toạ độ tuỳ chọn (`type="number" step="any"`) kèm
+    hint giải thích tác dụng (hiện trên Map Planner).
+  - `src/features/map/geo.ts` (rule-based, không AI): Haversine tính khoảng
+    cách giữa 2 điểm; `detectBacktrack()` so quãng đường thực tế trong ngày
+    với quãng đường theo heuristic nearest-neighbor — lệch quá
+    `BACKTRACK_RATIO_THRESHOLD = 1.3` (và ≥3 điểm có toạ độ) thì coi là "có
+    thể đang đi vòng".
+  - `src/features/map/trip-map.tsx` + `trip-map-loader.tsx`: bản đồ Leaflet
+    - OpenStreetMap (chọn theo yêu cầu người dùng — free, không cần API
+      key), marker màu theo ngày, popup hiện tên/ngày/giờ/trust-tier. Phải
+      tách riêng file `"use client"` chỉ để gọi `next/dynamic(..., {ssr:
+false})` vì không gọi được `ssr:false` trực tiếp trong Server Component.
+  - Trang chi tiết trip: card "Map Planner" mới, lọc itinerary item có tag
+    đã gắn toạ độ → marker; hiện cảnh báo "Ngày N có thể đang đi vòng" theo
+    từng ngày qua `detectBacktrack`.
+  - `prisma/seed.ts`: đổi `seedLocationTag` từ "bỏ qua nếu đã tồn tại" sang
+    upsert-cập-nhật, và thêm toạ độ thực tế gần đúng cho cả 8 tag mẫu (Đà
+    Nẵng, Hà Nội, Hội An, Hạ Long, Đà Lạt, TP.HCM) để Map Planner có dữ liệu
+    ngay khi seed, không phải nhập tay mới thấy được tính năng.
+  - **Không làm**: gom điểm theo khu vực/geo-clustering thật (mục 6a) — mới
+    dừng ở cảnh báo đi vòng theo ngày; chưa cảnh báo giờ mở cửa; chưa có
+    UI chọn toạ độ bằng cách click trên bản đồ (chỉ nhập số tay); model
+    `Place` trong schema vẫn chưa dùng tới.
+  - Debug đáng chú ý (tốn nhiều thời gian nhất module này): trong lúc test
+    qua trình duyệt thật, mọi lần submit form login/tạo trip đều gọi nhầm
+    `logoutAction()` phía server (thấy rõ qua log dev server:
+    `POST /en/trips/new 200 ... └─ ƒ logoutAction() in 4ms`). Ban đầu nghi
+    do HMR cũ làm lệch Server Action ID, sau nghi do Chrome cache HTTP ở
+    `/login` — cả hai đều sai. Nguyên nhân thật: script test dùng selector
+    toàn trang `document.querySelector('button[type="submit"]')`, và khi
+    user đã đăng nhập, selector này khớp nhầm vào nút "Đăng xuất" của
+    `SiteHeader` (cũng `type="submit"`, nằm trước mọi form của trang trong
+    DOM) thay vì nút submit của form đang test. Sửa bằng cách scope selector
+    vào đúng form: `inputElement.closest('form').querySelector('button[type="submit"]')`.
+    Sau khi sửa, toàn bộ luồng test (tạo trip, thêm itinerary item gắn tag,
+    hiện bản đồ, cảnh báo đi vòng) chạy đúng ngay lần đầu.
+  - Verify qua trình duyệt thật với dữ liệu thật trong Postgres: tạo trip
+    "Đà Nẵng cuối tuần", thêm 3 itinerary item gắn tag có toạ độ thật →
+    bản đồ hiện đúng 3 marker đúng vị trí, popup đúng tên/giờ/trust-tier,
+    cảnh báo "Ngày 1 có thể đang đi vòng" hiện đúng khi thứ tự điểm bất hợp
+    lý. Xoá trip test sau khi xong để không để lại data rác.
     `lint`/`typecheck`/`build` pass. Committed vào `dev`, chưa merge
     `main`.

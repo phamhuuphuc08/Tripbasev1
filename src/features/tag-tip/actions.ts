@@ -21,7 +21,13 @@ export interface CreateTagFormState {
   error?: string;
   duplicate?: { id: string; title: string };
   createdTitle?: string;
-  submitted?: { title: string; category: TagCategory; content: string };
+  submitted?: {
+    title: string;
+    category: TagCategory;
+    content: string;
+    latitude: string;
+    longitude: string;
+  };
 }
 
 export async function createTagAction(
@@ -46,6 +52,8 @@ export async function createTagAction(
   const rawTitle = formData.get("title")?.toString() ?? "";
   const rawCategory = formData.get("category");
   const rawContent = formData.get("content")?.toString() ?? "";
+  const rawLatitude = formData.get("latitude")?.toString() ?? "";
+  const rawLongitude = formData.get("longitude")?.toString() ?? "";
   const submitted = {
     title: rawTitle,
     category: (TAG_CATEGORIES as readonly string[]).includes(
@@ -54,14 +62,16 @@ export async function createTagAction(
       ? (rawCategory as TagCategory)
       : "RESTAURANT",
     content: rawContent,
-  } as const;
+    latitude: rawLatitude,
+    longitude: rawLongitude,
+  };
 
   const parsed = schema.safeParse({
     title: rawTitle,
     category: rawCategory,
     content: rawContent || undefined,
-    latitude: formData.get("latitude")?.toString() || undefined,
-    longitude: formData.get("longitude")?.toString() || undefined,
+    latitude: rawLatitude || undefined,
+    longitude: rawLongitude || undefined,
   });
   if (!parsed.success) {
     return {

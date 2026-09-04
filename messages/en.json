@@ -173,6 +173,9 @@
       "categoryLabel": "Category",
       "contentLabel": "Description (optional)",
       "contentPlaceholder": "e.g. Great food, cheap, has parking",
+      "latitudeLabel": "Latitude (optional)",
+      "longitudeLabel": "Longitude (optional)",
+      "coordinatesHint": "Add coordinates so this place shows up on the trip's Map Planner.",
       "submit": "Create tag",
       "submitPending": "Creating…",
       "createAnyway": "Create anyway",
@@ -183,6 +186,11 @@
       "loginRequired": "You need to log in to create a tag.",
       "titleRequired": "Please enter a name."
     }
+  },
+  "map": {
+    "heading": "Map Planner",
+    "empty": "No geolocated points to show yet — add latitude/longitude when creating a tag in the Tag & Tip Library.",
+    "backtrackWarning": "Day {day} may be backtracking — try reordering these stops by area."
   },
   "placeholders": {
     "explore": {

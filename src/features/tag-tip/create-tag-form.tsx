@@ -83,6 +83,34 @@ export function CreateTagForm() {
         />
       </div>
 
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="tag-lat">{t("latitudeLabel")}</Label>
+          <Input
+            id="tag-lat"
+            name="latitude"
+            type="number"
+            step="any"
+            placeholder="10.7626"
+            defaultValue={state.submitted?.latitude}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="tag-lng">{t("longitudeLabel")}</Label>
+          <Input
+            id="tag-lng"
+            name="longitude"
+            type="number"
+            step="any"
+            placeholder="106.6602"
+            defaultValue={state.submitted?.longitude}
+          />
+        </div>
+      </div>
+      <p className="text-muted-foreground -mt-2 text-xs">
+        {t("coordinatesHint")}
+      </p>
+
       {state.duplicate && (
         <div className="border-chart-2/40 bg-chart-2/10 flex flex-col gap-2 rounded-lg border p-3 text-sm">
           <p>{t("duplicateWarning", { title: state.duplicate.title })}</p>

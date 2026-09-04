@@ -4,7 +4,16 @@ export function findItineraryItemsByTrip(tripId: string) {
   return prisma.itineraryItem.findMany({
     where: { tripId },
     include: {
-      locationTag: { select: { id: true, title: true, category: true } },
+      locationTag: {
+        select: {
+          id: true,
+          title: true,
+          category: true,
+          latitude: true,
+          longitude: true,
+          citeTrustScore: true,
+        },
+      },
     },
     orderBy: [{ day: "asc" }, { startTime: "asc" }],
   });

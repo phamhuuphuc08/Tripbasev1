@@ -173,6 +173,9 @@
       "categoryLabel": "Danh mục",
       "contentLabel": "Mô tả (tuỳ chọn)",
       "contentPlaceholder": "VD: Quán ăn ngon, giá rẻ, có chỗ đậu xe",
+      "latitudeLabel": "Vĩ độ (tuỳ chọn)",
+      "longitudeLabel": "Kinh độ (tuỳ chọn)",
+      "coordinatesHint": "Nhập toạ độ để địa điểm hiện trên Map Planner của trip.",
       "submit": "Tạo tag",
       "submitPending": "Đang tạo…",
       "createAnyway": "Vẫn tạo mới",
@@ -183,6 +186,11 @@
       "loginRequired": "Cần đăng nhập để tạo tag mới.",
       "titleRequired": "Vui lòng nhập tên."
     }
+  },
+  "map": {
+    "heading": "Map Planner",
+    "empty": "Chưa có điểm nào có toạ độ để hiện trên bản đồ — thêm vĩ độ/kinh độ khi tạo tag trong Tag & Tip Library.",
+    "backtrackWarning": "Ngày {day} có thể đang đi vòng — thử sắp xếp lại các điểm theo khu vực gần nhau."
   },
   "placeholders": {
     "explore": {
