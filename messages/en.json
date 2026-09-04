@@ -30,6 +30,41 @@
     "verified": "Verified",
     "by": "by {name}"
   },
+  "tripVisibility": {
+    "PRIVATE": "🔒 Private",
+    "FRIENDS": "👥 Friends/group",
+    "PUBLIC": "🌐 Public"
+  },
+  "trip": {
+    "dashboard": {
+      "heading": "Your trips",
+      "createButton": "Create a trip",
+      "empty": "You don't have any trips yet.",
+      "emptyCta": "Create your first trip"
+    },
+    "form": {
+      "nameLabel": "Trip name",
+      "namePlaceholder": "e.g. Da Lat 3D2N with friends",
+      "destinationLabel": "Destination",
+      "destinationPlaceholder": "e.g. Da Lat, Vietnam",
+      "startDateLabel": "Start date",
+      "endDateLabel": "End date",
+      "visibilityLabel": "Visibility",
+      "statusLabel": "Status",
+      "createTitle": "Create a trip",
+      "createSubmit": "Create trip",
+      "createSubmitPending": "Creating…",
+      "editTitle": "Edit trip",
+      "editSubmit": "Save changes",
+      "editSubmitPending": "Saving…"
+    },
+    "errors": {
+      "nameRequired": "Please enter a trip name.",
+      "destinationRequired": "Please enter a destination.",
+      "endBeforeStart": "End date must be after the start date.",
+      "updateFailed": "Couldn't update this trip."
+    }
+  },
   "tripDetail": {
     "gateDescription": "{destination} — this plan is public, log in to see the full Timeline/Map/Budget.",
     "loginCta": "Log in to view details",
@@ -67,10 +102,6 @@
     }
   },
   "placeholders": {
-    "trips": {
-      "title": "Trips",
-      "description": "Your trips — create a new one or open one to edit its Timeline/Map/Budget."
-    },
     "explore": {
       "title": "Explore / Plan Marketplace",
       "description": "Public plan feed, filter by destination/budget/CopyPlan Score/status; Like, Bookmark, CopyPlan on each card."

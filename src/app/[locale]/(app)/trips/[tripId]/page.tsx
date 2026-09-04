@@ -3,9 +3,15 @@ import { notFound } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
+import { TripForm } from "@/features/trip/trip-form";
 import { getSession } from "@/server/auth/session";
 import { getTripDetail } from "@/server/services/trip.service";
+
+function toDateInputValue(date: Date | null): string {
+  return date ? date.toISOString().slice(0, 10) : "";
+}
 
 export default async function TripDetailPage({
   params,
@@ -18,10 +24,11 @@ export default async function TripDetailPage({
 
   if (!result) notFound();
 
-  const { trip, requiresLogin } = result;
-  const [t, tStatus, format] = await Promise.all([
+  const { trip, isOwner, requiresLogin } = result;
+  const [t, tStatus, tForm, format] = await Promise.all([
     getTranslations("tripDetail"),
     getTranslations("tripStatus"),
+    getTranslations("trip.form"),
     getFormatter(),
   ]);
 
@@ -55,35 +62,59 @@ export default async function TripDetailPage({
       : null;
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-3 px-6 py-12">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold">{trip.name}</h1>
-        <Badge variant="outline">
-          {tStatus(trip.status as "IDEA" | "SCHEDULED" | "COMPLETED")}
-        </Badge>
-      </div>
-      <p className="text-muted-foreground flex items-center gap-1.5 text-sm">
-        <MapPin className="text-primary size-3.5" />
-        {trip.destination}
-      </p>
-      {dateRange && (
+    <div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-12">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-xl font-semibold">{trip.name}</h1>
+          <Badge variant="outline">
+            {tStatus(trip.status as "IDEA" | "SCHEDULED" | "COMPLETED")}
+          </Badge>
+        </div>
         <p className="text-muted-foreground flex items-center gap-1.5 text-sm">
-          <CalendarRange className="size-3.5" />
-          {dateRange}
+          <MapPin className="text-primary size-3.5" />
+          {trip.destination}
         </p>
+        {dateRange && (
+          <p className="text-muted-foreground flex items-center gap-1.5 text-sm">
+            <CalendarRange className="size-3.5" />
+            {dateRange}
+          </p>
+        )}
+        <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+          <User className="size-3" />
+          {t("meta", {
+            owner: trip.owner.name,
+            count: trip._count.itineraryItems,
+          })}
+        </p>
+        <p className="text-muted-foreground mt-2 text-xs">
+          {t.rich("modulesNote", {
+            module: (chunks) => <code>{chunks}</code>,
+          })}
+        </p>
+      </div>
+
+      {isOwner && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{tForm("editTitle")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TripForm
+              mode="edit"
+              defaultValues={{
+                id: trip.id,
+                name: trip.name,
+                destination: trip.destination,
+                startDate: toDateInputValue(trip.startDate),
+                endDate: toDateInputValue(trip.endDate),
+                visibility: trip.visibility,
+                status: trip.status,
+              }}
+            />
+          </CardContent>
+        </Card>
       )}
-      <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-        <User className="size-3" />
-        {t("meta", {
-          owner: trip.owner.name,
-          count: trip._count.itineraryItems,
-        })}
-      </p>
-      <p className="text-muted-foreground mt-6 text-xs">
-        {t.rich("modulesNote", {
-          module: (chunks) => <code>{chunks}</code>,
-        })}
-      </p>
     </div>
   );
 }

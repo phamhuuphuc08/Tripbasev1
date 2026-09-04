@@ -30,6 +30,41 @@
     "verified": "Đã xác thực",
     "by": "bởi {name}"
   },
+  "tripVisibility": {
+    "PRIVATE": "🔒 Riêng tư",
+    "FRIENDS": "👥 Bạn bè/nhóm",
+    "PUBLIC": "🌐 Public"
+  },
+  "trip": {
+    "dashboard": {
+      "heading": "Chuyến đi của bạn",
+      "createButton": "Tạo trip mới",
+      "empty": "Bạn chưa có trip nào.",
+      "emptyCta": "Tạo trip đầu tiên"
+    },
+    "form": {
+      "nameLabel": "Tên trip",
+      "namePlaceholder": "VD: Đà Lạt 3N2Đ nhóm bạn",
+      "destinationLabel": "Điểm đến",
+      "destinationPlaceholder": "VD: Đà Lạt, Việt Nam",
+      "startDateLabel": "Ngày bắt đầu",
+      "endDateLabel": "Ngày kết thúc",
+      "visibilityLabel": "Quyền xem",
+      "statusLabel": "Trạng thái",
+      "createTitle": "Tạo trip mới",
+      "createSubmit": "Tạo trip",
+      "createSubmitPending": "Đang tạo…",
+      "editTitle": "Chỉnh sửa trip",
+      "editSubmit": "Lưu thay đổi",
+      "editSubmitPending": "Đang lưu…"
+    },
+    "errors": {
+      "nameRequired": "Vui lòng nhập tên trip.",
+      "destinationRequired": "Vui lòng nhập điểm đến.",
+      "endBeforeStart": "Ngày kết thúc phải sau ngày bắt đầu.",
+      "updateFailed": "Không thể cập nhật trip này."
+    }
+  },
   "tripDetail": {
     "gateDescription": "{destination} — plan này public, đăng nhập để xem đầy đủ Timeline/Map/Budget.",
     "loginCta": "Đăng nhập để xem chi tiết",
@@ -67,10 +102,6 @@
     }
   },
   "placeholders": {
-    "trips": {
-      "title": "Trips",
-      "description": "Danh sách chuyến đi của bạn — tạo trip mới hoặc mở một trip để chỉnh sửa Timeline/Map/Budget."
-    },
     "explore": {
       "title": "Explore / Plan Marketplace",
       "description": "Feed plan public, lọc theo điểm đến/ngân sách/CopyPlan Score/trạng thái; Like, Bookmark, CopyPlan trên mỗi card."

@@ -19,7 +19,7 @@ Tổng quan kiến trúc: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 | M00 | [Infra/Scaffold](#m00--infrascaffold)                         | —       | ✅         | —       | —   | ✅         |
 | M13 | [Auth (login/register)](#m13--auth-loginregister)             | —       | ✅         | ✅      | ✅  | ✅         |
 | M14 | [i18n & UI polish](#m14--i18n--ui-polish)                     | —       | —          | ✅      | ✅  | ✅         |
-| M01 | [Trip Builder](#m01--trip-builder)                            | P0      | ✅         | 🟨      | 🟨  | 🟨         |
+| M01 | [Trip Builder](#m01--trip-builder)                            | P0      | ✅         | ✅      | 🟨  | 🟨         |
 | M02 | [Itinerary / Smart Timeline](#m02--itinerary--smart-timeline) | P0      | ✅         | ⬜      | ⬜  | ⬜         |
 | M03 | [Map Planner](#m03--map-planner)                              | P0      | ✅         | ⬜      | ⬜  | ⬜         |
 | M04 | [Budget Board](#m04--budget-board)                            | P0      | ✅         | ⬜      | ⬜  | ⬜         |
@@ -145,6 +145,10 @@ Ghi chú kỹ thuật:
 - `next-themes` tự inject 1 `<script>` để tránh flash sai theme — React 19
   log 1 console warning dev-only ("Encountered a script tag...") vô hại,
   không xuất hiện ở production build, không phải bug của TripBase.
+- shadcn `Select` (Base UI) — `Select.Value` **không** tự tra nhãn theo
+  `SelectItem` đang chọn như Radix; phải truyền render-prop
+  `<SelectValue>{(value) => label}</SelectValue>` để hiện nhãn đã dịch thay
+  vì raw enum value. Xem `src/features/trip/trip-form.tsx`.
 
 ---
 
@@ -152,23 +156,39 @@ Ghi chú kỹ thuật:
 
 - **Ưu tiên:** P0 · **Spec:** mục 4, 5, 6a
 - **Code:** `src/features/trip/`, `src/server/services/trip.service.ts`, model `Trip`, `Traveler`
-- **Trạng thái:** 🟨 Đang làm
+- **Trạng thái:** 🟨 Đang làm (lõi CRUD xong, chưa có Timeline/Map/Budget)
 
 Đã làm:
 
 - [x] Đọc chi tiết 1 trip thật từ DB (`getTripDetail`), có gate: plan không
       public + không phải chủ sở hữu → 404; plan public nhưng chưa đăng
       nhập → yêu cầu login (`/trips/[tripId]`)
+- [x] Trip dashboard thật (`/trips`, yêu cầu đăng nhập) — danh sách trip của
+      user, badge trạng thái + visibility, nút "Tạo trip mới"
+- [x] Form tạo trip (`/trips/new`): tên, điểm đến, ngày bắt đầu/kết thúc
+      (optional), visibility — `createTripAction` → redirect vào trip mới
+- [x] Form chỉnh sửa (trên `/trips/[tripId]`, chỉ hiện cho chủ sở hữu):
+      sửa mọi field ở trên + đổi trạng thái Ý tưởng/Đã lên lịch/Đã đi và
+      visibility Riêng tư/Bạn bè-nhóm/Public — `updateTripAction`
+      (`src/features/trip/{actions.ts,trip-form.tsx}`), có check ownership
+      ở `trip.service.updateTrip` (defense-in-depth, UI đã gate trước)
+- [x] `TripForm` dùng chung create/edit, shadcn `Select` (Base UI) —
+      lưu ý: `Select.Value` không tự tra nhãn theo item như Radix, phải
+      truyền render-prop map giá trị → nhãn dịch thủ công
+- [x] Verify qua trình duyệt thật: tạo trip → sửa status/visibility → lưu
+      → xuất hiện đúng trên dashboard **và** trên search public ở Home
+      (dữ liệu thật trong Postgres)
 
 Chưa làm:
 
-- [ ] Form tạo trip (điểm đến, ngày, số người, ngân sách, style)
-- [ ] Server action `createTrip` / `updateTrip`
-- [ ] Trip dashboard thật (danh sách trip của user đăng nhập) — hiện
-      `src/app/(app)/trips/page.tsx` vẫn là placeholder tĩnh
-- [ ] Trạng thái plan: chuyển Ý tưởng / Đã lên lịch / Đã đi + badge
-      "Verified by Author" (hiện chỉ đọc, không đổi được)
-- [ ] Đổi visibility: Riêng tư / Bạn bè-nhóm / Public
+- [ ] Số người tham gia (`Traveler`), ngân sách, sở thích/nhịp độ từ form
+      lõi mục 2 của spec — data model hiện tách các field này sang module
+      khác (Traveler riêng, Budget → `Expense`), chưa có UI thêm traveler
+- [ ] Badge "Verified by Author" khi chuyển sang "Đã đi" — cố ý chưa làm:
+      cần bằng chứng tối thiểu (ảnh/booking) theo guardrail mục 13, phụ
+      thuộc Travel Memory (M12) chưa tồn tại; hiện tự do đổi status không
+      bị chặn nhưng field `verifiedByAuthor` luôn `false`
+- [ ] Xoá trip
 
 ---
 
@@ -434,3 +454,23 @@ WEB_PORT=3001 docker compose up --build
   - Verify qua trình duyệt thật: search + gate + login + logout lặp lại ở
     cả 2 theme (sáng/tối) và cả 2 locale (vi mặc định không prefix, en có
     `/en`); `lint`/`typecheck`/`build` đều pass.
+- Tạo branch `dev`, chuyển toàn bộ commit từ giờ vào đó — chỉ merge `main`
+  sau khi user xác nhận đã test OK (xem memory `git-workflow-dev-branch`).
+- **Trip Builder (M01) — lõi CRUD:**
+  - `src/server/repositories/trip.repository.ts` +
+    `src/server/services/trip.service.ts`: `createTrip`, `updateTrip` (check
+    ownership), `listOwnedTrips`.
+  - `src/features/trip/{actions.ts,trip-form.tsx}`: Server Actions
+    `createTripAction`/`updateTripAction` (Zod, `useActionState`), 1
+    component `TripForm` dùng chung create/edit.
+  - `/trips` (dashboard, yêu cầu đăng nhập), `/trips/new` (form tạo),
+    `/trips/[tripId]` (thêm form edit khi `isOwner`) — tất cả route thật,
+    không còn placeholder cho `/trips`.
+  - Thêm shadcn `Select`; phát hiện `Select.Value` (Base UI) không tự tra
+    nhãn theo `SelectItem` như Radix — phải truyền render-prop
+    `(value) => label` thủ công, đã note vào phần M14 "Ghi chú kỹ thuật".
+  - Verify qua trình duyệt thật: tạo trip → sửa status (Idea → Scheduled)
+    - visibility (Private → Public) → lưu → trip xuất hiện đúng trên
+      dashboard và trên search public ở Home; validate HTML `required` chặn
+      submit tên/điểm đến rỗng. `lint`/`typecheck`/`build` pass. Committed
+      vào `dev`, **chưa merge `main`** — chờ user xác nhận test.
