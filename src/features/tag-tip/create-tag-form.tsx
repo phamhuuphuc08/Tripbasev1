@@ -23,7 +23,7 @@ import {
 
 const initialState: CreateTagFormState = { attempt: 0 };
 
-export function CreateTagForm() {
+export function CreateTagForm({ initialTitle }: { initialTitle?: string }) {
   const t = useTranslations("tagTip.form");
   const tCategory = useTranslations("tagCategory");
   const [state, formAction, pending] = useActionState(
@@ -48,7 +48,13 @@ export function CreateTagForm() {
           name="title"
           required
           placeholder={t("titlePlaceholder")}
-          defaultValue={state.submitted?.title}
+          // Only fall back to `initialTitle` before the first submit — once
+          // an attempt has gone through, a cleared field (success) should
+          // stay cleared instead of re-seeding the same prefilled title.
+          defaultValue={
+            state.submitted?.title ??
+            (state.attempt === 0 ? initialTitle : undefined)
+          }
         />
       </div>
 

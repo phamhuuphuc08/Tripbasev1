@@ -5,6 +5,7 @@ import {
   Hotel,
   type LucideIcon,
   Landmark,
+  Plus,
   Search,
   Smartphone,
   Sparkles,
@@ -16,14 +17,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Link } from "@/i18n/navigation";
-import { CreateTagForm } from "@/features/tag-tip/create-tag-form";
 import {
   TAG_CATEGORIES,
   isTagCategory,
   type TagCategory,
 } from "@/features/tag-tip/categories";
 import { getTrustTier } from "@/features/tag-tip/trust-tier";
-import { getSession } from "@/server/auth/session";
 import { searchTags } from "@/server/services/location-tag.service";
 
 const CATEGORY_ICON: Record<TagCategory, LucideIcon> = {
@@ -45,19 +44,38 @@ export default async function TagsPage({
   const query = q?.trim() ?? "";
   const category = isTagCategory(categoryParam) ? categoryParam : undefined;
 
-  const [session, results, t, tCategory, tTrust] = await Promise.all([
-    getSession(),
+  const [results, t, tCategory, tTrust] = await Promise.all([
     searchTags({ query: query || undefined, category }),
     getTranslations("tagTip"),
     getTranslations("tagCategory"),
     getTranslations("tagTrust"),
   ]);
 
+  // Same convention as SiteHeader's nav links: this always points at
+  // /tags/new regardless of login state, and that page itself redirects
+  // to /login?callbackUrl=/tags/new when there's no session — the gate
+  // lives with the protected route, not duplicated at every link to it.
+  // Prefilling from the current search query only makes sense once we
+  // know it didn't already match something (see the empty state below).
+  const newTagHref = query
+    ? `/tags/new?title=${encodeURIComponent(query)}`
+    : "/tags/new";
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-12">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-xl font-semibold">{t("heading")}</h1>
-        <p className="text-muted-foreground text-sm">{t("subtitle")}</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-xl font-semibold">{t("heading")}</h1>
+          <p className="text-muted-foreground text-sm">{t("subtitle")}</p>
+        </div>
+        <Button
+          render={<Link href="/tags/new" />}
+          nativeButton={false}
+          className="shrink-0"
+        >
+          <Plus className="size-4" />
+          {t("createButton")}
+        </Button>
       </div>
 
       <form action="/tags" className="flex flex-col gap-2 sm:flex-row">
@@ -86,7 +104,17 @@ export default async function TagsPage({
       </form>
 
       {results.length === 0 ? (
-        <p className="text-muted-foreground text-sm">{t("empty")}</p>
+        <div className="flex flex-col items-center gap-3 py-16 text-center">
+          <p className="text-muted-foreground text-sm">{t("empty")}</p>
+          <Button
+            render={<Link href={newTagHref} />}
+            nativeButton={false}
+            variant="outline"
+          >
+            <Plus className="size-4" />
+            {t("emptyCta")}
+          </Button>
+        </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {results.map((tag) => {
@@ -125,26 +153,6 @@ export default async function TagsPage({
           })}
         </div>
       )}
-
-      <div className="flex flex-col gap-4 border-t pt-8">
-        <h2 className="text-base font-semibold">{t("createHeading")}</h2>
-        {session ? (
-          <CreateTagForm />
-        ) : (
-          <p className="text-muted-foreground text-sm">
-            {t.rich("loginToCreate", {
-              link: (chunks) => (
-                <Link
-                  href="/login?callbackUrl=/tags"
-                  className="text-foreground underline"
-                >
-                  {chunks}
-                </Link>
-              ),
-            })}
-          </p>
-        )}
-      </div>
     </div>
   );
 }
