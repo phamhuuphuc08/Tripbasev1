@@ -49,11 +49,29 @@
       "destinationPlaceholder": "VD: Đà Lạt, Việt Nam",
       "startDateLabel": "Ngày bắt đầu",
       "endDateLabel": "Ngày kết thúc",
+
+      "travelerCountLabel": "Số người",
+      "budgetTargetLabel": "Ngân sách dự kiến",
+      "budgetTargetPlaceholder": "VD: 15000000",
+
+      "travelStyleLabel": "Sở thích du lịch",
+      "styleFood": "Ăn uống",
+      "styleShopping": "Mua sắm",
+      "styleCulture": "Văn hóa",
+      "styleNature": "Thiên nhiên",
+
+      "paceLabel": "Nhịp độ chuyến đi",
+      "paceRelaxed": "Nhẹ nhàng",
+      "paceNormal": "Bình thường",
+      "paceBusy": "Dày lịch",
+
       "visibilityLabel": "Quyền xem",
       "statusLabel": "Trạng thái",
+
       "createTitle": "Tạo trip mới",
       "createSubmit": "Tạo trip",
       "createSubmitPending": "Đang tạo…",
+
       "editTitle": "Chỉnh sửa trip",
       "editSubmit": "Lưu thay đổi",
       "editSubmitPending": "Đang lưu…"
@@ -62,6 +80,7 @@
       "nameRequired": "Vui lòng nhập tên trip.",
       "destinationRequired": "Vui lòng nhập điểm đến.",
       "endBeforeStart": "Ngày kết thúc phải sau ngày bắt đầu.",
+      "createFailed": "Không thể tạo trip. Vui lòng thử lại.",
       "updateFailed": "Không thể cập nhật trip này."
     }
   },
@@ -113,6 +132,33 @@
     "creator": {
       "title": "Creator {id}",
       "description": "Tổng lượt CopyPlan nhận được, danh sách plan, biểu đồ uy tín theo thời gian."
+    }
+  },
+  "itinerary": {
+    "form": {
+      "titleLabel": "Hoạt động",
+      "titlePlaceholder": "VD: Tham quan Gyeongbokgung",
+      "dayLabel": "Ngày thứ",
+      "startTimeLabel": "Bắt đầu",
+      "endTimeLabel": "Kết thúc",
+      "notesLabel": "Ghi chú",
+      "notesPlaceholder": "Thông tin thêm cho hoạt động...",
+      "create": "Thêm hoạt động",
+      "save": "Lưu hoạt động",
+      "saving": "Đang lưu..."
+    },
+    "errors": {
+      "titleRequired": "Vui lòng nhập tên hoạt động.",
+      "dayInvalid": "Ngày không hợp lệ.",
+      "dateTimeInvalid": "Thời gian không hợp lệ.",
+      "endBeforeStart": "Thời gian kết thúc phải sau thời gian bắt đầu.",
+      "createFailed": "Không thể thêm hoạt động.",
+      "updateFailed": "Không thể cập nhật hoạt động.",
+      "deleteFailed": "Không thể xóa hoạt động."
+    },
+    "timeline": {
+      "day": "Ngày {day}",
+      "empty": "Chưa có hoạt động nào trong lịch trình."
     }
   }
 }

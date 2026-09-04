@@ -1,6 +1,7 @@
-import { PlanVisibility, type PlanStatus } from "@prisma/client";
+import { PlanVisibility, type PlanStatus, type TravelPace } from "@prisma/client";
 import {
   createTrip as createTripRepo,
+  deleteTrip as deleteTripRepo,
   findTripById,
   findTripsByOwner,
   updateTrip as updateTripRepo,
@@ -15,11 +16,8 @@ export async function getTripDetail(id: string, viewerId?: string) {
   const isOwner = viewerId != null && trip.ownerId === viewerId;
   const isPublic = trip.visibility === PlanVisibility.PUBLIC;
 
-  // Private and not yours: behave like it doesn't exist, don't leak that a
-  // private plan with this id is out there.
   if (!isPublic && !isOwner) return null;
 
-  // mục 3.3/6b của spec: xem chi tiết plan public vẫn cần đăng nhập.
   const requiresLogin = viewerId == null;
 
   return { trip, isOwner, requiresLogin };
@@ -36,6 +34,10 @@ export function createTrip(
     destination: string;
     startDate: Date | null;
     endDate: Date | null;
+    travelerCount: number;
+    budgetTarget: number | null;
+    travelStyle: string[];
+    pace: TravelPace;
     visibility: PlanVisibility;
   },
 ) {
@@ -50,15 +52,27 @@ export async function updateTrip(
     destination: string;
     startDate: Date | null;
     endDate: Date | null;
+    travelerCount: number;
+    budgetTarget: number | null;
+    travelStyle: string[];
+    pace: TravelPace;
     visibility: PlanVisibility;
     status: PlanStatus;
   },
 ) {
   const trip = await findTripById(tripId);
+
   if (!trip) throw new TripError("NOT_FOUND");
-  // UI only ever renders the edit form for the owner — this is
-  // defense-in-depth, not the primary access check.
   if (trip.ownerId !== ownerId) throw new TripError("FORBIDDEN");
 
   return updateTripRepo(tripId, input);
+}
+
+export async function deleteTrip(tripId: string, ownerId: string) {
+  const trip = await findTripById(tripId);
+
+  if (!trip) throw new TripError("NOT_FOUND");
+  if (trip.ownerId !== ownerId) throw new TripError("FORBIDDEN");
+
+  return deleteTripRepo(tripId);
 }

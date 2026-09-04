@@ -49,11 +49,29 @@
       "destinationPlaceholder": "e.g. Da Lat, Vietnam",
       "startDateLabel": "Start date",
       "endDateLabel": "End date",
+
+      "travelerCountLabel": "Travelers",
+      "budgetTargetLabel": "Estimated budget",
+      "budgetTargetPlaceholder": "e.g. 15000000",
+
+      "travelStyleLabel": "Travel interests",
+      "styleFood": "Food",
+      "styleShopping": "Shopping",
+      "styleCulture": "Culture",
+      "styleNature": "Nature",
+
+      "paceLabel": "Travel pace",
+      "paceRelaxed": "Relaxed",
+      "paceNormal": "Normal",
+      "paceBusy": "Busy",
+
       "visibilityLabel": "Visibility",
       "statusLabel": "Status",
+
       "createTitle": "Create a trip",
       "createSubmit": "Create trip",
       "createSubmitPending": "Creating…",
+
       "editTitle": "Edit trip",
       "editSubmit": "Save changes",
       "editSubmitPending": "Saving…"
@@ -62,6 +80,7 @@
       "nameRequired": "Please enter a trip name.",
       "destinationRequired": "Please enter a destination.",
       "endBeforeStart": "End date must be after the start date.",
+      "createFailed": "Couldn't create this trip. Please try again.",
       "updateFailed": "Couldn't update this trip."
     }
   },
@@ -113,6 +132,33 @@
     "creator": {
       "title": "Creator {id}",
       "description": "Total CopyPlan received, list of plans, reputation chart over time."
+    }
+  },
+  "itinerary": {
+    "form": {
+      "titleLabel": "Activity",
+      "titlePlaceholder": "e.g. Visit Gyeongbokgung",
+      "dayLabel": "Day",
+      "startTimeLabel": "Start time",
+      "endTimeLabel": "End time",
+      "notesLabel": "Notes",
+      "notesPlaceholder": "Additional information...",
+      "create": "Add activity",
+      "save": "Save activity",
+      "saving": "Saving..."
+    },
+    "errors": {
+      "titleRequired": "Please enter an activity name.",
+      "dayInvalid": "Invalid day.",
+      "dateTimeInvalid": "Invalid date or time.",
+      "endBeforeStart": "End time must be after start time.",
+      "createFailed": "Couldn't add the activity.",
+      "updateFailed": "Couldn't update the activity.",
+      "deleteFailed": "Couldn't delete the activity."
+    },
+    "timeline": {
+      "day": "Day {day}",
+      "empty": "No activities have been added yet."
     }
   }
 }

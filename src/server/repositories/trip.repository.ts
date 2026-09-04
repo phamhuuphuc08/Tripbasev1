@@ -1,4 +1,4 @@
-import { PlanVisibility, type PlanStatus } from "@prisma/client";
+import { PlanVisibility, type PlanStatus, type TravelPace } from "@prisma/client";
 import { prisma } from "@/server/db/client";
 
 const ownerSelect = { id: true, name: true } as const;
@@ -47,6 +47,10 @@ export function createTrip(data: {
   destination: string;
   startDate: Date | null;
   endDate: Date | null;
+  travelerCount: number;
+  budgetTarget: number | null;
+  travelStyle: string[];
+  pace: TravelPace;
   visibility: PlanVisibility;
 }) {
   return prisma.trip.create({ data });
@@ -59,9 +63,17 @@ export function updateTrip(
     destination: string;
     startDate: Date | null;
     endDate: Date | null;
+    travelerCount: number;
+    budgetTarget: number | null;
+    travelStyle: string[];
+    pace: TravelPace;
     visibility: PlanVisibility;
     status: PlanStatus;
   },
 ) {
   return prisma.trip.update({ where: { id }, data });
+}
+
+export function deleteTrip(id: string) {
+  return prisma.trip.delete({ where: { id } });
 }
