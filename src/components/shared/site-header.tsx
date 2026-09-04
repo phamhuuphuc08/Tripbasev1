@@ -42,6 +42,12 @@ export async function SiteHeader() {
           >
             {t("saved")}
           </Link>
+          <Link
+            href="/tags"
+            className="hover:text-foreground transition-colors"
+          >
+            {t("tags")}
+          </Link>
         </nav>
 
         <LanguageSwitcher />

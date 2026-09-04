@@ -50,6 +50,37 @@ async function seedPublicTrip(
   });
 }
 
+async function seedLocationTag(
+  ownerId: string,
+  data: {
+    title: string;
+    category:
+      | "RESTAURANT"
+      | "ATTRACTION"
+      | "HOTEL"
+      | "CAR_RENTAL"
+      | "TRANSPORT"
+      | "SIM";
+    content: string;
+    citeTrustScore?: number;
+  },
+) {
+  const existing = await prisma.locationTag.findFirst({
+    where: { title: data.title },
+  });
+  if (existing) return existing;
+
+  return prisma.locationTag.create({
+    data: {
+      ownerId,
+      title: data.title,
+      category: data.category,
+      content: data.content,
+      citeTrustScore: data.citeTrustScore ?? 0,
+    },
+  });
+}
+
 async function main() {
   const demo = await upsertDemoUser(
     "demo@tripbase.vn",
@@ -100,7 +131,53 @@ async function main() {
     verifiedByAuthor: true,
   });
 
-  console.log("Seed xong: 2 user, 5 trip public.");
+  await seedLocationTag(linh.id, {
+    title: "Bánh Xèo Bà Dưỡng",
+    category: "RESTAURANT",
+    content: "Quán bánh xèo lâu năm ở Đà Nẵng, ăn kèm rau sống rất ngon.",
+    citeTrustScore: 14,
+  });
+  await seedLocationTag(demo.id, {
+    title: "Phở Thìn Lò Đúc",
+    category: "RESTAURANT",
+    content: "Phở bò tái lăn nổi tiếng Hà Nội.",
+    citeTrustScore: 3,
+  });
+  await seedLocationTag(linh.id, {
+    title: "Phố cổ Hội An",
+    category: "ATTRACTION",
+    content: "Đèn lồng, phố đi bộ, đẹp nhất lúc chập tối.",
+    citeTrustScore: 22,
+  });
+  await seedLocationTag(demo.id, {
+    title: "Vịnh Hạ Long",
+    category: "ATTRACTION",
+    content: "Đi tour tàu 1 ngày hoặc ngủ đêm trên vịnh.",
+  });
+  await seedLocationTag(linh.id, {
+    title: "Muong Thanh Grand Đà Nẵng",
+    category: "HOTEL",
+    content: "View biển, gần cầu Rồng, giá tầm trung.",
+    citeTrustScore: 5,
+  });
+  await seedLocationTag(demo.id, {
+    title: "Thuê xe máy Đà Lạt - Easy Rider",
+    category: "CAR_RENTAL",
+    content: "Xe số/tay ga, giao tận nơi, có bảo hiểm.",
+  });
+  await seedLocationTag(linh.id, {
+    title: "Xe khách Phương Trang",
+    category: "TRANSPORT",
+    content: "Tuyến Sài Gòn - Đà Lạt/Nha Trang, có giường nằm.",
+    citeTrustScore: 8,
+  });
+  await seedLocationTag(demo.id, {
+    title: "eSIM Viettel Du Lịch",
+    category: "SIM",
+    content: "Kích hoạt ngay tại sân bay, 4G tốc độ cao.",
+  });
+
+  console.log("Seed xong: 2 user, 5 trip public, 8 location tag.");
   console.log("Đăng nhập demo: demo@tripbase.vn / password123");
 }
 

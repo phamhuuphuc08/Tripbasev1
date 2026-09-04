@@ -3,6 +3,7 @@
     "trips": "Chuyến đi",
     "explore": "Khám phá",
     "saved": "Đã lưu",
+    "tags": "Tag & Tip",
     "login": "Đăng nhập",
     "register": "Đăng ký",
     "logout": "Đăng xuất"
@@ -99,6 +100,47 @@
       "passwordMin": "Mật khẩu cần ít nhất 8 ký tự.",
       "emailTaken": "Email này đã được đăng ký.",
       "invalidCredentials": "Email hoặc mật khẩu không đúng."
+    }
+  },
+  "tagCategory": {
+    "RESTAURANT": "🍜 Ăn uống",
+    "ATTRACTION": "🏞️ Tham quan",
+    "HOTEL": "🏨 Khách sạn",
+    "CAR_RENTAL": "🛵 Thuê xe",
+    "TRANSPORT": "🚌 Di chuyển",
+    "SIM": "📶 SIM/eSIM",
+    "OTHER": "📍 Khác"
+  },
+  "tagTrust": {
+    "verified": "🟢 Verified Local Pick",
+    "emerging": "🟡 Emerging",
+    "unverified": "⚪ Chưa xác thực"
+  },
+  "tagTip": {
+    "heading": "Tag & Tip Library",
+    "subtitle": "Tra cứu địa điểm ăn uống, tham quan, khách sạn và các tiện ích hỗ trợ (thuê xe, di chuyển, SIM...) đã có sẵn — dùng lại thay vì tạo trùng.",
+    "searchPlaceholder": "Tìm theo tên...",
+    "searchButton": "Tìm",
+    "allCategories": "Tất cả danh mục",
+    "empty": "Chưa có tag nào khớp. Thử từ khoá khác hoặc tạo tag mới bên dưới.",
+    "by": "bởi {name}",
+    "createHeading": "Tạo tag mới",
+    "loginToCreate": "<link>Đăng nhập</link> để tạo tag mới.",
+    "form": {
+      "titleLabel": "Tên",
+      "titlePlaceholder": "VD: Bánh Xèo Bà Dưỡng",
+      "categoryLabel": "Danh mục",
+      "contentLabel": "Mô tả (tuỳ chọn)",
+      "contentPlaceholder": "VD: Quán ăn ngon, giá rẻ, có chỗ đậu xe",
+      "submit": "Tạo tag",
+      "submitPending": "Đang tạo…",
+      "createAnyway": "Vẫn tạo mới",
+      "duplicateWarning": "Đã có tag tương tự: \"{title}\" — cân nhắc dùng lại thay vì tạo mới.",
+      "createdSuccess": "Đã tạo tag \"{title}\"."
+    },
+    "errors": {
+      "loginRequired": "Cần đăng nhập để tạo tag mới.",
+      "titleRequired": "Vui lòng nhập tên."
     }
   },
   "placeholders": {

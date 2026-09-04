@@ -29,7 +29,7 @@ Tổng quan kiến trúc: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 | M08 | [CopyPlan Engine](#m08--copyplan-engine)                      | P0      | ✅         | ⬜      | ⬜  | ⬜         |
 | M09 | [Reputation Engine](#m09--reputation-engine)                  | P1      | ✅         | ⬜      | ⬜  | ⬜         |
 | M10 | [Plan Marketplace / Explore](#m10--plan-marketplace--explore) | P1      | ✅         | 🟨      | 🟨  | 🟨         |
-| M11 | [Tag & Tip Library](#m11--tag--tip-library)                   | P1      | ✅         | ⬜      | ⬜  | ⬜         |
+| M11 | [Tag & Tip Library](#m11--tag--tip-library)                   | P1      | ✅         | ✅      | ✅  | 🟨         |
 | M12 | [Travel Memory](#m12--travel-memory)                          | P2      | ⬜         | ⬜      | ⬜  | ⬜         |
 
 "Data model ✅" nghĩa là entity đã có trong `prisma/schema.prisma` **và** đã
@@ -341,14 +341,51 @@ Chưa làm:
 
 - **Ưu tiên:** P1 · **Spec:** mục 4, 8.1
 - **Code:** `src/features/tag-tip/`, model `LocationTag`
-- **Trạng thái:** ⬜ Chưa bắt đầu
+- **Trạng thái:** 🟨 Đang làm (lookup + dedup lõi xong, chưa gắn vào itinerary)
+
+Đã làm:
+
+- [x] Trang `/tags` (public, không cần đăng nhập để xem/tìm) — search theo
+      tên + filter theo category, card hiện icon, category badge, trust
+      badge (🟢/🟡/⚪ theo `getTrustTier`), mô tả, chủ sở hữu
+- [x] 7 category cố định cho UI (`src/features/tag-tip/categories.ts`):
+      RESTAURANT, ATTRACTION, HOTEL, CAR_RENTAL, TRANSPORT, SIM, OTHER —
+      đáp ứng yêu cầu lookup ăn uống/tham quan/hotel **và** support (thuê
+      xe, di chuyển, SIM)
+- [x] Rule-based dedup (`tag-dedup.service.ts`): Levenshtein similarity,
+      so trong cùng category, ngưỡng `DUPLICATE_THRESHOLD = 0.72` — **chưa**
+      thêm điều kiện bán kính toạ độ (spec mục 8.1 có nhắc, nhưng tag hiện
+      chưa bắt buộc nhập lat/lng nên chưa áp dụng được ngay)
+- [x] Tạo tag (`createTagAction`) → nếu nghi trùng, hiện cảnh báo + nút
+      "Vẫn tạo mới"; nếu user vẫn tạo, set `possibleDuplicateOfId` trỏ về
+      tag gốc — đúng guardrail mục 13 (không tính là nguồn độc lập)
+- [x] Seed 8 location tag mẫu (đa category, vài cái có `citeTrustScore` >
+      0 để demo đủ 3 trạng thái trust badge — điểm này hiện set tay qua
+      seed, chưa có cơ chế tự tính, xem M09)
+- [x] Verify qua trình duyệt thật: search + filter category đúng; gõ tên
+      gần giống 1 tag đã có (cùng category) → bị chặn tạo, hiện gợi ý dùng
+      lại; bấm "Vẫn tạo mới" → tạo được, DB có `possible_duplicate_of`
+      trỏ đúng về tag gốc (check trực tiếp qua `psql`)
+
+Bug đã fix trong lúc build: React tự xoá field uncontrolled sau mỗi lần
+Server Action chạy — lúc phát hiện trùng, ô "Tên" bị xoá trắng ngay khi
+user cần thấy lại nó nhất để quyết định. Fix bằng cách server trả lại giá
+trị đã submit (`submitted`) + tăng 1 counter (`attempt`) dùng làm `key` của
+`<form>` để remount và áp `defaultValue` mới — xem
+`src/features/tag-tip/{actions.ts,create-tag-form.tsx}`.
 
 Chưa làm:
 
-- [ ] Rule-based dedup: fuzzy string match (Levenshtein) + bán kính toạ độ + cùng danh mục
-- [ ] Gợi ý "dùng lại tag này?" khi gõ
-- [ ] `possible_duplicate_of` flag khi user vẫn tạo mới dù trùng
-- [ ] Self-cite: cho dùng lại nhưng không cộng điểm cho chính chủ
+- [ ] Gắn dedup-suggestion vào lúc thêm địa điểm trong itinerary (mục 8.1:
+      "gợi ý ngay trong lúc gõ") — phụ thuộc Itinerary (M02) chưa tồn tại,
+      hiện chỉ có trang lookup độc lập `/tags`
+- [ ] Bán kính toạ độ trong dedup — cần bắt buộc lat/lng khi tạo LocationTag
+      (hiện optional, chưa có input map/pick toạ độ trên form)
+- [ ] Citation thật (model `Citation`) khi 1 plan trích dẫn 1 tag — chưa
+      có UI/luồng nào tạo `Citation`, nên `citeTrustScore` chưa tự tăng
+- [ ] Self-cite: quy tắc (không cộng điểm khi tự cite đồ của mình) chỉ áp
+      dụng được khi có Citation thật; chưa implement vì lý do trên
+- [ ] Sửa/xoá tag đã tạo
 
 ---
 
@@ -474,3 +511,22 @@ WEB_PORT=3001 docker compose up --build
       dashboard và trên search public ở Home; validate HTML `required` chặn
       submit tên/điểm đến rỗng. `lint`/`typecheck`/`build` pass. Committed
       vào `dev`, **chưa merge `main`** — chờ user xác nhận test.
+- **Tag & Tip Library (M11) — lookup + dedup lõi**, theo yêu cầu "phải cho
+  lookup các địa điểm ăn uống, thăm quan, hotel từ local tag, các support
+  như thuê xe, di chuyển, sim... đều lookup hết":
+  - 7 category cố định (ăn uống/tham quan/khách sạn/thuê xe/di chuyển/
+    SIM/khác) — `src/features/tag-tip/categories.ts`.
+  - `tag-dedup.service.ts`: Levenshtein similarity rule-based (không AI),
+    dùng bởi `location-tag.service.ts` khi tạo tag mới.
+  - Trang `/tags`: search + filter category (public, không cần đăng
+    nhập), form tạo tag (cần đăng nhập) với cảnh báo trùng lặp + nút
+    "Vẫn tạo mới" gắn `possibleDuplicateOfId`.
+  - Bug phát hiện + fix: React tự xoá field form sau mỗi lần Server Action
+    chạy — mất đúng lúc cần giữ lại tên đã gõ để user quyết định trên
+    cảnh báo trùng lặp. Fix bằng cách echo `submitted` values từ server +
+    remount `<form>` qua `key={attempt}`.
+  - Seed 8 location tag mẫu đa category.
+  - Verify qua trình duyệt thật + kiểm tra trực tiếp trong Postgres
+    (`possible_duplicate_of` trỏ đúng tag gốc sau khi force-create).
+    `lint`/`typecheck`/`build` pass. Committed vào `dev`, chưa merge
+    `main`.
