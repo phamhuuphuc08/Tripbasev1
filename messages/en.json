@@ -87,7 +87,8 @@
       "ageGroupLabel": "Age group (optional)",
       "ageGroupPlaceholder": "e.g. child, adult",
       "addButton": "Add",
-      "removeButton": "Remove"
+      "removeButton": "Remove",
+      "removeButtonNamed": "Remove {name}"
     },
     "delete": {
       "title": "Delete trip",
@@ -107,6 +108,7 @@
     "dayHeading": "Day {day}",
     "addHeading": "Add to itinerary",
     "removeButton": "Remove",
+    "removeButtonNamed": "Remove {name}",
     "form": {
       "titleLabel": "Activity name (optional)",
       "titlePlaceholder": "e.g. Breakfast at the hotel",
@@ -284,5 +286,45 @@
     "RELAXATION": "🧘 Relaxation",
     "PHOTOGRAPHY": "📸 Photography",
     "BUDGET_TRAVEL": "🎒 Budget travel"
+  },
+  "expenseCategory": {
+    "FLIGHT": "✈️ Flight",
+    "HOTEL": "🏨 Hotel",
+    "FOOD": "🍜 Food",
+    "ATTRACTION": "🎫 Attraction",
+    "TRANSPORT": "🚌 Transport",
+    "SHOPPING": "🛍️ Shopping",
+    "CONTINGENCY": "🛟 Contingency",
+    "OTHER": "📦 Other"
+  },
+  "budget": {
+    "heading": "Budget",
+    "totalSpentLabel": "Spent",
+    "targetLabel": "Estimated budget",
+    "remainingLabel": "Remaining",
+    "overBudgetLabel": "Over budget",
+    "noTargetHint": "No budget target set yet — set one when editing the trip.",
+    "byCategoryHeading": "By category",
+    "splitHeading": "Split between travelers",
+    "expenseListEmpty": "No expenses yet.",
+    "addHeading": "Add an expense",
+    "removeButton": "Remove",
+    "removeButtonNamed": "Remove {name}",
+    "form": {
+      "categoryLabel": "Category",
+      "amountLabel": "Amount",
+      "amountPlaceholder": "e.g. 500000",
+      "noteLabel": "Note (optional)",
+      "notePlaceholder": "e.g. Round-trip flight ticket",
+      "splitLabel": "Split between",
+      "splitHint": "Pick who shares this expense (split equally).",
+      "submit": "Add expense",
+      "submitPending": "Adding…"
+    },
+    "errors": {
+      "loginRequired": "You need to log in to add an expense.",
+      "amountInvalid": "Amount must be greater than 0.",
+      "addFailed": "Couldn't add this expense."
+    }
   }
 }

@@ -15,6 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
+import { removeExpenseAction } from "@/features/budget/actions";
+import { toExpenseCategory } from "@/features/budget/categories";
+import { ExpenseForm } from "@/features/budget/expense-form";
 import { removeItineraryItemAction } from "@/features/itinerary/actions";
 import { ItineraryItemForm } from "@/features/itinerary/itinerary-item-form";
 import { detectBacktrack } from "@/features/map/geo";
@@ -25,6 +28,10 @@ import { TravelerForm } from "@/features/trip/traveler-form";
 import { TripForm } from "@/features/trip/trip-form";
 import { toTagCategory } from "@/features/tag-tip/categories";
 import { getSession } from "@/server/auth/session";
+import {
+  computeBudgetSummary,
+  listExpenses,
+} from "@/server/services/budget.service";
 import { listItineraryItems } from "@/server/services/itinerary.service";
 import { listTagsForPicker } from "@/server/services/location-tag.service";
 import { getTripDetail } from "@/server/services/trip.service";
@@ -63,17 +70,29 @@ export default async function TripDetailPage({
   if (!result) notFound();
 
   const { trip, isOwner, requiresLogin } = result;
-  const [t, tStatus, tForm, tTravelers, tItinerary, tCategory, tMap, format] =
-    await Promise.all([
-      getTranslations("tripDetail"),
-      getTranslations("tripStatus"),
-      getTranslations("trip.form"),
-      getTranslations("trip.travelers"),
-      getTranslations("itinerary"),
-      getTranslations("tagCategory"),
-      getTranslations("map"),
-      getFormatter(),
-    ]);
+  const [
+    t,
+    tStatus,
+    tForm,
+    tTravelers,
+    tItinerary,
+    tCategory,
+    tMap,
+    tBudget,
+    tExpenseCategory,
+    format,
+  ] = await Promise.all([
+    getTranslations("tripDetail"),
+    getTranslations("tripStatus"),
+    getTranslations("trip.form"),
+    getTranslations("trip.travelers"),
+    getTranslations("itinerary"),
+    getTranslations("tagCategory"),
+    getTranslations("map"),
+    getTranslations("budget"),
+    getTranslations("expenseCategory"),
+    getFormatter(),
+  ]);
 
   if (requiresLogin) {
     return (
@@ -95,9 +114,11 @@ export default async function TripDetailPage({
     );
   }
 
-  const [items, tagOptions] = await Promise.all([
+  const [items, tagOptions, expenses, budgetSummary] = await Promise.all([
     listItineraryItems(tripId),
     isOwner ? listTagsForPicker() : Promise.resolve([]),
+    listExpenses(tripId),
+    computeBudgetSummary(tripId),
   ]);
 
   const itemsByDay = new Map<number, typeof items>();
@@ -240,7 +261,9 @@ export default async function TripDetailPage({
                       >
                         <button
                           type="submit"
-                          aria-label={tTravelers("removeButton")}
+                          aria-label={tTravelers("removeButtonNamed", {
+                            name: traveler.name,
+                          })}
                           className="hover:bg-destructive/20 hover:text-destructive rounded-full p-0.5"
                         >
                           <X className="size-3" />
@@ -320,7 +343,12 @@ export default async function TripDetailPage({
                           >
                             <button
                               type="submit"
-                              aria-label={tItinerary("removeButton")}
+                              aria-label={tItinerary("removeButtonNamed", {
+                                name:
+                                  item.title ??
+                                  item.locationTag?.title ??
+                                  tItinerary("dayHeading", { day }),
+                              })}
                               className="hover:bg-destructive/20 hover:text-destructive shrink-0 rounded-full p-1"
                             >
                               <X className="size-3.5" />
@@ -370,6 +398,144 @@ export default async function TripDetailPage({
                 </p>
               ))}
             </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{tBudget("heading")}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex flex-col">
+              <span className="text-muted-foreground text-xs">
+                {tBudget("totalSpentLabel")}
+              </span>
+              <span className="font-medium">
+                {format.number(budgetSummary.totalSpent)} VND
+              </span>
+            </div>
+            {budgetSummary.budgetTarget != null ? (
+              <div className="flex flex-col">
+                <span className="text-muted-foreground text-xs">
+                  {(budgetSummary.remaining ?? 0) < 0
+                    ? tBudget("overBudgetLabel")
+                    : tBudget("remainingLabel")}
+                </span>
+                <span
+                  className={
+                    (budgetSummary.remaining ?? 0) < 0
+                      ? "text-destructive font-medium"
+                      : "font-medium"
+                  }
+                >
+                  {format.number(Math.abs(budgetSummary.remaining ?? 0))} VND
+                </span>
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-xs">
+                {tBudget("noTargetHint")}
+              </p>
+            )}
+          </div>
+
+          {budgetSummary.byCategory.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <h3 className="text-muted-foreground text-xs font-medium">
+                {tBudget("byCategoryHeading")}
+              </h3>
+              <ul className="flex flex-wrap gap-2">
+                {budgetSummary.byCategory.map(({ category, total }) => (
+                  <li key={category}>
+                    <Badge variant="outline">
+                      {tExpenseCategory(toExpenseCategory(category))}:{" "}
+                      {format.number(total)} VND
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {budgetSummary.bySplitMember.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <h3 className="text-muted-foreground text-xs font-medium">
+                {tBudget("splitHeading")}
+              </h3>
+              <ul className="flex flex-wrap gap-2">
+                {budgetSummary.bySplitMember.map(({ name, owed }) => (
+                  <li key={name}>
+                    <Badge variant="secondary">
+                      {name}: {format.number(Math.round(owed))} VND
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {expenses.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              {tBudget("expenseListEmpty")}
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {expenses.map((expense) => (
+                <li
+                  key={expense.id}
+                  className="border-border flex items-start justify-between gap-2 rounded-lg border px-3 py-2 text-sm"
+                >
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-medium">
+                      {tExpenseCategory(expense.category)} ·{" "}
+                      {format.number(expense.amount)} VND
+                    </span>
+                    {expense.note && (
+                      <span className="text-muted-foreground">
+                        {expense.note}
+                      </span>
+                    )}
+                    {expense.splitBetween.length > 0 && (
+                      <span className="text-muted-foreground text-xs">
+                        {expense.splitBetween.join(", ")}
+                      </span>
+                    )}
+                  </div>
+                  {isOwner && (
+                    <form
+                      action={removeExpenseAction.bind(
+                        null,
+                        tripId,
+                        expense.id,
+                      )}
+                    >
+                      <button
+                        type="submit"
+                        aria-label={tBudget("removeButtonNamed", {
+                          name: `${tExpenseCategory(expense.category)} ${format.number(expense.amount)} VND`,
+                        })}
+                        className="hover:bg-destructive/20 hover:text-destructive shrink-0 rounded-full p-1"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </form>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {isOwner && (
+            <div className="border-t pt-4">
+              <h3 className="mb-3 text-sm font-medium">
+                {tBudget("addHeading")}
+              </h3>
+              <ExpenseForm
+                tripId={tripId}
+                travelerNames={trip.travelers.map((traveler) => traveler.name)}
+              />
+            </div>
           )}
         </CardContent>
       </Card>

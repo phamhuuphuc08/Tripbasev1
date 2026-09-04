@@ -87,7 +87,8 @@
       "ageGroupLabel": "Độ tuổi (tuỳ chọn)",
       "ageGroupPlaceholder": "VD: trẻ em, người lớn",
       "addButton": "Thêm",
-      "removeButton": "Xoá người này"
+      "removeButton": "Xoá người này",
+      "removeButtonNamed": "Xoá {name}"
     },
     "delete": {
       "title": "Xoá trip",
@@ -107,6 +108,7 @@
     "dayHeading": "Ngày {day}",
     "addHeading": "Thêm vào lịch trình",
     "removeButton": "Xoá mục này",
+    "removeButtonNamed": "Xoá {name}",
     "form": {
       "dayLabel": "Ngày",
       "titleLabel": "Tên hoạt động (tuỳ chọn)",
@@ -284,5 +286,45 @@
     "RELAXATION": "🧘 Nghỉ dưỡng",
     "PHOTOGRAPHY": "📸 Chụp ảnh",
     "BUDGET_TRAVEL": "🎒 Phượt tiết kiệm"
+  },
+  "expenseCategory": {
+    "FLIGHT": "✈️ Vé máy bay",
+    "HOTEL": "🏨 Khách sạn",
+    "FOOD": "🍜 Ăn uống",
+    "ATTRACTION": "🎫 Vé tham quan",
+    "TRANSPORT": "🚌 Di chuyển",
+    "SHOPPING": "🛍️ Mua sắm",
+    "CONTINGENCY": "🛟 Dự phòng",
+    "OTHER": "📦 Khác"
+  },
+  "budget": {
+    "heading": "Ngân sách",
+    "totalSpentLabel": "Đã chi",
+    "targetLabel": "Ngân sách dự kiến",
+    "remainingLabel": "Còn lại",
+    "overBudgetLabel": "Vượt ngân sách",
+    "noTargetHint": "Chưa đặt ngân sách dự kiến — đặt trong phần chỉnh sửa trip.",
+    "byCategoryHeading": "Theo hạng mục",
+    "splitHeading": "Chia tiền theo người",
+    "expenseListEmpty": "Chưa có khoản chi nào.",
+    "addHeading": "Thêm khoản chi",
+    "removeButton": "Xoá",
+    "removeButtonNamed": "Xoá {name}",
+    "form": {
+      "categoryLabel": "Hạng mục",
+      "amountLabel": "Số tiền",
+      "amountPlaceholder": "VD: 500000",
+      "noteLabel": "Ghi chú (tuỳ chọn)",
+      "notePlaceholder": "VD: Vé máy bay khứ hồi",
+      "splitLabel": "Chia cho",
+      "splitHint": "Chọn người cùng chia khoản này (chia đều).",
+      "submit": "Thêm khoản chi",
+      "submitPending": "Đang thêm…"
+    },
+    "errors": {
+      "loginRequired": "Cần đăng nhập để thêm khoản chi.",
+      "amountInvalid": "Số tiền phải lớn hơn 0.",
+      "addFailed": "Không thể thêm khoản chi này."
+    }
   }
 }

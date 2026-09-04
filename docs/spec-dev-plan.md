@@ -22,7 +22,7 @@ Tổng quan kiến trúc: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 | M01 | [Trip Builder](#m01--trip-builder)                            | P0      | ✅         | ✅      | 🟨  | 🟨         |
 | M02 | [Itinerary / Smart Timeline](#m02--itinerary--smart-timeline) | P0      | ✅         | ✅      | 🟨  | 🟨         |
 | M03 | [Map Planner](#m03--map-planner)                              | P0      | ✅         | ✅      | 🟨  | 🟨         |
-| M04 | [Budget Board](#m04--budget-board)                            | P0      | ✅         | ⬜      | ⬜  | ⬜         |
+| M04 | [Budget Board](#m04--budget-board)                            | P0      | ✅         | ✅      | 🟨  | 🟨         |
 | M05 | [Booking Vault](#m05--booking-vault)                          | P1      | ✅         | ⬜      | ⬜  | ⬜         |
 | M06 | [Checklist](#m06--checklist)                                  | P0      | ✅         | ⬜      | ⬜  | ⬜         |
 | M07 | [Share & Permission](#m07--share--permission)                 | P0      | ✅         | ⬜      | ⬜  | ⬜         |
@@ -322,15 +322,54 @@ Ghi chú kỹ thuật:
 
 ## M04 — Budget Board
 
-- **Ưu tiên:** P0 · **Spec:** mục 4, 5
-- **Code:** `src/features/budget/`, model `Expense`
-- **Trạng thái:** ⬜ Chưa bắt đầu
+- **Ưu tiên:** P0 · **Spec:** mục 4, 5, 11
+- **Code:** `src/features/budget/`, `src/server/services/budget.service.ts`, model `Expense`
+- **Trạng thái:** 🟨 Đang làm (CRUD + chia tiền cơ bản xong, chưa có
+  Booking Vault liên kết)
+
+Đã làm:
+
+- [x] Thêm/xoá khoản chi trên trang chi tiết trip (chỉ chủ sở hữu), 8 hạng
+      mục cố định (`src/features/budget/categories.ts`: Vé máy bay, Khách
+      sạn, Ăn uống, Vé tham quan, Di chuyển, Mua sắm, Dự phòng, Khác) —
+      cùng pattern "union cố định, coerce ở boundary" với các module khác
+- [x] `Expense` thêm `note` (ghi chú tuỳ chọn) + `createdAt` (migration
+      `add_expense_note_and_created_at`); `paidById` mặc định là chủ sở
+      hữu trip (người duy nhất có quyền thêm hiện tại, chưa có form chọn
+      người trả vì chưa có Share & Permission/M07)
+- [x] Money View cơ bản (mục 11, rule-based không AI):
+      `computeBudgetSummary` — tổng đã chi, so với `Trip.budgetTarget`
+      (còn lại/vượt ngân sách), phân theo hạng mục, và **chia tiền cơ
+      bản**: mỗi expense có `splitBetween` (tên các Traveler, không phải
+      FK cứng — đúng thiết kế "lỏng" ở mục 12 của spec) được chia đều,
+      cộng dồn theo tên ra tổng mỗi người phải trả. Đây là chia đều đơn
+      giản, **không phải** thuật toán settle-up tối ưu (ai trả ai bao
+      nhiêu để cân bằng số dư).
+- [x] Debug đáng chú ý: phát hiện 3 nút "Xoá" khác nhau trên cùng trang
+      chi tiết trip (traveler/itinerary/budget) từng dùng chung
+      `aria-label` gần giống nhau ("Remove") — kịch bản test tự động bấm
+      nhầm nút xoá traveler thay vì xoá expense. Sửa bằng cách thêm
+      `removeButtonNamed` (interpolate tên/hạng mục cụ thể) cho cả 3 nút,
+      vừa hết nhầm lẫn cho test tự động vừa tốt hơn cho accessibility
+      (screen reader phân biệt được đang xoá cái gì).
+- [x] Verify qua trình duyệt thật + Postgres thật: tạo trip ngân sách
+      5.000.000đ, thêm 2 traveler (An, Binh), thêm 1 khoản chi 2.000.000đ
+      chia cho cả 2 → hiện đúng "Đã chi 2.000.000 / Còn lại 3.000.000",
+      đúng "An: 1.000.000 · Binh: 1.000.000"; xoá khoản chi (sau khi sửa
+      aria-label) → đúng khoản chi biến mất, traveler không bị ảnh hưởng;
+      kiểm tra trực tiếp qua `psql` khớp 100%. `lint`/`typecheck`/`build`
+      pass.
 
 Chưa làm:
 
-- [ ] CRUD chi phí theo hạng mục, đơn vị VND
-- [ ] Chia tiền cơ bản giữa thành viên (`splitBetween`)
-- [ ] Money View (mục 11)
+- [ ] Sửa khoản chi đã tạo (hiện chỉ thêm/xoá)
+- [ ] Chọn người trả (`paidById`) khác chủ sở hữu — cần Share & Permission
+      (M07) để có người khác ngoài chủ sở hữu thao tác trên trip trước
+- [ ] Thuật toán settle-up ("ai nợ ai bao nhiêu", tối thiểu hoá số giao
+      dịch) — hiện chỉ có tổng mỗi người phải trả, chưa tính chênh lệch
+      giữa người trả tiền thật và người nợ
+- [ ] Upload hoá đơn/receipt cho từng khoản chi — liên quan Booking Vault
+      (M05), chưa xây
 
 ---
 
@@ -911,3 +950,17 @@ origin/main` để đưa `main` về đúng trạng thái đã push trước đ�
     liệu test sau khi xong. `lint`/`typecheck`/`build` pass.
   - Commit vào `dev`, sau đó merge `dev` vào `main` theo đúng yêu cầu của
     user trong cùng chuỗi thao tác này (không phải xác nhận riêng sau).
+- **Ghi nhận nhánh cộng sự đã merge + xoá nhánh**, theo yêu cầu "merge và
+  xoá đi": dùng `git merge -s ours` để đánh dấu
+  `feature/trip-builder-itinerary` là đã merge trong lịch sử Git (không
+  áp lại nội dung file thô — phần giá trị đã được rà soát/viết lại thủ
+  công ở bước trên), verify `git diff` giữa các commit trước/sau đều
+  rỗng (cây file không đổi gì thêm), rồi xoá nhánh đó trên GitHub
+  (`git push origin --delete`).
+- **Budget Board (M04)**, theo yêu cầu "OK code tiếp đi" (chọn module P0
+  còn trống tiếp theo, gắn liền với `Trip.budgetTarget` vừa thêm ở M01):
+  xem chi tiết ở mục [M04](#m04--budget-board). Migration
+  `add_expense_note_and_created_at`. Verify qua trình duyệt thật +
+  Postgres thật: tạo trip 5.000.000đ, 2 traveler, 1 khoản chi 2.000.000đ
+  chia đôi → tổng/còn lại/chia tiền đều đúng; xoá khoản chi đúng, không
+  ảnh hưởng traveler. `lint`/`typecheck`/`build` pass. Test data đã xoá.
