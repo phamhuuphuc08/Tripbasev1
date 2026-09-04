@@ -1,9 +1,12 @@
 import {
   CalendarRange,
+  Gauge,
   Lock,
   MapPin,
   TriangleAlert,
   User,
+  Users,
+  Wallet,
   X,
 } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -17,6 +20,7 @@ import { ItineraryItemForm } from "@/features/itinerary/itinerary-item-form";
 import { detectBacktrack } from "@/features/map/geo";
 import { TripMapLoader } from "@/features/map/trip-map-loader";
 import { removeTravelerAction } from "@/features/trip/actions";
+import { toTripStyles } from "@/features/trip/styles";
 import { TravelerForm } from "@/features/trip/traveler-form";
 import { TripForm } from "@/features/trip/trip-form";
 import { toTagCategory } from "@/features/tag-tip/categories";
@@ -33,6 +37,19 @@ function toTimeLabel(date: Date | null): string | null {
   if (!date) return null;
   return date.toISOString().slice(11, 16);
 }
+
+const PACE_KEY = {
+  RELAXED: "paceRelaxed",
+  NORMAL: "paceNormal",
+  BUSY: "paceBusy",
+} as const;
+
+const STYLE_KEY = {
+  FOOD: "styleFood",
+  SHOPPING: "styleShopping",
+  CULTURE: "styleCulture",
+  NATURE: "styleNature",
+} as const;
 
 export default async function TripDetailPage({
   params,
@@ -151,6 +168,31 @@ export default async function TripDetailPage({
             {dateRange}
           </p>
         )}
+        <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm">
+          <span className="flex items-center gap-1.5">
+            <Users className="size-3.5" />
+            {trip.travelerCount}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Gauge className="size-3.5" />
+            {tForm(PACE_KEY[trip.pace])}
+          </span>
+          {trip.budgetTarget != null && (
+            <span className="flex items-center gap-1.5">
+              <Wallet className="size-3.5" />
+              {format.number(Number(trip.budgetTarget))} VND
+            </span>
+          )}
+        </div>
+        {toTripStyles(trip.travelStyle).length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {toTripStyles(trip.travelStyle).map((style) => (
+              <Badge key={style} variant="outline">
+                {tForm(STYLE_KEY[style])}
+              </Badge>
+            ))}
+          </div>
+        )}
         <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
           <User className="size-3" />
           {t.rich("meta", {
@@ -245,8 +287,17 @@ export default async function TripDetailPage({
                               {endLabel ? ` – ${endLabel}` : ""}
                             </span>
                           )}
+                          {item.title && (
+                            <span className="font-medium">{item.title}</span>
+                          )}
                           {item.locationTag && (
-                            <span className="font-medium">
+                            <span
+                              className={
+                                item.title
+                                  ? "text-muted-foreground text-xs"
+                                  : "font-medium"
+                              }
+                            >
                               {tCategory(
                                 toTagCategory(item.locationTag.category),
                               )}{" "}
@@ -337,6 +388,10 @@ export default async function TripDetailPage({
                 destination: trip.destination,
                 startDate: toDateInputValue(trip.startDate),
                 endDate: toDateInputValue(trip.endDate),
+                travelerCount: trip.travelerCount,
+                budgetTarget: trip.budgetTarget?.toString() ?? "",
+                pace: trip.pace,
+                travelStyle: toTripStyles(trip.travelStyle),
                 visibility: trip.visibility,
                 status: trip.status,
               }}

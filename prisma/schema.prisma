@@ -27,6 +27,12 @@ enum PlanStatus {
   COMPLETED
 }
 
+enum TravelPace {
+  RELAXED
+  NORMAL
+  BUSY
+}
+
 enum CollaboratorRole {
   VIEWER
   EDITOR
@@ -116,6 +122,16 @@ model Trip {
   status            PlanStatus     @default(IDEA)
   verifiedByAuthor  Boolean        @default(false) @map("verified_by_author")
 
+  // Trip Builder (M01) planning fields — quick numbers entered up front,
+  // separate from the actual named Traveler[] list added later.
+  travelerCount     Int            @default(1) @map("traveler_count")
+  budgetTarget      Decimal?       @map("budget_target")
+  pace              TravelPace     @default(NORMAL)
+  // Fixed taxonomy (src/features/trip/styles.ts), not free text — same
+  // "app-level union, no migration to add an option" choice used elsewhere
+  // (LocationTag.category, User.travelStyle/travelInterests).
+  travelStyle       String[]       @default([]) @map("travel_style")
+
   forkedFromPlanId  String?        @map("forked_from_plan_id")
   forkedFrom        Trip?          @relation("PlanFork", fields: [forkedFromPlanId], references: [id])
   forks             Trip[]         @relation("PlanFork")
@@ -204,6 +220,10 @@ model ItineraryItem {
   tripId        String       @map("trip_id")
   trip          Trip         @relation(fields: [tripId], references: [id], onDelete: Cascade)
   day           Int
+  // Optional freeform label for items with no linked tag (e.g. "Ăn sáng ở
+  // khách sạn") — when a tag is linked, its title is still what's shown as
+  // the primary label; this fills the gap for untagged items.
+  title         String?
   startTime     DateTime?    @map("start_time")
   endTime       DateTime?    @map("end_time")
   placeId       String?      @map("place_id")
@@ -211,6 +231,16 @@ model ItineraryItem {
   locationTagId String?      @map("location_tag_id")
   locationTag   LocationTag? @relation(fields: [locationTagId], references: [id])
   notes         String?
+  // Reserved for manual drag-and-drop reordering within a day — not wired
+  // into any query's ORDER BY yet (still day/startTime), so it's inert
+  // until that UI exists.
+  sortOrder     Int          @default(0) @map("sort_order")
+
+  createdAt     DateTime     @default(now()) @map("created_at")
+  // `@default(now())` here too (unlike other @updatedAt fields in this
+  // file) because this column is being added to a table that already has
+  // rows — needs a backfill value for the migration to apply cleanly.
+  updatedAt     DateTime     @default(now()) @updatedAt @map("updated_at")
 
   votes         Vote[]
   comments      Comment[]

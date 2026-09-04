@@ -26,6 +26,7 @@ export function findItineraryItemById(id: string) {
 export function createItineraryItem(data: {
   tripId: string;
   day: number;
+  title: string | null;
   startTime: Date | null;
   endTime: Date | null;
   notes: string | null;

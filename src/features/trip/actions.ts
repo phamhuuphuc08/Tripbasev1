@@ -1,9 +1,10 @@
 "use server";
 
-import { PlanStatus, PlanVisibility } from "@prisma/client";
+import { PlanStatus, PlanVisibility, TravelPace } from "@prisma/client";
 import { getLocale, getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { redirect } from "@/i18n/navigation";
+import { toTripStyles } from "@/features/trip/styles";
 import { getSession } from "@/server/auth/session";
 import {
   addTraveler,
@@ -21,6 +22,34 @@ function parseDateInput(value: string | undefined): Date | null {
   if (!value) return null;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * Trip Builder fields (mục 4) shared by create and update: traveler count,
+ * estimated budget, pace, and a fixed set of style tags — kept separate
+ * from the zod schema above since budgetTarget/travelStyle don't fit its
+ * simple field-per-key shape (optional decimal, repeated checkbox values).
+ */
+function parseTripBuilderFields(formData: FormData) {
+  const travelerCount = Math.min(
+    50,
+    Math.max(1, Number(formData.get("travelerCount")) || 1),
+  );
+
+  const budgetTargetRaw = formData.get("budgetTarget")?.toString().trim();
+  const budgetTarget =
+    budgetTargetRaw && !Number.isNaN(Number(budgetTargetRaw))
+      ? Number(budgetTargetRaw)
+      : null;
+
+  const paceRaw = formData.get("pace")?.toString();
+  const pace = (Object.values(TravelPace) as string[]).includes(paceRaw ?? "")
+    ? (paceRaw as TravelPace)
+    : TravelPace.NORMAL;
+
+  const travelStyle = toTripStyles(formData.getAll("travelStyle").map(String));
+
+  return { travelerCount, budgetTarget, pace, travelStyle };
 }
 
 export async function createTripAction(
@@ -58,13 +87,19 @@ export async function createTripAction(
     return { error: t("endBeforeStart") };
   }
 
-  const trip = await createTrip(session.userId, {
-    name: parsed.data.name,
-    destination: parsed.data.destination,
-    startDate,
-    endDate,
-    visibility: parsed.data.visibility,
-  });
+  let trip;
+  try {
+    trip = await createTrip(session.userId, {
+      name: parsed.data.name,
+      destination: parsed.data.destination,
+      startDate,
+      endDate,
+      visibility: parsed.data.visibility,
+      ...parseTripBuilderFields(formData),
+    });
+  } catch {
+    return { error: t("createFailed") };
+  }
 
   return redirect({ href: `/trips/${trip.id}`, locale });
 }
@@ -115,6 +150,7 @@ export async function updateTripAction(
       endDate,
       visibility: parsed.data.visibility,
       status: parsed.data.status,
+      ...parseTripBuilderFields(formData),
     });
   } catch {
     return { error: t("updateFailed") };

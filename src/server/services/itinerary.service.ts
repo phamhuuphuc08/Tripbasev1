@@ -25,6 +25,7 @@ export async function addItineraryItem(
   ownerId: string,
   input: {
     day: number;
+    title: string | null;
     startTime: Date | null;
     endTime: Date | null;
     notes: string | null;

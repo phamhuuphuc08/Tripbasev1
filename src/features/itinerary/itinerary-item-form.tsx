@@ -44,6 +44,15 @@ export function ItineraryItemForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="item-title">{t("titleLabel")}</Label>
+        <Input
+          id="item-title"
+          name="title"
+          placeholder={t("titlePlaceholder")}
+        />
+      </div>
+
       <div className="grid grid-cols-3 gap-3">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="item-day">{t("dayLabel")}</Label>

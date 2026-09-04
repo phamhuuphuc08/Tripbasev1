@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TRIP_STYLES, type TripStyle } from "@/features/trip/styles";
 import {
   createTripAction,
   updateTripAction,
@@ -20,12 +22,18 @@ import {
 
 const initialState: TripFormState = {};
 
+type Pace = "RELAXED" | "NORMAL" | "BUSY";
+
 export interface TripFormDefaults {
   id: string;
   name: string;
   destination: string;
   startDate: string;
   endDate: string;
+  travelerCount: number;
+  budgetTarget: string;
+  pace: Pace;
+  travelStyle: TripStyle[];
   visibility: "PRIVATE" | "FRIENDS" | "PUBLIC";
   status: "IDEA" | "SCHEDULED" | "COMPLETED";
 }
@@ -94,6 +102,87 @@ export function TripForm({
             defaultValue={defaultValues?.endDate}
           />
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="travelerCount">{t("travelerCountLabel")}</Label>
+          <Input
+            id="travelerCount"
+            name="travelerCount"
+            type="number"
+            min={1}
+            max={50}
+            step={1}
+            defaultValue={defaultValues?.travelerCount ?? 1}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="budgetTarget">{t("budgetTargetLabel")}</Label>
+          <div className="relative">
+            <Input
+              id="budgetTarget"
+              name="budgetTarget"
+              type="number"
+              min={0}
+              step={1000}
+              inputMode="numeric"
+              placeholder={t("budgetTargetPlaceholder")}
+              defaultValue={defaultValues?.budgetTarget}
+              className="pr-12"
+            />
+            <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm">
+              VND
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label>{t("travelStyleLabel")}</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {TRIP_STYLES.map((style) => {
+            const stylePlaceholder: Record<TripStyle, string> = {
+              FOOD: t("styleFood"),
+              SHOPPING: t("styleShopping"),
+              CULTURE: t("styleCulture"),
+              NATURE: t("styleNature"),
+            };
+            return (
+              <label
+                key={style}
+                className="border-input has-[[data-checked]]:border-primary has-[[data-checked]]:bg-primary/5 flex items-center gap-2 rounded-lg border px-2.5 py-2 text-sm"
+              >
+                <Checkbox
+                  name="travelStyle"
+                  value={style}
+                  defaultChecked={defaultValues?.travelStyle?.includes(style)}
+                />
+                {stylePlaceholder[style]}
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="pace">{t("paceLabel")}</Label>
+        <Select name="pace" defaultValue={defaultValues?.pace ?? "NORMAL"}>
+          <SelectTrigger id="pace" className="w-full">
+            <SelectValue>
+              {(value: Pace | null) => {
+                if (value === "RELAXED") return t("paceRelaxed");
+                if (value === "BUSY") return t("paceBusy");
+                return t("paceNormal");
+              }}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="RELAXED">{t("paceRelaxed")}</SelectItem>
+            <SelectItem value="NORMAL">{t("paceNormal")}</SelectItem>
+            <SelectItem value="BUSY">{t("paceBusy")}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex flex-col gap-1.5">

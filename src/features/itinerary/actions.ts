@@ -43,6 +43,7 @@ export async function addItineraryItemAction(
 
   const schema = z.object({
     day: z.coerce.number().int().min(1, t("dayInvalid")),
+    title: z.string().trim().optional(),
     startTime: z.string().optional(),
     endTime: z.string().optional(),
     notes: z.string().trim().optional(),
@@ -51,6 +52,7 @@ export async function addItineraryItemAction(
 
   const parsed = schema.safeParse({
     day: formData.get("day"),
+    title: formData.get("title")?.toString() || undefined,
     startTime: formData.get("startTime")?.toString() || undefined,
     endTime: formData.get("endTime")?.toString() || undefined,
     notes: formData.get("notes")?.toString() || undefined,
@@ -69,6 +71,7 @@ export async function addItineraryItemAction(
   try {
     await addItineraryItem(tripId, session.userId, {
       day: parsed.data.day,
+      title: parsed.data.title?.trim() || null,
       startTime,
       endTime,
       notes: parsed.data.notes?.trim() || null,

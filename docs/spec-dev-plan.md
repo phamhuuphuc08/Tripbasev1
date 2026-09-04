@@ -162,8 +162,9 @@ Ghi chú kỹ thuật:
 ## M01 — Trip Builder
 
 - **Ưu tiên:** P0 · **Spec:** mục 4, 5, 6a
-- **Code:** `src/features/trip/`, `src/server/services/trip.service.ts`, model `Trip`, `Traveler`
-- **Trạng thái:** 🟨 Đang làm (CRUD + travelers + xoá xong, chưa có Map/Budget)
+- **Code:** `src/features/trip/{trip-form,styles,actions}.tsx`, `src/server/services/trip.service.ts`, model `Trip`, `Traveler`
+- **Trạng thái:** 🟨 Đang làm (CRUD + travelers + xoá + ngân sách/sở thích/
+  nhịp độ xong, chưa có Map/Budget board thật)
 
 Đã làm:
 
@@ -193,11 +194,19 @@ Ghi chú kỹ thuật:
       → xuất hiện đúng trên dashboard **và** trên search public ở Home;
       thêm/xoá traveler; xoá trip → về `/trips`, biến mất khỏi danh sách
       và DB (dữ liệu thật trong Postgres)
+- [x] Số người dự kiến, ngân sách dự kiến, phong cách chuyến đi (4 tag cố
+      định: Ẩm thực/Mua sắm/Văn hoá/Thiên nhiên), nhịp độ (Thong thả/Vừa
+      phải/Dày lịch) — `Trip.{travelerCount,budgetTarget,travelStyle,pace}`
+      (migration `add_trip_builder_and_itinerary_fields`), hiện ngay dưới
+      tiêu đề trip. Đây là các field mục 4 của spec mà bản đầu tiên của
+      M01 còn thiếu — coi thêm chi tiết ở mục "Rà soát nhánh cộng sự" trong
+      Changelog.
 
 Chưa làm:
 
-- [ ] Ngân sách, sở thích/nhịp độ từ form lõi mục 2 của spec — thuộc module
-      khác (Budget → `Expense`, M04), chưa có UI
+- [ ] Ngân sách **thực chi** theo hạng mục (Budget board thật, `Expense`,
+      M04) — `budgetTarget` ở trên chỉ là con số ước lượng lúc lập kế
+      hoạch, chưa so sánh được với chi tiêu thật
 - [ ] Badge "Verified by Author" khi chuyển sang "Đã đi" — cố ý chưa làm:
       cần bằng chứng tối thiểu (ảnh/booking) theo guardrail mục 13, phụ
       thuộc Travel Memory (M12) chưa tồn tại; hiện tự do đổi status không
@@ -228,12 +237,21 @@ Chưa làm:
 - [x] Verify qua trình duyệt thật: thêm 2 item (1 có link tag, 1 không) →
       hiện đúng thứ tự theo giờ trong đúng ngày, tag hiện icon + category +
       tên; xoá từng item → cập nhật đúng
+- [x] `title` tuỳ chọn trên mỗi item (migration
+      `add_trip_builder_and_itinerary_fields`) — đặt tên hoạt động tự do
+      cho item không gắn tag (VD: "Ăn sáng ở khách sạn"); nếu vừa có
+      `title` vừa có tag liên kết, `title` hiện làm nhãn chính, tag hiện
+      phụ bên dưới nhỏ hơn. Cũng thêm `sortOrder`/`createdAt`/`updatedAt`
+      vào model — `sortOrder` mới chỉ nằm trong schema (default 0), **chưa
+      dùng để sắp xếp** (vẫn sort theo `day`+`startTime` như cũ), dành chỗ
+      cho kéo-thả thật sau này.
 
 Chưa làm:
 
 - [ ] Kéo thả (drag-and-drop) — MVP hiện dùng form nhập ngày/giờ + tự sắp
       xếp theo `startTime`, **không phải** kéo thả thật; cần đánh giá có
-      đáng thêm thư viện DnD hay không trước khi làm
+      đáng thêm thư viện DnD hay không trước khi làm. Đã có sẵn cột
+      `sortOrder` trong schema chờ dùng.
 - [ ] Cảnh báo travel time/buffer, giờ mở cửa — cần dữ liệu toạ độ/giờ mở
       cửa (Place hoặc LocationTag) mà hiện chưa bắt buộc nhập
 - [ ] Gợi ý dedup **ngay trong lúc gõ** tên địa điểm mới (mục 8.1) — hiện
@@ -857,3 +875,39 @@ origin/main` để đưa `main` về đúng trạng thái đã push trước đ�
     lộ form edit); test locale vi → toàn bộ nhãn, dropdown, checkbox
     dịch đúng. Xoá file test + reset dữ liệu test sau khi xong.
     `lint`/`typecheck`/`build` pass.
+- **Rà soát nhánh cộng sự + hoàn thiện Trip Builder/Itinerary (M01/M02)**,
+  theo yêu cầu "check out vs branch mới, rồi tìm cách kiểm tra và merge
+  vào branch dev, rồi đẩy vào main":
+  - Phát hiện nhánh `feature/trip-builder-itinerary` trên GitHub **không
+    phải do tôi tạo** — do cộng sự (`phamhuuphuc08`) push, tách từ commit
+    cũ (`edeb4e3`, ngay sau bản M01 đầu tiên), độc lập xây tiếp Trip
+    Builder + Itinerary theo hướng riêng, không hay biết các module đã
+    làm thêm trên `dev` từ đó tới giờ (Tag & Tip, Map Planner, đổi font,
+    redesign tạo tag, Creator Profile). Migration Prisma của 2 nhánh rẽ
+    khác nhau từ cùng gốc → **không** merge Git trực tiếp được (sẽ vỡ
+    lịch sử migration, có nguy cơ đè field của 1 trong 2 bên).
+  - Báo tình huống cho user, hỏi hướng xử lý — user chọn **rà soát và
+    merge có chọn lọc, ưu tiên những gì đã có trên `dev`**.
+  - Đã mang sang `dev` (viết lại theo đúng cấu trúc code hiện tại, không
+    copy nguyên file của nhánh kia): `Trip.travelerCount`/`budgetTarget`/
+    `pace`/`travelStyle` (Trip Builder đầy đủ hơn theo mục 4 của spec —
+    xem chi tiết ở mục [M01](#m01--trip-builder)); `ItineraryItem.title`/
+    `sortOrder`/`createdAt`/`updatedAt` (xem mục
+    [M02](#m02--itinerary--smart-timeline)). Gộp chung 1 migration
+    `add_trip_builder_and_itinerary_fields`.
+  - **Cố ý không mang sang**: `itinerary-form.tsx`/`itinerary-timeline.tsx`/
+    `delete-trip-button.tsx` của nhánh kia — khác kiến trúc với bản hiện
+    tại (không liên kết Tag & Tip Library, dùng `datetime-local` thay vì
+    giờ-trong-ngày, có sửa item tại chỗ mà bản hiện tại chưa có) — giữ
+    nguyên UI/luồng hiện tại của `dev` theo đúng lựa chọn "ưu tiên dev"
+    của user; ý tưởng "sửa item tại chỗ" ghi lại như 1 việc chưa làm ở
+    mục Chưa làm của M02 để cân nhắc sau, không bỏ qua hẳn.
+  - Verify qua trình duyệt thật + Postgres thật: tạo trip mới với đủ 4
+    người/20.000.000đ/nhịp độ Thong thả/style Ẩm thực+Thiên nhiên → hiện
+    đúng ngay dưới tiêu đề trip (cả 2 locale vi/en); mở lại form sửa →
+    tất cả field pre-fill đúng giá trị đã lưu; thêm itinerary item có
+    `title` "Lặn ngắm san hô" → hiện đúng làm nhãn chính trong danh sách;
+    kiểm tra trực tiếp qua `psql` khớp 100% với dữ liệu đã nhập. Xoá dữ
+    liệu test sau khi xong. `lint`/`typecheck`/`build` pass.
+  - Commit vào `dev`, sau đó merge `dev` vào `main` theo đúng yêu cầu của
+    user trong cùng chuỗi thao tác này (không phải xác nhận riêng sau).

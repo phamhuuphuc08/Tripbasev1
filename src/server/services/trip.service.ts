@@ -1,4 +1,8 @@
-import { PlanVisibility, type PlanStatus } from "@prisma/client";
+import {
+  PlanVisibility,
+  type PlanStatus,
+  type TravelPace,
+} from "@prisma/client";
 import {
   createTrip as createTripRepo,
   deleteTrip as deleteTripRepo,
@@ -43,6 +47,10 @@ export function createTrip(
     startDate: Date | null;
     endDate: Date | null;
     visibility: PlanVisibility;
+    travelerCount: number;
+    budgetTarget: number | null;
+    pace: TravelPace;
+    travelStyle: string[];
   },
 ) {
   return createTripRepo({ ownerId, ...input });
@@ -67,6 +75,10 @@ export async function updateTrip(
     endDate: Date | null;
     visibility: PlanVisibility;
     status: PlanStatus;
+    travelerCount: number;
+    budgetTarget: number | null;
+    pace: TravelPace;
+    travelStyle: string[];
   },
 ) {
   await assertOwner(tripId, ownerId);
