@@ -1,8 +1,18 @@
-import { MapPinned, MessageSquare, ShieldCheck, Tag } from "lucide-react";
+import {
+  MapPinned,
+  MessageSquare,
+  Pencil,
+  ShieldCheck,
+  Tag,
+} from "lucide-react";
 import { notFound } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
 import type { LucideIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Link } from "@/i18n/navigation";
+import { getSession } from "@/server/auth/session";
 import { getCreatorProfile } from "@/server/services/creator-profile.service";
 
 function initialsOf(name: string): string {
@@ -38,11 +48,19 @@ export default async function CreatorProfilePage({
   params: Promise<{ creatorId: string }>;
 }) {
   const { creatorId } = await params;
-  const profile = await getCreatorProfile(creatorId);
+  const [profile, session] = await Promise.all([
+    getCreatorProfile(creatorId),
+    getSession(),
+  ]);
   if (!profile) notFound();
 
-  const [t, format] = await Promise.all([
+  const isOwner = session?.userId === profile.id;
+
+  const [t, tStyle, tBudget, tInterest, format] = await Promise.all([
     getTranslations("creatorProfile"),
+    getTranslations("travelStyle"),
+    getTranslations("budgetLevel"),
+    getTranslations("travelInterest"),
     getFormatter(),
   ]);
 
@@ -52,15 +70,31 @@ export default async function CreatorProfilePage({
     year: "numeric",
   });
 
+  const hasPreferences =
+    profile.travelStyle != null ||
+    profile.budgetLevel != null ||
+    profile.travelInterests.length > 0;
+
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-6 py-12">
       {/* "Thẻ hội viên" — membership-card styling for the profile header. */}
       <Card className="from-primary to-primary/70 border-0 bg-gradient-to-br py-0 text-white shadow-lg">
         <CardContent className="flex items-center gap-4 py-7">
-          <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-white/15 text-xl font-semibold ring-2 ring-white/30">
-            {initialsOf(profile.name)}
-          </div>
-          <div className="flex flex-col gap-1">
+          {profile.image ? (
+            // Locally uploaded file (src/server/storage/avatar.ts), not an
+            // optimizable remote asset worth next/image's config for.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profile.image}
+              alt=""
+              className="size-16 shrink-0 rounded-full object-cover ring-2 ring-white/30"
+            />
+          ) : (
+            <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-white/15 text-xl font-semibold ring-2 ring-white/30">
+              {initialsOf(profile.name)}
+            </div>
+          )}
+          <div className="flex flex-1 flex-col gap-1">
             <span className="text-xs font-medium tracking-widest text-white/70 uppercase">
               {t("cardLabel")}
             </span>
@@ -68,7 +102,22 @@ export default async function CreatorProfilePage({
             <span className="text-sm text-white/80">
               {t("memberSince", { date: memberSince })}
             </span>
+            {profile.bio && (
+              <p className="mt-1 text-sm text-white/90">{profile.bio}</p>
+            )}
           </div>
+          {isOwner && (
+            <Button
+              render={<Link href={`/creators/${profile.id}/edit`} />}
+              nativeButton={false}
+              variant="secondary"
+              size="sm"
+              className="shrink-0"
+            >
+              <Pencil className="size-3.5" />
+              {t("editButton")}
+            </Button>
+          )}
         </CardContent>
       </Card>
 
@@ -97,6 +146,33 @@ export default async function CreatorProfilePage({
           />
         </div>
       </div>
+
+      {(hasPreferences || isOwner) && (
+        <div className="flex flex-col gap-3">
+          <h2 className="text-sm font-medium">{t("preferencesHeading")}</h2>
+          {hasPreferences ? (
+            <div className="flex flex-wrap gap-2">
+              {profile.travelStyle && (
+                <Badge variant="secondary">{tStyle(profile.travelStyle)}</Badge>
+              )}
+              {profile.budgetLevel && (
+                <Badge variant="secondary">
+                  {tBudget(profile.budgetLevel)}
+                </Badge>
+              )}
+              {profile.travelInterests.map((interest) => (
+                <Badge key={interest} variant="outline">
+                  {tInterest(interest)}
+                </Badge>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              {t("preferencesEmpty")}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

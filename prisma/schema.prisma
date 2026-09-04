@@ -65,7 +65,17 @@ model User {
   id           String   @id @default(cuid())
   name         String
   email        String   @unique
+  // Avatar image path — local upload under public/uploads/avatars (see
+  // src/server/storage/avatar.ts), not an external CDN URL.
   image        String?
+  bio          String?
+  // Fixed, app-level unions (src/features/profile/preferences.ts), not DB
+  // enums — same "free-text column, coerce at the boundary" choice already
+  // used for LocationTag.category, so adding an option never needs a
+  // migration.
+  travelStyle     String?  @map("travel_style")
+  budgetLevel     String?  @map("budget_level")
+  travelInterests String[] @default([]) @map("travel_interests")
   // Credentials-based auth for this stage (see src/server/auth). Nullable so
   // a future OAuth provider can create users without a local password.
   passwordHash String?  @map("password_hash")

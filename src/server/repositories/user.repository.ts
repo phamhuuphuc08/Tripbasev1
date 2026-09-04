@@ -15,3 +15,17 @@ export function createUser(data: {
 }) {
   return prisma.user.create({ data });
 }
+
+export function updateUserProfile(
+  id: string,
+  data: {
+    name: string;
+    bio: string | null;
+    travelStyle: string | null;
+    budgetLevel: string | null;
+    travelInterests: string[];
+    image?: string;
+  },
+) {
+  return prisma.user.update({ where: { id }, data });
+}

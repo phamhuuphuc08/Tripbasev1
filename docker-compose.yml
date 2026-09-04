@@ -37,6 +37,13 @@ services:
     ports:
       # Override with `WEB_PORT=3001 docker compose up` if 3000 is taken.
       - "${WEB_PORT:-3000}:3000"
+    volumes:
+      # User-uploaded avatars (src/server/storage/avatar.ts) — persists
+      # across image rebuilds. Next.js serves public/ straight off disk at
+      # runtime, so anything written here is immediately reachable at
+      # /uploads/avatars/<file> with no extra routing.
+      - avatar_uploads:/app/public/uploads
 
 volumes:
   tripbase_db_data:
+  avatar_uploads:

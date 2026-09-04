@@ -377,12 +377,14 @@ Chưa làm:
 ## M09 — Reputation Engine
 
 - **Ưu tiên:** P1 · **Spec:** mục 3, 7, 8, 9, 13, 15
-- **Code:** `src/app/[locale]/(app)/creators/[creatorId]/page.tsx`,
-  `src/server/services/creator-profile.service.ts`,
-  `src/server/repositories/comment.repository.ts`, model `CreatorReputation`,
-  `Citation`, `PlanCopy`
-- **Trạng thái:** 🟨 Phase 1 xong (profile card + số liệu đóng góp thật),
-  chưa làm phần scoring/CopyPlan (2026-09-04)
+- **Code:** `src/app/[locale]/(app)/creators/[creatorId]/{page,edit/page}.tsx`,
+  `src/features/profile/`, `src/server/services/creator-profile.service.ts`,
+  `src/server/repositories/comment.repository.ts`,
+  `src/server/storage/avatar.ts`, model `CreatorReputation`, `Citation`,
+  `PlanCopy`
+- **Trạng thái:** 🟨 Phase 1 + Phase 2 xong (profile card + số liệu đóng
+  góp thật + edit hồ sơ/avatar/sở thích du lịch), chưa làm phần
+  scoring/CopyPlan (2026-09-04)
 
 Đã làm (Phase 1 — theo yêu cầu "làm thêm tính năng profile, click vào xem
 được profile như 1 thẻ hội viên, ghi nhận các đóng góp"):
@@ -406,6 +408,46 @@ Chưa làm:
 - [x] Trang public, ai cũng xem được (không gate đăng nhập) — chỉ lộ số
       liệu tổng hợp, không lộ nội dung trip riêng tư nào
 
+Đã làm (Phase 2 — theo yêu cầu "thiết kế profile icon chuẩn đi, cho phép
+update 1 số thông tin, điền sở thích liên quan du lịch, để làm cơ sở
+matching, suggestion sau này"):
+
+- [x] Avatar ảnh thật — chọn hướng **upload ảnh, lưu local disk** (không
+      URL/emoji) theo lựa chọn của user. `src/server/storage/avatar.ts`:
+      validate mime type (jpeg/png/webp/gif) + giới hạn 4MB, ghi file vào
+      `public/uploads/avatars/<userId>-<timestamp>.<ext>`, Next.js tự
+      serve như static file, không cần route riêng. Dọn file avatar cũ
+      sau khi lưu file mới thành công (best-effort, không throw).
+  - `next.config.ts`: nâng `serverActions.bodySizeLimit` lên `5mb` (mặc
+    định 1MB không đủ cho ảnh).
+  - Docker: thêm named volume `avatar_uploads:/app/public/uploads` để
+    ảnh không mất khi rebuild image.
+- [x] `User` thêm field `bio`, `travelStyle`, `budgetLevel`,
+      `travelInterests` (migration `add_profile_fields`) — union cố định
+      ở app-layer (`src/features/profile/preferences.ts`), cùng cách làm
+      với `LocationTag.category`, không phải DB enum, thêm lựa chọn mới
+      không cần migration.
+  - `TRAVEL_STYLES`: Solo/Couple/Family/Group/Backpacker.
+  - `BUDGET_LEVELS`: Tiết kiệm/Tầm trung/Cao cấp.
+  - `TRAVEL_INTERESTS`: 10 mục cố định (Biển, Núi, Thành phố, Ẩm thực,
+    Văn hoá & lịch sử, Mạo hiểm, Giải trí đêm, Nghỉ dưỡng, Chụp ảnh,
+    Phượt tiết kiệm) — multi-select qua checkbox.
+- [x] Trang `/creators/[creatorId]/edit` — chỉ chủ sở hữu mới vào được
+      (redirect về login nếu chưa đăng nhập, redirect về trang profile
+      nếu không phải chính mình — check lại lần 2 ngay trong
+      `updateProfileAction`, không chỉ chặn ở UI). Form: avatar (có
+      preview qua `URL.createObjectURL`), tên, bio (textarea, tối đa 280
+      ký tự), 2 select phong cách/ngân sách (tuỳ chọn), lưới checkbox sở
+      thích.
+- [x] Trang profile hiện thêm: ảnh đại diện thật (fallback về chữ cái
+      đầu tên nếu chưa có), bio, và badge "Sở thích du lịch" (phong
+      cách + ngân sách + các sở thích đã chọn) — nút "Edit profile" chỉ
+      hiện với chính chủ.
+- **Chỉ dừng ở thu thập dữ liệu có cấu trúc** — chưa có bất kỳ thuật
+  toán matching/suggestion nào đọc `travelInterests`/`travelStyle`/
+  `budgetLevel`; đây là nền tảng dữ liệu để làm việc đó sau, chưa phải
+  tính năng matching thật.
+
 Chưa làm (vẫn thuộc M09 gốc — cần Reputation Engine đầy đủ):
 
 - [ ] Công thức CopyPlan Score (mục 7) — background job, không real-time
@@ -415,7 +457,10 @@ Chưa làm (vẫn thuộc M09 gốc — cần Reputation Engine đầy đủ):
       (`CreatorReputation` model vẫn chưa được ghi bởi bất kỳ service nào)
 - [ ] Scoring job scheduler (cron/queue — mục 15)
 - [ ] Guardrail chống gian lận (mục 13): wash-trading cluster, self-cite
-- [ ] Avatar ảnh thật (`User.image`) — hiện chỉ có avatar chữ cái đầu tên
+- [ ] Thuật toán matching/suggestion dựa trên sở thích du lịch — mới có
+      dữ liệu, chưa có logic dùng nó
+- [ ] Resize/nén ảnh avatar phía server (hiện lưu nguyên file gốc, giới
+      hạn duy nhất là 4MB)
 
 Ghi chú kỹ thuật:
 
@@ -425,6 +470,14 @@ Ghi chú kỹ thuật:
   `absolute inset-0` làm nền cho cả card, nội dung phía trên đặt
   `pointer-events-none`, chỉ bật lại `pointer-events-auto` ở đúng link
   tên chủ sở hữu.
+- Base UI `Select`/`Checkbox` không nhận `value=""` làm giá trị "chưa
+  chọn" một cách gọn gàng — dùng sentinel string `"none"` (giống pattern
+  đã có ở `itinerary-item-form.tsx` cho tag tuỳ chọn), coi `"none"` là
+  `undefined` ở boundary của Server Action.
+- `public/` được `next start` serve trực tiếp từ đĩa tại runtime (app
+  này không dùng `output: "standalone"`), nên file ghi vào
+  `public/uploads/avatars/` sau khi build/start vẫn được serve ngay lập
+  tức ở `/uploads/avatars/<file>` — không cần route/API riêng để trả ảnh.
 
 ---
 
@@ -769,3 +822,38 @@ false})` vì không gọi được `ssr:false` trực tiếp trong Server Compon
     vi → toàn bộ nhãn dịch đúng, format ngày `dd/mm/yyyy`; test
     `creatorId` không tồn tại → 404 đúng. `lint`/`typecheck`/`build` pass.
     Committed vào `dev`.
+  - Lưu ý quy trình: bước cuối lỡ commit thẳng vào `main` (do sau lần
+    merge trước, repo còn đang ở nhánh `main`) — phát hiện trước khi
+    push, xử lý bằng cherry-pick commit sang `dev` rồi `git reset --hard
+origin/main` để đưa `main` về đúng trạng thái đã push trước đó,
+    không có gì rò rỉ lên `origin/main`.
+- **Edit hồ sơ + avatar upload + sở thích du lịch (M09 Phase 2)**, theo
+  yêu cầu "thiết kế profile icon chuẩn đi, cho phép update 1 số thông
+  tin. Điền sở thích liên quan du lịch này kia nữa. Để làm cơ sở
+  matching, suggestion sau này":
+  - Hỏi lại user hướng làm avatar (emoji / upload local disk / URL) do
+    mỗi hướng có đánh đổi hạ tầng khác nhau — user chọn **upload ảnh
+    thật, lưu local disk**.
+  - Schema: `User` thêm `bio`, `travelStyle`, `budgetLevel`,
+    `travelInterests` (migration `add_profile_fields`).
+  - `src/server/storage/avatar.ts`: lưu file vào
+    `public/uploads/avatars/`, validate type/size, dọn file cũ sau khi
+    lưu file mới; Docker có volume riêng để không mất ảnh khi rebuild.
+  - `next.config.ts`: `serverActions.bodySizeLimit: "5mb"` (mặc định 1MB
+    của Next.js không đủ cho upload ảnh).
+  - Trang `/creators/[creatorId]/edit` (gate chủ sở hữu ở cả UI lẫn
+    Server Action) — form avatar/tên/bio/phong cách/ngân sách/sở thích
+    (checkbox đa chọn, 10 mục cố định). Trang profile hiện avatar thật
+    (fallback chữ cái đầu tên), bio, và badge sở thích; nút "Edit
+    profile" chỉ hiện với chính chủ.
+  - Thêm 2 shadcn component còn thiếu: `Checkbox`, `Textarea`.
+  - Verify qua trình duyệt thật, dữ liệu thật: upload ảnh test (màu hồng
+    riêng biệt) → hiện đúng ngay trên card, file cũ trên đĩa bị xoá sau
+    khi lưu file mới (kiểm tra trực tiếp thư mục), DB có đúng path/bio/
+    travel_style=BACKPACKER/travel_interests={BEACH,FOOD}; upload file
+    `.txt` giả dạng ảnh → bị chặn đúng ("Unsupported image format"),
+    không ghi gì xuống đĩa/DB; vào thẳng URL edit của người khác trong
+    khi đang đăng nhập user khác → bị redirect về trang profile (không
+    lộ form edit); test locale vi → toàn bộ nhãn, dropdown, checkbox
+    dịch đúng. Xoá file test + reset dữ liệu test sau khi xong.
+    `lint`/`typecheck`/`build` pass.

@@ -17,6 +17,10 @@
 /.next/
 /out/
 
+# user-uploaded avatars (src/server/storage/avatar.ts) — local disk only,
+# persisted via a Docker volume in production, never committed
+/public/uploads/
+
 # production
 /build
 
