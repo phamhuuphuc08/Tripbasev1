@@ -27,7 +27,7 @@ Tổng quan kiến trúc: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 | M06 | [Checklist](#m06--checklist)                                  | P0      | ✅         | ⬜      | ⬜  | ⬜         |
 | M07 | [Share & Permission](#m07--share--permission)                 | P0      | ✅         | ⬜      | ⬜  | ⬜         |
 | M08 | [CopyPlan Engine](#m08--copyplan-engine)                      | P0      | ✅         | ⬜      | ⬜  | ⬜         |
-| M09 | [Reputation Engine](#m09--reputation-engine)                  | P1      | ✅         | ⬜      | ⬜  | ⬜         |
+| M09 | [Reputation Engine](#m09--reputation-engine)                  | P1      | ✅         | 🟨      | 🟨  | 🟨         |
 | M10 | [Plan Marketplace / Explore](#m10--plan-marketplace--explore) | P1      | ✅         | 🟨      | 🟨  | 🟨         |
 | M11 | [Tag & Tip Library](#m11--tag--tip-library)                   | P1      | ✅         | ✅      | ✅  | 🟨         |
 | M12 | [Travel Memory](#m12--travel-memory)                          | P2      | ⬜         | ⬜      | ⬜  | ⬜         |
@@ -128,11 +128,18 @@ theme-toggle,theme-provider,language-switcher,placeholder-screen}.tsx`
       `Intl.DateTimeFormat("vi-VN", ...)` nữa.
 - [x] Next.js 16: đổi `middleware.ts` (deprecated) → `src/proxy.ts` theo
       convention mới.
+- [x] Đổi font UI từ Geist Sans sang **Inter** (theo yêu cầu "đổi font chữ
+      thành chữ modern UI hay dùng và phù hợp đa ngôn ngữ"), subsets
+      `latin`/`latin-ext`/`vietnamese`; chuỗi fallback `--font-sans` kết
+      thúc bằng font hệ thống chuyên CJK (Noto Sans JP/SC, Hiragino Sans,
+      PingFang SC, Microsoft YaHei) để JA/ZH sau này hiển thị đúng ngay
+      không cần đổi font. Tiện thể fix 1 bug có sẵn: `--font-sans` bị tự
+      tham chiếu chính nó nên trước giờ chưa từng áp dụng đúng font.
 
 Chưa làm:
 
-- [ ] Explore/Saved/Trips/Creator vẫn là `PlaceholderScreen` — chưa có UI
-      thật để đánh giá redesign trên các trang đó
+- [ ] Explore/Saved vẫn là `PlaceholderScreen` — chưa có UI thật để đánh
+      giá redesign trên các trang đó (Trip/Creator đã có UI thật)
 - [ ] Chưa có cách người dùng tự chọn/khoá 1 ngôn ngữ lâu dài qua UI settings
       (hiện chỉ đổi tức thời bằng nút, next-intl tự set cookie `NEXT_LOCALE`)
 - [ ] Chưa test responsive mobile kỹ (mới verify ở viewport desktop)
@@ -369,17 +376,55 @@ Chưa làm:
 
 ## M09 — Reputation Engine
 
-- **Ưu tiên:** P1 · **Spec:** mục 3, 7, 8, 13, 15
-- **Code:** `src/features/reputation/`, model `CreatorReputation`, `Citation`, `PlanCopy`
-- **Trạng thái:** ⬜ Chưa bắt đầu
+- **Ưu tiên:** P1 · **Spec:** mục 3, 7, 8, 9, 13, 15
+- **Code:** `src/app/[locale]/(app)/creators/[creatorId]/page.tsx`,
+  `src/server/services/creator-profile.service.ts`,
+  `src/server/repositories/comment.repository.ts`, model `CreatorReputation`,
+  `Citation`, `PlanCopy`
+- **Trạng thái:** 🟨 Phase 1 xong (profile card + số liệu đóng góp thật),
+  chưa làm phần scoring/CopyPlan (2026-09-04)
 
-Chưa làm:
+Đã làm (Phase 1 — theo yêu cầu "làm thêm tính năng profile, click vào xem
+được profile như 1 thẻ hội viên, ghi nhận các đóng góp"):
+
+- [x] Trang `/creators/[creatorId]` thật thay cho placeholder cũ — style
+      "thẻ hội viên" (gradient, avatar chữ cái đầu tên, "Tham gia từ {ngày}")
+  - lưới 4 ô thống kê đóng góp
+- [x] `getCreatorProfile(userId)` — số liệu **thật, đếm trực tiếp từ DB**,
+      không mock: số trip đã tạo (`Trip.count` theo `ownerId`), số location
+      tag đã thêm (`LocationTag.count` theo `ownerId`), tổng `citeTrustScore`
+      cộng dồn trên các tag đó ("Điểm tin cậy tag" — chỉ là phép cộng đơn
+      giản trên field có sẵn, **không phải** công thức Cite Trust Score có
+      trọng số ở mục 8), và số comment (`Comment.count` theo `userId` — luôn
+      ra 0 vì tính năng comment (M06/M07) chưa xây, số liệu vẫn thật chứ
+      không phải giả)
+- [x] Gắn link tới profile ở mọi nơi đang hiện tên chủ sở hữu: tên user
+      đăng nhập ở `SiteHeader`, "by {name}" trên card trip ở trang chủ, "by
+      {name}" trên card tag ở `/tags`, "Created by {owner}" ở trang chi tiết
+      trip — dùng `t.rich("by"/"meta", {link: ...})` để chỉ phần tên là link,
+      không phải cả câu
+- [x] Trang public, ai cũng xem được (không gate đăng nhập) — chỉ lộ số
+      liệu tổng hợp, không lộ nội dung trip riêng tư nào
+
+Chưa làm (vẫn thuộc M09 gốc — cần Reputation Engine đầy đủ):
 
 - [ ] Công thức CopyPlan Score (mục 7) — background job, không real-time
-- [ ] Công thức Cite Trust Score (mục 8)
+- [ ] Công thức Cite Trust Score có trọng số đầy đủ (mục 8) — hiện chỉ có
+      tổng đơn giản, xem "Đã làm" ở trên
 - [ ] Creator Reputation tổng hợp có trọng số theo plan mới nhất
+      (`CreatorReputation` model vẫn chưa được ghi bởi bất kỳ service nào)
 - [ ] Scoring job scheduler (cron/queue — mục 15)
 - [ ] Guardrail chống gian lận (mục 13): wash-trading cluster, self-cite
+- [ ] Avatar ảnh thật (`User.image`) — hiện chỉ có avatar chữ cái đầu tên
+
+Ghi chú kỹ thuật:
+
+- Card trip ở trang chủ trước đó bọc toàn bộ card trong 1 `<Link>` — thêm
+  link riêng cho tên chủ sở hữu bên trong sẽ tạo `<a>` lồng `<a>`, không
+  hợp lệ HTML. Xử lý bằng pattern "stretched link": `<Link>` phủ
+  `absolute inset-0` làm nền cho cả card, nội dung phía trên đặt
+  `pointer-events-none`, chỉ bật lại `pointer-events-auto` ở đúng link
+  tên chủ sở hữu.
 
 ---
 
@@ -415,9 +460,20 @@ Chưa làm:
 
 - **Ưu tiên:** P1 · **Spec:** mục 4, 8.1
 - **Code:** `src/features/tag-tip/`, model `LocationTag`
-- **Trạng thái:** 🟨 Đang làm (lookup + dedup lõi xong, chưa gắn vào itinerary)
+- **Trạng thái:** 🟨 Đang làm (lookup + dedup lõi xong; đã liên kết vào
+  itinerary qua tag-picker từ M02 — chỉ chưa có gợi ý dedup ngay lúc gõ)
 
 Đã làm:
+
+- [x] Tách màn hình tạo tag ra `/tags/new` riêng (theo yêu cầu "Create tag
+      screen nên làm lại") — không còn form chìm ở cuối trang list. Trang
+      `/tags` có nút "Tạo tag" ở header (giống nút "Tạo trip" ở dashboard
+      trips) và luôn trỏ tới `/tags/new`; trang đó tự redirect sang
+      `/login?callbackUrl=/tags/new` nếu chưa đăng nhập (cùng convention
+      với các link `/trips` trong `SiteHeader`, gate nằm ở route đích chứ
+      không lặp lại ở từng nơi có link tới). Empty-state khi tìm không ra
+      kết quả có nút "Tạo tag này" mang theo từ khoá vừa gõ để prefill
+      sẵn tên trên `/tags/new`.
 
 - [x] Trang `/tags` (public, không cần đăng nhập để xem/tìm) — search theo
       tên + filter theo category, card hiện icon, category badge, trust
@@ -675,3 +731,41 @@ false})` vì không gọi được `ssr:false` trực tiếp trong Server Compon
     lý. Xoá trip test sau khi xong để không để lại data rác.
     `lint`/`typecheck`/`build` pass. Committed vào `dev`, chưa merge
     `main`.
+- **Đổi font UI sang Inter (M14)**, theo yêu cầu "đổi font chữ thành chữ
+  modern UI hay dùng và phù hợp đa ngôn ngữ sau này như En, JA, CN": xem
+  chi tiết ở mục [M14](#m14--i18n--ui-polish) — gồm cả fix bug
+  `--font-sans` tự tham chiếu khiến font trước đó chưa từng áp dụng đúng.
+  Verify qua browser thật (`getComputedStyle`, chữ có dấu tiếng Việt hiện
+  đúng nét). Committed vào `dev`, sau đó **đã merge vào `main`** theo xác
+  nhận "test xong, merge dev vào main đi" của user (gộp chung với M03 và
+  phần tag-screen redesign bên dưới trong cùng 1 lần merge).
+- **Tách màn hình tạo tag (M11)**, theo yêu cầu "Create tag screen nên
+  làm lại và từ màn hình list a tag sẽ tổ chức button create tag sao cho
+  hợp lý nhất": xem chi tiết ở mục [M11](#m11--tag--tip-library). Verify
+  qua browser thật: tạo/xoá tag test trên `/tags/new` để xác nhận luồng
+  dedup vẫn đúng; logout rồi vào `/tags/new` → redirect đúng callbackUrl;
+  empty-state "Tạo tag này" prefill đúng từ khoá đã tìm.
+  `lint`/`typecheck`/`build` pass. Committed + merge vào `main` cùng đợt
+  với 2 mục trên.
+- **Creator Profile — Phase 1 (M09)**, theo yêu cầu "làm thêm tính năng
+  profile, click vào xem được profile như 1 thẻ hội viên, ghi nhận các
+  đóng góp": xem chi tiết ở mục [M09](#m09--reputation-engine).
+  - Thay placeholder `/creators/[creatorId]` bằng trang thật: "thẻ hội
+    viên" (avatar chữ cái đầu, tên, ngày tham gia) + 4 ô thống kê đóng
+    góp — tất cả đếm thật từ Postgres, không mock: số trip đã tạo, số
+    location tag đã thêm, tổng `citeTrustScore` cộng dồn trên các tag đó,
+    số comment (đúng 0 vì tính năng comment chưa xây — số liệu vẫn thật).
+  - Gắn link tới profile ở mọi chỗ đang hiện tên chủ sở hữu: tên mình ở
+    `SiteHeader`, "by {name}" trên card trip trang chủ, "by {name}" trên
+    card tag `/tags`, "Created by {owner}" ở trang chi tiết trip.
+  - Debug đáng chú ý: card trip ở trang chủ vốn bọc toàn bộ card trong 1
+    `<Link>` — thêm link riêng cho tên chủ sở hữu bên trong sẽ tạo `<a>`
+    lồng `<a>`, không hợp lệ HTML. Xử lý bằng pattern "stretched link"
+    (xem Ghi chú kỹ thuật ở mục M09).
+  - Verify qua browser thật với dữ liệu thật: xem profile "Linh Creator"
+    → đúng 3 trip / 4 tag / 0 comment / 49 điểm tin cậy (khớp tổng
+    `citeTrustScore` thật của 4 tag seed: 14+22+5+8); xem profile
+    "TripBase Demo" → đúng 2 trip / 4 tag / 0 comment / 3 điểm; test locale
+    vi → toàn bộ nhãn dịch đúng, format ngày `dd/mm/yyyy`; test
+    `creatorId` không tồn tại → 404 đúng. `lint`/`typecheck`/`build` pass.
+    Committed vào `dev`.

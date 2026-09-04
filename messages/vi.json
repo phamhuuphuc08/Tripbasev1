@@ -29,7 +29,7 @@
   },
   "tripCard": {
     "verified": "Đã xác thực",
-    "by": "bởi {name}"
+    "by": "bởi <link>{name}</link>"
   },
   "tripVisibility": {
     "PRIVATE": "🔒 Riêng tư",
@@ -86,7 +86,7 @@
   "tripDetail": {
     "gateDescription": "{destination} — plan này public, đăng nhập để xem đầy đủ Timeline/Map/Budget.",
     "loginCta": "Đăng nhập để xem chi tiết",
-    "meta": "Tạo bởi {owner} · {count, plural, =0 {chưa có điểm nào} other {# điểm}} trong itinerary"
+    "meta": "Tạo bởi <link>{owner}</link> · {count, plural, =0 {chưa có điểm nào} other {# điểm}} trong itinerary"
   },
   "itinerary": {
     "heading": "Itinerary (Smart Timeline)",
@@ -165,7 +165,7 @@
     "allCategories": "Tất cả danh mục",
     "empty": "Chưa có tag nào khớp.",
     "emptyCta": "Tạo tag này",
-    "by": "bởi {name}",
+    "by": "bởi <link>{name}</link>",
     "createButton": "Tạo tag",
     "createHeading": "Tạo tag mới",
     "newPageDescription": "Điền thông tin địa điểm hoặc tip bên dưới — hệ thống sẽ tự kiểm tra trùng lặp trước, giúp thư viện không bị trùng nội dung gần giống nhau.",
@@ -203,10 +203,18 @@
     "saved": {
       "title": "Saved Library",
       "description": "Danh sách plan đã Bookmark, riêng tư cho từng user."
-    },
-    "creator": {
-      "title": "Creator {id}",
-      "description": "Tổng lượt CopyPlan nhận được, danh sách plan, biểu đồ uy tín theo thời gian."
     }
+  },
+  "creatorProfile": {
+    "cardLabel": "Thành viên TripBase",
+    "memberSince": "Tham gia từ {date}",
+    "contributionsHeading": "Đóng góp",
+    "stats": {
+      "trips": "Trip đã tạo",
+      "tags": "Địa điểm & tip đã thêm",
+      "comments": "Bình luận",
+      "trustPoints": "Điểm tin cậy tag"
+    },
+    "notFound": "Không tìm thấy thành viên này."
   }
 }

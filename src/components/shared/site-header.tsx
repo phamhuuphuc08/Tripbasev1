@@ -55,9 +55,12 @@ export async function SiteHeader() {
 
         {session ? (
           <div className="flex items-center gap-3">
-            <span className="text-muted-foreground hidden sm:inline">
+            <Link
+              href={`/creators/${session.userId}`}
+              className="text-muted-foreground hover:text-foreground hidden transition-colors sm:inline"
+            >
               {session.name}
-            </span>
+            </Link>
             <form action={logoutAction}>
               <Button type="submit" variant="ghost" size="sm">
                 {t("logout")}

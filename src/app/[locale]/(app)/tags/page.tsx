@@ -144,7 +144,17 @@ export default async function TagsPage({
                     </Badge>
                     <span className="text-muted-foreground text-xs">
                       {tier !== "verified" && `${tTrust(tier)} · `}
-                      {t("by", { name: tag.owner.name })}
+                      {t.rich("by", {
+                        name: tag.owner.name,
+                        link: (chunks) => (
+                          <Link
+                            href={`/creators/${tag.owner.id}`}
+                            className="hover:text-foreground hover:underline"
+                          >
+                            {chunks}
+                          </Link>
+                        ),
+                      })}
                     </span>
                   </div>
                 </CardContent>

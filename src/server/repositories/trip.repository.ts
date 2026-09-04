@@ -42,6 +42,10 @@ export function findTripsByOwner(ownerId: string) {
   });
 }
 
+export function countTripsByOwner(ownerId: string) {
+  return prisma.trip.count({ where: { ownerId } });
+}
+
 export function createTrip(data: {
   ownerId: string;
   name: string;

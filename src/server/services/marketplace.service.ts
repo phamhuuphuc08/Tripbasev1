@@ -11,6 +11,7 @@ export interface TripSearchResult {
   endDate: Date | null;
   status: string;
   verifiedByAuthor: boolean;
+  ownerId: string;
   ownerName: string;
 }
 
@@ -43,6 +44,7 @@ export async function searchPublicTrips(
     endDate: trip.endDate,
     status: trip.status,
     verifiedByAuthor: trip.verifiedByAuthor,
+    ownerId: trip.owner.id,
     ownerName: trip.owner.name,
   }));
 

@@ -47,3 +47,20 @@ export function createLocationTag(data: {
 }) {
   return prisma.locationTag.create({ data });
 }
+
+/**
+ * Contribution stats for a creator's profile card: how many tags they've
+ * added, plus the sum of citeTrustScore across them — a simple, real signal
+ * from existing data, not the weighted Cite Trust Score formula from mục 8
+ * (that still needs the full Reputation Engine, M09).
+ */
+export async function getTagContributionStats(ownerId: string) {
+  const [count, aggregate] = await Promise.all([
+    prisma.locationTag.count({ where: { ownerId } }),
+    prisma.locationTag.aggregate({
+      where: { ownerId },
+      _sum: { citeTrustScore: true },
+    }),
+  ]);
+  return { count, trustPoints: aggregate._sum.citeTrustScore ?? 0 };
+}

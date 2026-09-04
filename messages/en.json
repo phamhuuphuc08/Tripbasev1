@@ -29,7 +29,7 @@
   },
   "tripCard": {
     "verified": "Verified",
-    "by": "by {name}"
+    "by": "by <link>{name}</link>"
   },
   "tripVisibility": {
     "PRIVATE": "🔒 Private",
@@ -86,7 +86,7 @@
   "tripDetail": {
     "gateDescription": "{destination} — this plan is public, log in to see the full Timeline/Map/Budget.",
     "loginCta": "Log in to view details",
-    "meta": "Created by {owner} · {count, plural, =0 {no items yet} other {# items}} in itinerary"
+    "meta": "Created by <link>{owner}</link> · {count, plural, =0 {no items yet} other {# items}} in itinerary"
   },
   "itinerary": {
     "heading": "Itinerary (Smart Timeline)",
@@ -165,7 +165,7 @@
     "allCategories": "All categories",
     "empty": "No tag matches yet.",
     "emptyCta": "Create it",
-    "by": "by {name}",
+    "by": "by <link>{name}</link>",
     "createButton": "Create tag",
     "createHeading": "Create a tag",
     "newPageDescription": "Fill in the place or tip below — we'll check for duplicates first, so the library stays free of near-identical entries.",
@@ -203,10 +203,18 @@
     "saved": {
       "title": "Saved Library",
       "description": "Your bookmarked plans, private per user."
-    },
-    "creator": {
-      "title": "Creator {id}",
-      "description": "Total CopyPlan received, list of plans, reputation chart over time."
     }
+  },
+  "creatorProfile": {
+    "cardLabel": "TripBase member",
+    "memberSince": "Member since {date}",
+    "contributionsHeading": "Contributions",
+    "stats": {
+      "trips": "Trips created",
+      "tags": "Places & tips added",
+      "comments": "Comments",
+      "trustPoints": "Tag trust points"
+    },
+    "notFound": "This member couldn't be found."
   }
 }

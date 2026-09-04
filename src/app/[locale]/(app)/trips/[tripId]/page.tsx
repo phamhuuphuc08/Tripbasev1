@@ -153,9 +153,17 @@ export default async function TripDetailPage({
         )}
         <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
           <User className="size-3" />
-          {t("meta", {
+          {t.rich("meta", {
             owner: trip.owner.name,
             count: trip._count.itineraryItems,
+            link: (chunks) => (
+              <Link
+                href={`/creators/${trip.owner.id}`}
+                className="hover:text-foreground hover:underline"
+              >
+                {chunks}
+              </Link>
+            ),
           })}
         </p>
       </div>

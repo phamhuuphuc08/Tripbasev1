@@ -26,47 +26,62 @@ async function TripResultCard({ trip }: { trip: TripSearchResult }) {
       : null;
 
   return (
-    <Link href={`/trips/${trip.id}`}>
-      <Card className="hover:border-primary/40 hover:shadow-primary/5 h-full gap-3 py-5 transition-all hover:shadow-md">
-        <CardHeader>
-          <div className="flex items-start justify-between gap-2">
-            <CardTitle className="text-base leading-snug">
-              {trip.name}
-            </CardTitle>
-            {trip.verifiedByAuthor && (
-              <Badge
-                variant="secondary"
-                className="bg-accent text-accent-foreground shrink-0 gap-1"
-              >
-                <BadgeCheck className="size-3" />
-                {t("verified")}
-              </Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-1.5 text-sm">
-          <span className="text-foreground/90 flex items-center gap-1.5">
-            <MapPin className="text-primary size-3.5 shrink-0" />
-            {trip.destination}
-          </span>
-          {dateRange && (
-            <span className="text-muted-foreground flex items-center gap-1.5">
-              <CalendarRange className="size-3.5 shrink-0" />
-              {dateRange}
-            </span>
-          )}
-          <div className="mt-2 flex items-center justify-between">
-            <Badge variant="outline">
-              {tStatus(trip.status as "IDEA" | "SCHEDULED" | "COMPLETED")}
+    <Card className="hover:border-primary/40 hover:shadow-primary/5 relative h-full gap-3 py-5 transition-all hover:shadow-md">
+      {/* Stretched-link: covers the whole card so it's clickable anywhere,
+          while sitting beneath the owner name below (pointer-events:none on
+          that content, re-enabled just on the name) so the name can still
+          be its own link — nesting an <a> inside <a> isn't valid HTML. */}
+      <Link
+        href={`/trips/${trip.id}`}
+        className="absolute inset-0 z-0"
+        aria-label={trip.name}
+      />
+      <CardHeader className="pointer-events-none relative z-10">
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="text-base leading-snug">{trip.name}</CardTitle>
+          {trip.verifiedByAuthor && (
+            <Badge
+              variant="secondary"
+              className="bg-accent text-accent-foreground shrink-0 gap-1"
+            >
+              <BadgeCheck className="size-3" />
+              {t("verified")}
             </Badge>
-            <span className="text-muted-foreground flex items-center gap-1 text-xs">
-              <User className="size-3" />
-              {t("by", { name: trip.ownerName })}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="pointer-events-none relative z-10 flex flex-col gap-1.5 text-sm">
+        <span className="text-foreground/90 flex items-center gap-1.5">
+          <MapPin className="text-primary size-3.5 shrink-0" />
+          {trip.destination}
+        </span>
+        {dateRange && (
+          <span className="text-muted-foreground flex items-center gap-1.5">
+            <CalendarRange className="size-3.5 shrink-0" />
+            {dateRange}
+          </span>
+        )}
+        <div className="mt-2 flex items-center justify-between">
+          <Badge variant="outline">
+            {tStatus(trip.status as "IDEA" | "SCHEDULED" | "COMPLETED")}
+          </Badge>
+          <span className="text-muted-foreground flex items-center gap-1 text-xs">
+            <User className="size-3" />
+            {t.rich("by", {
+              name: trip.ownerName,
+              link: (chunks) => (
+                <Link
+                  href={`/creators/${trip.ownerId}`}
+                  className="hover:text-foreground pointer-events-auto relative z-20 hover:underline"
+                >
+                  {chunks}
+                </Link>
+              ),
+            })}
+          </span>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
