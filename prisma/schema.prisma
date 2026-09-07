@@ -150,6 +150,7 @@ model Trip {
   citations         Citation[]
   copiesOfThisPlan  PlanCopy[]      @relation("OriginalPlan")
   copyRecord        PlanCopy?       @relation("CopyPlan")
+  storySlides       StorySlide[]
 
   @@index([ownerId])
   @@index([visibility, status])
@@ -296,6 +297,37 @@ model ChecklistItem {
 
   @@index([tripId])
   @@map("checklist_items")
+}
+
+// ---------------------------------------------------------------------------
+// Trip Story — M12 (Travel Memory), phase 1
+// Not literally spec'd (mục 4/6a only says "album, note, tổng kết chi phí,
+// review itinerary"); this is our own take on it — a swipeable,
+// Instagram/TikTok-Stories-style narrative the trip owner writes by hand
+// (no AI, no auto-generated captions), aimed at younger travelers who
+// already think in "stories" and want something shareable, not a static
+// summary page. See src/features/story/.
+// ---------------------------------------------------------------------------
+
+model StorySlide {
+  id        String   @id @default(cuid())
+  tripId    String   @map("trip_id")
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  // null = a trip-level cover slide, not tied to one day.
+  day       Int?
+  // The narrative text itself — always handwritten by the owner.
+  caption   String
+  // Fixed gradient palette (src/features/story/themes.ts), same
+  // "app-level union, coerce at the boundary" pattern as ExpenseCategory.
+  theme     String   @default("SUNSET")
+  // Optional background photo, local-disk upload — same mechanism as
+  // User.image (src/server/storage/avatar.ts), separate helper/folder.
+  photo     String?
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tripId])
+  @@map("story_slides")
 }
 
 // ---------------------------------------------------------------------------

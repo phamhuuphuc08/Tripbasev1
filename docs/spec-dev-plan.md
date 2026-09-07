@@ -30,7 +30,7 @@ Tổng quan kiến trúc: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 | M09 | [Reputation Engine](#m09--reputation-engine)                  | P1      | ✅         | 🟨      | 🟨  | 🟨         |
 | M10 | [Plan Marketplace / Explore](#m10--plan-marketplace--explore) | P1      | ✅         | 🟨      | 🟨  | 🟨         |
 | M11 | [Tag & Tip Library](#m11--tag--tip-library)                   | P1      | ✅         | ✅      | ✅  | 🟨         |
-| M12 | [Travel Memory](#m12--travel-memory)                          | P2      | ⬜         | ⬜      | ⬜  | ⬜         |
+| M12 | [Travel Memory](#m12--travel-memory)                          | P2      | ✅         | ✅      | 🟨  | 🟨         |
 
 "Data model ✅" nghĩa là entity đã có trong `prisma/schema.prisma` **và** đã
 migrate vào DB thật — chưa có nghĩa là service/business rule đã implement.
@@ -660,15 +660,74 @@ Chưa làm:
 ## M12 — Travel Memory
 
 - **Ưu tiên:** P2 · **Spec:** mục 4, 6a
-- **Code:** `src/features/travel-memory/` — **chưa có model Prisma riêng**
-- **Trạng thái:** ⬜ Chưa bắt đầu
+- **Code:** `src/features/story/`, `src/server/services/story.service.ts`,
+  `src/server/storage/story-photo.ts`, model `StorySlide`
+- **Trạng thái:** 🟨 Phase 1 xong — **Trip Story**, cách hiểu riêng của mục
+  này (2026-09-07)
+
+Đã làm (Trip Story — theo yêu cầu "thêm 1 tính năng mà bạn cho rằng cực
+kỳ độc đáo và hút user trẻ, những bạn muốn di chuyển và rất thích viết
+story của mình"):
+
+- **Không phải diễn giải đúng nghĩa đen của spec** ("album, note, tổng
+  kết chi phí, review itinerary" — vẫn chưa làm, xem "Chưa làm" bên
+  dưới). Đây là ý tưởng riêng để lấp khoảng trống data model mà M12 chưa
+  có: 1 định dạng "story" kiểu Instagram/TikTok Stories — vuốt/chạm để
+  xem từng đoạn, tự chuyển sau vài giây, do chính chủ trip viết tay
+  (không AI, không tự sinh caption).
+- [x] Model `StorySlide` (migration `add_story_slides`): `day` (null =
+      slide bìa, không gắn ngày cụ thể), `caption` (bắt buộc, tối đa 220
+      ký tự), `theme` (1 trong 5 tông màu gradient cố định — union
+      app-level, coerce ở boundary, cùng pattern với `ExpenseCategory`),
+      `photo` (ảnh nền tuỳ chọn, upload local disk qua
+      `src/server/storage/story-photo.ts`, cùng cơ chế với avatar), thứ
+      tự theo `sortOrder`.
+- [x] Card "Trip Story" trên trang chi tiết trip: thumbnail thu nhỏ mỗi
+      slide (gradient hoặc ảnh + trích caption), nút "Xem story", form
+      thêm slide (chọn ngày/bìa, viết caption, chọn 1 trong 5 tông màu,
+      upload ảnh tuỳ chọn), xoá slide (chỉ chủ sở hữu).
+- [x] Trang xem story `/trips/[tripId]/story` (`StoryViewer`, client
+      component): full-screen dạng thẻ tỉ lệ điện thoại, thanh tiến trình
+      nhiều đoạn ở trên (như Instagram Stories), tự chuyển đoạn sau 6
+      giây, chạm trái/phải hoặc phím mũi tên để lùi/tiến, nút Share
+      (copy link) và nút Đóng.
+- [x] **Cố ý nới lỏng quy tắc truy cập so với `getTripDetail`** (mục
+      3.3/6b nói plan public vẫn cần đăng nhập mới xem chi tiết):
+      `getStoryView` cho xem story của trip PUBLIC **không cần đăng
+      nhập** — đúng tinh thần 1 link Instagram/TikTok story mở ra là xem
+      được ngay, không bắt tạo tài khoản. Trip PRIVATE vẫn chỉ chủ sở
+      hữu xem được (404 với người khác, kể cả đã đăng nhập).
+- [x] Debug đáng chú ý: khi test, click/gõ phím qua công cụ automation
+      đột nhiên không có tác dụng dù không có lỗi console — hoá ra do
+      cửa sổ Chrome bị mất focus ở cấp hệ điều hành (khả năng do lệnh
+      `open -a Docker` trước đó làm nổi cửa sổ Docker Desktop lên trên).
+      Chuyển sang thao tác trực tiếp qua JS (set giá trị input bằng
+      native setter + dispatch event, `.click()` trên phần tử,
+      `form.requestSubmit()`) để tiếp tục test không phụ thuộc focus hệ
+      điều hành — xác nhận đây là hạn chế môi trường test, không phải
+      bug của tính năng.
+- [x] Verify qua trình duyệt thật + Postgres thật: tạo 2 slide (1 slide
+      bìa tông OCEAN, 1 slide "Ngày 1" tông FOREST) → thumbnail và story
+      viewer hiện đúng màu/caption/badge ngày; tự chuyển đoạn đúng sau 6s;
+      chạm trái quay lại đúng đoạn trước; xoá 1 slide → đúng slide biến
+      mất, slide còn lại không đổi; đổi trip sang PUBLIC rồi đăng xuất →
+      xem story vẫn được, không bị chặn đăng nhập; đổi lại PRIVATE → xem
+      story trả về 404 khi chưa đăng nhập; xoá hết slide → hiện đúng màn
+      "Chưa có story" thay vì viewer trống/vỡ. `lint`/`typecheck`/`build`
+      pass. Xoá dữ liệu test sau khi xong.
 
 Chưa làm:
 
-- [ ] Quyết định data model (album/note/review — hiện spec chưa định nghĩa
-      entity riêng, chỉ có `PlanCopy.postTripRating`)
-- [ ] Album ảnh, note, tổng kết chi phí sau chuyến đi
-- [ ] Feed dữ liệu ngược vào Reputation Engine (M09)
+- [ ] Phần đúng nghĩa đen ban đầu của M12 theo spec: album ảnh tổng hợp
+      cả trip, tổng kết chi phí tự động (có `Budget Board`/M04 rồi,
+      chưa nối vào đây), review lại itinerary sau khi đi
+- [ ] Feed dữ liệu ngược vào Reputation Engine (M09) — Trip Story hiện
+      không ảnh hưởng CopyPlan Score/Cite Trust Score
+- [ ] Sửa lại thứ tự slide đã tạo (kéo-thả) — hiện chỉ thêm nối đuôi +
+      xoá, không sắp xếp lại được
+- [ ] Sửa nội dung 1 slide đã tạo (hiện chỉ thêm/xoá)
+- [ ] Đếm lượt xem/lượt share thật (nút Share chỉ copy link, không có số
+      liệu lượt xem)
 
 ---
 
@@ -1002,3 +1061,34 @@ origin/main` để đưa `main` về đúng trạng thái đã push trước đ�
   dark mode trên nhiều trang (Home, Tag & Tip, Creator Profile) — màu
   đổi nhất quán khắp app chỉ qua token dùng chung, không sót chỗ nào còn
   màu cũ. `lint`/`typecheck`/`build` pass.
+
+### 2026-09-07
+
+- **Trip Story (M12 Phase 1)**, theo yêu cầu "thêm 1 tính năng mà bạn
+  cho rằng cực kỳ độc đáo và hút user trẻ. Những bạn muốn di chuyển và
+  rất thích viết story của mình": xem chi tiết ở mục
+  [M12](#m12--travel-memory). Không phải diễn giải đúng nghĩa đen của
+  spec cho Travel Memory — đây là ý tưởng riêng: định dạng "story" kiểu
+  Instagram/TikTok Stories cho mỗi trip, viết tay hoàn toàn (không AI).
+  - Model `StorySlide` (migration `add_story_slides`), card "Trip
+    Story" trên trang chi tiết trip, trang xem full-screen
+    `/trips/[tripId]/story` (tự chuyển đoạn 6s, chạm/phím mũi tên để
+    điều hướng, nút Share copy link).
+  - Quyết định sản phẩm đáng chú ý: story của trip PUBLIC xem được
+    **không cần đăng nhập** (nới lỏng có chủ đích so với quy tắc chung
+    "plan public vẫn cần đăng nhập" — vì mục tiêu của tính năng này là
+    chia sẻ link mở ra xem ngay, giống 1 link Instagram/TikTok story
+    thật); trip PRIVATE vẫn chỉ chủ sở hữu xem được.
+  - Debug đáng chú ý: giữa lúc test, thao tác click/gõ phím qua công cụ
+    automation đột nhiên mất tác dụng — nguyên nhân là cửa sổ Chrome bị
+    mất focus cấp hệ điều hành (nghi do lệnh khởi động lại Docker Desktop
+    trước đó làm nổi cửa sổ khác lên trên). Xử lý bằng cách chuyển hẳn
+    sang thao tác trực tiếp qua JS (native setter + dispatch event,
+    `.click()`, `form.requestSubmit()`) — xác nhận đây là hạn chế môi
+    trường test, không phải bug của tính năng.
+  - Verify qua trình duyệt thật + Postgres thật: tạo 2 slide (bìa +
+    ngày 1, 2 tông màu khác nhau) → hiện đúng cả thumbnail lẫn story
+    viewer; tự chuyển đoạn đúng giờ; điều hướng chạm đúng; xoá đúng 1
+    slide; quy tắc truy cập PUBLIC-không-cần-login và PRIVATE-vẫn-chặn
+    đều đúng; xoá hết slide → hiện đúng màn "Chưa có story".
+    `lint`/`typecheck`/`build` pass. Xoá dữ liệu test sau khi xong.

@@ -1,8 +1,10 @@
 import {
   CalendarRange,
+  Clapperboard,
   Gauge,
   Lock,
   MapPin,
+  Play,
   TriangleAlert,
   User,
   Users,
@@ -22,6 +24,9 @@ import { removeItineraryItemAction } from "@/features/itinerary/actions";
 import { ItineraryItemForm } from "@/features/itinerary/itinerary-item-form";
 import { detectBacktrack } from "@/features/map/geo";
 import { TripMapLoader } from "@/features/map/trip-map-loader";
+import { removeStorySlideAction } from "@/features/story/actions";
+import { StorySlideForm } from "@/features/story/story-slide-form";
+import { STORY_THEME_GRADIENT } from "@/features/story/themes";
 import { removeTravelerAction } from "@/features/trip/actions";
 import { toTripStyles } from "@/features/trip/styles";
 import { TravelerForm } from "@/features/trip/traveler-form";
@@ -34,6 +39,7 @@ import {
 } from "@/server/services/budget.service";
 import { listItineraryItems } from "@/server/services/itinerary.service";
 import { listTagsForPicker } from "@/server/services/location-tag.service";
+import { listStorySlides } from "@/server/services/story.service";
 import { getTripDetail } from "@/server/services/trip.service";
 
 function toDateInputValue(date: Date | null): string {
@@ -80,6 +86,7 @@ export default async function TripDetailPage({
     tMap,
     tBudget,
     tExpenseCategory,
+    tStory,
     format,
   ] = await Promise.all([
     getTranslations("tripDetail"),
@@ -91,6 +98,7 @@ export default async function TripDetailPage({
     getTranslations("map"),
     getTranslations("budget"),
     getTranslations("expenseCategory"),
+    getTranslations("story"),
     getFormatter(),
   ]);
 
@@ -114,12 +122,14 @@ export default async function TripDetailPage({
     );
   }
 
-  const [items, tagOptions, expenses, budgetSummary] = await Promise.all([
-    listItineraryItems(tripId),
-    isOwner ? listTagsForPicker() : Promise.resolve([]),
-    listExpenses(tripId),
-    computeBudgetSummary(tripId),
-  ]);
+  const [items, tagOptions, expenses, budgetSummary, storySlides] =
+    await Promise.all([
+      listItineraryItems(tripId),
+      isOwner ? listTagsForPicker() : Promise.resolve([]),
+      listExpenses(tripId),
+      computeBudgetSummary(tripId),
+      listStorySlides(tripId),
+    ]);
 
   const itemsByDay = new Map<number, typeof items>();
   for (const item of items) {
@@ -535,6 +545,81 @@ export default async function TripDetailPage({
                 tripId={tripId}
                 travelerNames={trip.travelers.map((traveler) => traveler.name)}
               />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Clapperboard className="size-4" />
+            {tStory("heading")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <p className="text-muted-foreground text-sm">{tStory("subtitle")}</p>
+
+          {storySlides.length === 0 ? (
+            <p className="text-muted-foreground text-sm">{tStory("empty")}</p>
+          ) : (
+            <>
+              <Button
+                render={<Link href={`/trips/${tripId}/story`} />}
+                nativeButton={false}
+                className="self-start"
+              >
+                <Play className="size-4" />
+                {tStory("viewButton", { count: storySlides.length })}
+              </Button>
+              <ul className="flex flex-wrap gap-2">
+                {storySlides.map((slide) => (
+                  <li key={slide.id} className="relative">
+                    <span
+                      className={`flex h-24 w-16 flex-col justify-end overflow-hidden rounded-lg bg-gradient-to-br bg-cover bg-center p-1.5 text-[10px] text-white ${
+                        slide.photo ? "" : STORY_THEME_GRADIENT[slide.theme]
+                      }`}
+                      style={
+                        slide.photo
+                          ? { backgroundImage: `url(${slide.photo})` }
+                          : undefined
+                      }
+                    >
+                      <span className="line-clamp-4 drop-shadow">
+                        {slide.caption}
+                      </span>
+                    </span>
+                    {isOwner && (
+                      <form
+                        action={removeStorySlideAction.bind(
+                          null,
+                          tripId,
+                          slide.id,
+                        )}
+                      >
+                        <button
+                          type="submit"
+                          aria-label={tStory("removeButtonNamed", {
+                            name: slide.caption.slice(0, 24),
+                          })}
+                          className="bg-destructive text-destructive-foreground absolute -top-1.5 -right-1.5 rounded-full p-0.5"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </form>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {isOwner && (
+            <div className="border-t pt-4">
+              <h3 className="mb-3 text-sm font-medium">
+                {tStory("addHeading")}
+              </h3>
+              <StorySlideForm tripId={tripId} dayCount={dayCount} />
             </div>
           )}
         </CardContent>

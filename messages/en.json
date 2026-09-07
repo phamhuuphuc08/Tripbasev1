@@ -333,5 +333,45 @@
       "amountInvalid": "Amount must be greater than 0.",
       "addFailed": "Couldn't add this expense."
     }
+  },
+  "story": {
+    "heading": "Trip Story",
+    "subtitle": "Write your trip as a swipeable story — pick a vibe, add a line, share the link.",
+    "empty": "No story slides yet — write the first one below.",
+    "viewButton": "Watch story ({count})",
+    "addHeading": "Add a slide",
+    "removeButtonNamed": "Remove slide: {name}",
+    "form": {
+      "dayLabel": "Day",
+      "coverOption": "Cover (no day)",
+      "dayOption": "Day {day}",
+      "captionLabel": "Your story",
+      "captionPlaceholder": "e.g. Got lost for 2 hours looking for this banh mi stall — 100% worth it.",
+      "themeLabel": "Vibe",
+      "photoLabel": "Photo (optional)",
+      "photoHint": "JPG, PNG, WebP or GIF, up to 4MB. No photo? We'll use your chosen color instead.",
+      "submit": "Add slide",
+      "submitPending": "Adding…"
+    },
+    "viewer": {
+      "shareLabel": "Copy link",
+      "closeLabel": "Close",
+      "prevLabel": "Previous slide",
+      "nextLabel": "Next slide",
+      "dayBadge": "Day {day}",
+      "emptyTitle": "No story yet",
+      "emptyDescription": "{name} doesn't have any story slides yet.",
+      "backToTrip": "Back to trip"
+    },
+    "errors": {
+      "loginRequired": "You need to log in to add a story slide.",
+      "captionRequired": "Please write something for this slide.",
+      "captionTooLong": "Keep it under 220 characters.",
+      "dayInvalid": "Invalid day.",
+      "addFailed": "Couldn't add this slide.",
+      "photoEmpty": "The image file is empty.",
+      "photoTooLarge": "Image is larger than 4MB.",
+      "photoUnsupportedType": "Unsupported image format (JPG/PNG/WebP/GIF only)."
+    }
   }
 }

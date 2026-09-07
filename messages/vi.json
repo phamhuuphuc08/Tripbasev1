@@ -333,5 +333,45 @@
       "amountInvalid": "Số tiền phải lớn hơn 0.",
       "addFailed": "Không thể thêm khoản chi này."
     }
+  },
+  "story": {
+    "heading": "Story Hành Trình",
+    "subtitle": "Viết chuyến đi thành story vuốt xem được — chọn tông màu, viết vài dòng, chia sẻ link.",
+    "empty": "Chưa có story nào — viết đoạn đầu tiên bên dưới.",
+    "viewButton": "Xem story ({count})",
+    "addHeading": "Thêm 1 đoạn story",
+    "removeButtonNamed": "Xoá đoạn: {name}",
+    "form": {
+      "dayLabel": "Ngày",
+      "coverOption": "Trang bìa (không gắn ngày)",
+      "dayOption": "Ngày {day}",
+      "captionLabel": "Câu chuyện của bạn",
+      "captionPlaceholder": "VD: Lạc đường 2 tiếng để tìm quán bánh mì này — đáng công 100%.",
+      "themeLabel": "Tông màu",
+      "photoLabel": "Ảnh (tuỳ chọn)",
+      "photoHint": "JPG, PNG, WebP hoặc GIF, tối đa 4MB. Không có ảnh thì dùng màu đã chọn.",
+      "submit": "Thêm đoạn story",
+      "submitPending": "Đang thêm…"
+    },
+    "viewer": {
+      "shareLabel": "Copy link",
+      "closeLabel": "Đóng",
+      "prevLabel": "Đoạn trước",
+      "nextLabel": "Đoạn sau",
+      "dayBadge": "Ngày {day}",
+      "emptyTitle": "Chưa có story",
+      "emptyDescription": "{name} chưa có đoạn story nào.",
+      "backToTrip": "Quay lại trip"
+    },
+    "errors": {
+      "loginRequired": "Cần đăng nhập để thêm story.",
+      "captionRequired": "Viết gì đó cho đoạn này đã nhé.",
+      "captionTooLong": "Giữ dưới 220 ký tự thôi.",
+      "dayInvalid": "Ngày không hợp lệ.",
+      "addFailed": "Không thể thêm đoạn story này.",
+      "photoEmpty": "Tệp ảnh trống.",
+      "photoTooLarge": "Ảnh vượt quá 4MB.",
+      "photoUnsupportedType": "Định dạng ảnh không hỗ trợ (chỉ JPG/PNG/WebP/GIF)."
+    }
   }
 }

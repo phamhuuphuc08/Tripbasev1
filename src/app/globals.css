@@ -142,3 +142,20 @@
     @apply font-sans;
   }
 }
+
+/* Trip Story (src/features/story/story-viewer.tsx) — fills a slide's
+   progress bar over its on-screen duration. animation-duration is set
+   inline per slide; remounting the element (key={index}) restarts it. */
+@keyframes story-progress-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+.story-progress-fill {
+  animation-name: story-progress-fill;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
