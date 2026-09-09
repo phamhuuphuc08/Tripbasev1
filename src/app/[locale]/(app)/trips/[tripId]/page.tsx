@@ -501,11 +501,7 @@ export default async function TripDetailPage({
                       {tExpenseCategory(expense.category)} ·{" "}
                       {format.number(expense.amount)} VND
                     </span>
-                    {expense.note && (
-                      <span className="text-muted-foreground">
-                        {expense.note}
-                      </span>
-                    )}
+                   
                     {expense.splitBetween.length > 0 && (
                       <span className="text-muted-foreground text-xs">
                         {expense.splitBetween.join(", ")}

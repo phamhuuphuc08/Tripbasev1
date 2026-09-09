@@ -20,21 +20,27 @@ export function findItineraryItemsByTrip(tripId: string) {
 }
 
 export function findItineraryItemById(id: string) {
-  return prisma.itineraryItem.findUnique({ where: { id } });
+  return prisma.itineraryItem.findUnique({
+    where: { id },
+  });
 }
 
 export function createItineraryItem(data: {
   tripId: string;
   day: number;
-  title: string | null;
+  title: string;
   startTime: Date | null;
   endTime: Date | null;
   notes: string | null;
   locationTagId: string | null;
 }) {
-  return prisma.itineraryItem.create({ data });
+  return prisma.itineraryItem.create({
+    data,
+  });
 }
 
 export function deleteItineraryItem(id: string) {
-  return prisma.itineraryItem.delete({ where: { id } });
+  return prisma.itineraryItem.delete({
+    where: { id },
+  });
 }

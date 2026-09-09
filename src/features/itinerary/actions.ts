@@ -71,7 +71,7 @@ export async function addItineraryItemAction(
   try {
     await addItineraryItem(tripId, session.userId, {
       day: parsed.data.day,
-      title: parsed.data.title?.trim() || null,
+      title: parsed.data.title?.trim() ?? "",
       startTime,
       endTime,
       notes: parsed.data.notes?.trim() || null,
