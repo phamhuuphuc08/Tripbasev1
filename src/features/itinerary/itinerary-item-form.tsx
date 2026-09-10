@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useTranslations } from "next-intl";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,10 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { addItineraryItemAction } from "@/features/itinerary/actions";
+
+import {
+  addItineraryItemAction,
+  updateItineraryItemAction,
+  type ItineraryFormState,
+} from "@/features/itinerary/actions";
+
 import type { TagCategory } from "@/features/tag-tip/categories";
 
-const initialState = { error: undefined } as { error?: string };
+const initialState: ItineraryFormState = {};
 
 export interface TagOption {
   id: string;
@@ -23,80 +30,227 @@ export interface TagOption {
   category: TagCategory;
 }
 
+export interface EditableItineraryItem {
+  id: string;
+  day: number;
+  title?: string | null;
+  startTime?: string | Date | null;
+  endTime?: string | Date | null;
+  notes?: string | null;
+  locationTagId?: string | null;
+}
+
+function formatTimeInput(
+  value: string | Date | null | undefined,
+): string {
+  if (!value) {
+    return "";
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    /*
+     * Cho phép trường hợp parent truyền trực tiếp "08:30".
+     */
+    if (typeof value === "string" && /^\d{2}:\d{2}$/.test(value)) {
+      return value;
+    }
+
+    return "";
+  }
+
+  const hour = String(date.getUTCHours()).padStart(2, "0");
+  const minute = String(date.getUTCMinutes()).padStart(2, "0");
+
+  return `${hour}:${minute}`;
+}
+
 export function ItineraryItemForm({
   tripId,
   dayCount,
   tagOptions,
+  editingItem,
 }: {
   tripId: string;
   dayCount: number;
   tagOptions: TagOption[];
+  editingItem?: EditableItineraryItem;
 }) {
   const t = useTranslations("itinerary.form");
   const tCategory = useTranslations("tagCategory");
-  const action = addItineraryItemAction.bind(null, tripId);
-  const [state, formAction, pending] = useActionState(action, initialState);
+
+  const isEditing = Boolean(editingItem?.id);
+
+  const addAction = addItineraryItemAction.bind(null, tripId);
+
+  const updateAction = editingItem
+    ? updateItineraryItemAction.bind(
+        null,
+        tripId,
+        editingItem.id,
+      )
+    : null;
+
+  const action = updateAction ?? addAction;
+
+  const [state, formAction, pending] = useActionState(
+    action,
+    initialState,
+  );
+
+  /*
+   * Không cho số ngày nhỏ hơn 1.
+   * Nếu đang sửa một item có day lớn hơn dayCount thì vẫn giữ được
+   * ngày hiện tại của item đó.
+   */
+  const maxDay = Math.max(
+    dayCount,
+    editingItem?.day ?? 1,
+    1,
+  );
 
   const dayChoices = Array.from(
-    { length: Math.max(dayCount, 1) + 1 },
-    (_, i) => i + 1,
+    { length: maxDay },
+    (_, index) => index + 1,
   );
+
+  const defaultDay = String(
+    editingItem?.day ?? dayChoices[0] ?? 1,
+  );
+
+  const defaultTag =
+    editingItem?.locationTagId &&
+    tagOptions.some(
+      (tag) => tag.id === editingItem.locationTagId,
+    )
+      ? editingItem.locationTagId
+      : "none";
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="item-title">{t("titleLabel")}</Label>
+        <Label htmlFor={`item-title-${editingItem?.id ?? "new"}`}>
+          {t("titleLabel")}
+        </Label>
+
         <Input
-          id="item-title"
+          id={`item-title-${editingItem?.id ?? "new"}`}
           name="title"
+          defaultValue={editingItem?.title ?? ""}
           placeholder={t("titlePlaceholder")}
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="item-day">{t("dayLabel")}</Label>
-          <Select name="day" defaultValue={String(dayChoices[0])}>
-            <SelectTrigger id="item-day" className="w-full">
-              <SelectValue>{(value: string | null) => value}</SelectValue>
+          <Label htmlFor={`item-day-${editingItem?.id ?? "new"}`}>
+            {t("dayLabel")}
+          </Label>
+
+          <Select
+            name="day"
+            defaultValue={defaultDay}
+          >
+            <SelectTrigger
+              id={`item-day-${editingItem?.id ?? "new"}`}
+              className="w-full"
+            >
+              <SelectValue>
+                {(value: string | null) => {
+                  const day = Number(value);
+
+                  return Number.isFinite(day)
+                    ? t("dayOption", { day })
+                    : value;
+                }}
+              </SelectValue>
             </SelectTrigger>
+
             <SelectContent>
               {dayChoices.map((day) => (
-                <SelectItem key={day} value={String(day)}>
+                <SelectItem
+                  key={day}
+                  value={String(day)}
+                >
                   {t("dayOption", { day })}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
+
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="item-start">{t("startTimeLabel")}</Label>
-          <Input id="item-start" name="startTime" type="time" />
+          <Label htmlFor={`item-start-${editingItem?.id ?? "new"}`}>
+            {t("startTimeLabel")}
+          </Label>
+
+          <Input
+            id={`item-start-${editingItem?.id ?? "new"}`}
+            name="startTime"
+            type="time"
+            defaultValue={formatTimeInput(
+              editingItem?.startTime,
+            )}
+          />
         </div>
+
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="item-end">{t("endTimeLabel")}</Label>
-          <Input id="item-end" name="endTime" type="time" />
+          <Label htmlFor={`item-end-${editingItem?.id ?? "new"}`}>
+            {t("endTimeLabel")}
+          </Label>
+
+          <Input
+            id={`item-end-${editingItem?.id ?? "new"}`}
+            name="endTime"
+            type="time"
+            defaultValue={formatTimeInput(
+              editingItem?.endTime,
+            )}
+          />
         </div>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="item-tag">{t("tagLabel")}</Label>
-        <Select name="locationTagId" defaultValue="none">
-          <SelectTrigger id="item-tag" className="w-full">
+        <Label htmlFor={`item-tag-${editingItem?.id ?? "new"}`}>
+          {t("tagLabel")}
+        </Label>
+
+        <Select
+          name="locationTagId"
+          defaultValue={defaultTag}
+        >
+          <SelectTrigger
+            id={`item-tag-${editingItem?.id ?? "new"}`}
+            className="w-full"
+          >
             <SelectValue>
               {(value: string | null) => {
-                if (!value || value === "none") return t("noTagOption");
-                const option = tagOptions.find((tag) => tag.id === value);
+                if (!value || value === "none") {
+                  return t("noTagOption");
+                }
+
+                const option = tagOptions.find(
+                  (tag) => tag.id === value,
+                );
+
                 return option
                   ? `${tCategory(option.category)} ${option.title}`
                   : t("noTagOption");
               }}
             </SelectValue>
           </SelectTrigger>
+
           <SelectContent>
-            <SelectItem value="none">{t("noTagOption")}</SelectItem>
+            <SelectItem value="none">
+              {t("noTagOption")}
+            </SelectItem>
+
             {tagOptions.map((tag) => (
-              <SelectItem key={tag.id} value={tag.id}>
+              <SelectItem
+                key={tag.id}
+                value={tag.id}
+              >
                 {tCategory(tag.category)} {tag.title}
               </SelectItem>
             ))}
@@ -105,22 +259,37 @@ export function ItineraryItemForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="item-notes">{t("notesLabel")}</Label>
+        <Label htmlFor={`item-notes-${editingItem?.id ?? "new"}`}>
+          {t("notesLabel")}
+        </Label>
+
         <Input
-          id="item-notes"
+          id={`item-notes-${editingItem?.id ?? "new"}`}
           name="notes"
+          defaultValue={editingItem?.notes ?? ""}
           placeholder={t("notesPlaceholder")}
         />
       </div>
 
       {state.error && (
-        <p role="alert" className="text-destructive text-sm">
+        <p
+          role="alert"
+          className="text-destructive text-sm"
+        >
           {state.error}
         </p>
       )}
 
-      <Button type="submit" disabled={pending} className="self-start">
-        {pending ? t("submitPending") : t("submit")}
+      <Button
+        type="submit"
+        disabled={pending}
+        className="self-start"
+      >
+        {pending
+          ? t("submitPending")
+          : isEditing
+            ? "Lưu thay đổi"
+            : t("submit")}
       </Button>
     </form>
   );

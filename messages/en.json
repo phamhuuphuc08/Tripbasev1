@@ -109,34 +109,48 @@
     "loginCta": "Log in to view details",
     "meta": "Created by <link>{owner}</link> · {count, plural, =0 {no items yet} other {# items}} in itinerary"
   },
-  "itinerary": {
-    "heading": "Itinerary (Smart Timeline)",
-    "empty": "No items in the itinerary yet.",
-    "dayHeading": "Day {day}",
-    "addHeading": "Add to itinerary",
-    "removeButton": "Remove",
-    "removeButtonNamed": "Remove {name}",
-    "form": {
-      "titleLabel": "Activity name (optional)",
-      "titlePlaceholder": "e.g. Breakfast at the hotel",
-      "dayLabel": "Day",
-      "dayOption": "Day {day}",
-      "startTimeLabel": "Start time",
-      "endTimeLabel": "End time",
-      "tagLabel": "Place/tip (optional)",
-      "noTagOption": "— None —",
-      "notesLabel": "Notes",
-      "notesPlaceholder": "e.g. Lunch, rest before heading to the airport",
-      "submit": "Add to itinerary",
-      "submitPending": "Adding…"
-    },
-    "errors": {
-      "loginRequired": "You need to log in to edit the itinerary.",
-      "dayInvalid": "Day must be a whole number, 1 or greater.",
-      "endBeforeStart": "End time must be after the start time.",
-      "addFailed": "Couldn't add this item."
-    }
+"itinerary": {
+  "heading": "Itinerary (Smart Timeline)",
+  "empty": "No items in the itinerary yet.",
+  "dayHeading": "Day {day}",
+  "addHeading": "Add to itinerary",
+  "editHeading": "Edit activity",
+  "cancelEdit": "Cancel edit",
+  "removeButton": "Remove this item",
+  "removeButtonNamed": "Remove {name}",
+  "editButtonNamed": "Edit {name}",
+  "overlapWarning": "Overlaps with {names}",
+  "shortGapWarning": "Only {minutes} minutes after \"{name}\"",
+  "travelInfo": "↓ {distance} km · about {minutes} min from \"{name}\"",
+  "travelWarning": "Only {available} minutes available for travel; about {needed} minutes needed",
+  "reorderFailed": "Could not save itinerary order.",
+  "savingOrder": "Saving order…",
+  "dragHandle": "Drag to reorder",
+  "form": {
+    "dayLabel": "Day",
+    "titleLabel": "Activity name (optional)",
+    "titlePlaceholder": "E.g. Breakfast at the hotel",
+    "dayOption": "Day {day}",
+    "startTimeLabel": "Start time",
+    "endTimeLabel": "End time",
+    "tagLabel": "Place/tip (optional)",
+    "noTagOption": "— None —",
+    "notesLabel": "Notes",
+    "notesPlaceholder": "E.g. Lunch, rest before heading to the airport",
+    "submit": "Add to itinerary",
+    "submitPending": "Adding…",
+    "submitEdit": "Save changes",
+    "submitEditPending": "Saving…"
+    
   },
+  "errors": {
+    "loginRequired": "You need to sign in to edit the itinerary.",
+    "dayInvalid": "Day must be an integer of 1 or greater.",
+    "endBeforeStart": "End time must be after start time.",
+    "addFailed": "Could not add this item.",
+    "updateFailed": "Could not update this activity."
+  }
+},
   "auth": {
     "login": {
       "title": "Log in to TripBase",

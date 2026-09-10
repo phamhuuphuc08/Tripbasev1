@@ -20,8 +20,8 @@ import { Link } from "@/i18n/navigation";
 import { removeExpenseAction } from "@/features/budget/actions";
 import { toExpenseCategory } from "@/features/budget/categories";
 import { ExpenseForm } from "@/features/budget/expense-form";
-import { removeItineraryItemAction } from "@/features/itinerary/actions";
 import { ItineraryItemForm } from "@/features/itinerary/itinerary-item-form";
+import { ItinerarySortableTimeline } from "@/features/itinerary/itinerary-sortable-timeline";
 import { detectBacktrack } from "@/features/map/geo";
 import { TripMapLoader } from "@/features/map/trip-map-loader";
 import { removeStorySlideAction } from "@/features/story/actions";
@@ -37,7 +37,12 @@ import {
   computeBudgetSummary,
   listExpenses,
 } from "@/server/services/budget.service";
-import { listItineraryItems } from "@/server/services/itinerary.service";
+import {
+  detectItineraryOverlaps,
+  detectItineraryShortGaps,
+  detectItineraryTravel,
+  listItineraryItems,
+} from "@/server/services/itinerary.service";
 import { listTagsForPicker } from "@/server/services/location-tag.service";
 import { listStorySlides } from "@/server/services/story.service";
 import { getTripDetail } from "@/server/services/trip.service";
@@ -66,10 +71,13 @@ const STYLE_KEY = {
 
 export default async function TripDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ tripId: string }>;
+  searchParams: Promise<{ editItem?: string }>;
 }) {
   const { tripId } = await params;
+  const { editItem } = await searchParams;
   const session = await getSession();
   const result = await getTripDetail(tripId, session?.userId);
 
@@ -131,14 +139,65 @@ export default async function TripDetailPage({
       listStorySlides(tripId),
     ]);
 
-  const itemsByDay = new Map<number, typeof items>();
-  for (const item of items) {
-    const existing = itemsByDay.get(item.day) ?? [];
-    existing.push(item);
-    itemsByDay.set(item.day, existing);
-  }
-  const sortedDays = [...itemsByDay.keys()].sort((a, b) => a - b);
+  const sortedDays = [...new Set(items.map((item) => item.day))].sort((a, b) => a - b);
   const dayCount = sortedDays.length > 0 ? Math.max(...sortedDays) : 0;
+  const editingItem =
+    isOwner && editItem
+      ? items.find((item) => item.id === editItem)
+      : undefined;
+  const itineraryOverlaps = detectItineraryOverlaps(items);
+  const overlapMap = new Map(itineraryOverlaps.map((overlap) => [overlap.itemId, overlap.overlappingItemIds]));
+  const itemById = new Map(items.map((item) => [item.id, item]));
+  const itineraryShortGaps = detectItineraryShortGaps(items);
+  const shortGapMap = new Map(itineraryShortGaps.map((gap) => [gap.itemId, gap]));
+  const itineraryTravel = detectItineraryTravel(items);
+  const travelMap = new Map(itineraryTravel.map((segment) => [segment.itemId, segment]));
+
+const tripDayCount = trip.startDate && trip.endDate
+  ? Math.max(1, Math.floor((Date.UTC(trip.endDate.getUTCFullYear(), trip.endDate.getUTCMonth(), trip.endDate.getUTCDate()) - Date.UTC(trip.startDate.getUTCFullYear(), trip.startDate.getUTCMonth(), trip.startDate.getUTCDate())) / 86400000) + 1)
+  : Math.max(dayCount, 1);
+
+const sortableItems = items.map((item) => {
+  const overlappingNames = (overlapMap.get(item.id) ?? []).flatMap((overlapId) => {
+    const overlapItem = itemById.get(overlapId);
+    if (!overlapItem) return [];
+    return [overlapItem.title || overlapItem.locationTag?.title || tItinerary("dayHeading", { day: overlapItem.day })];
+  });
+
+  const shortGap = shortGapMap.get(item.id);
+  const previousGapItem = shortGap ? itemById.get(shortGap.previousItemId) : undefined;
+  const travel = travelMap.get(item.id);
+  const previousTravelItem = travel ? itemById.get(travel.previousItemId) : undefined;
+
+  return {
+    id: item.id,
+    day: item.day,
+    sortOrder: item.sortOrder,
+    title: item.title || "",
+    displayStart: toTimeLabel(item.startTime),
+    displayEnd: toTimeLabel(item.endTime),
+    notes: item.notes ?? null,
+    locationTagTitle: item.locationTag
+      ? `${tCategory(toTagCategory(item.locationTag.category))} ${item.locationTag.title}`
+      : null,
+    overlappingNames,
+    shortGap: shortGap
+      ? {
+          minutes: shortGap.gapMinutes,
+          previousName: previousGapItem?.title || previousGapItem?.locationTag?.title || tItinerary("dayHeading", { day: previousGapItem?.day ?? item.day }),
+        }
+      : null,
+    travel: travel
+      ? {
+          distanceKm: travel.distanceKm,
+          estimatedMinutes: travel.estimatedMinutes,
+          availableMinutes: travel.availableMinutes,
+          insufficientTravelTime: travel.insufficientTravelTime,
+          previousName: previousTravelItem?.title || previousTravelItem?.locationTag?.title || tItinerary("dayHeading", { day: previousTravelItem?.day ?? item.day }),
+        }
+      : null,
+  };
+});
 
   // Map Planner (M03): only items whose linked tag has coordinates can be
   // plotted — coordinates are optional on LocationTag, so most seed/demo
@@ -289,99 +348,56 @@ export default async function TripDetailPage({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card id="itinerary">
         <CardHeader>
           <CardTitle className="text-base">{tItinerary("heading")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
-          {sortedDays.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              {tItinerary("empty")}
-            </p>
+          {items.length === 0 ? (
+            <p className="text-muted-foreground text-sm">{tItinerary("empty")}</p>
           ) : (
-            sortedDays.map((day) => (
-              <div key={day} className="flex flex-col gap-2">
-                <h3 className="text-sm font-medium">
-                  {tItinerary("dayHeading", { day })}
-                </h3>
-                <ul className="flex flex-col gap-2">
-                  {(itemsByDay.get(day) ?? []).map((item) => {
-                    const startLabel = toTimeLabel(item.startTime);
-                    const endLabel = toTimeLabel(item.endTime);
-                    return (
-                      <li
-                        key={item.id}
-                        className="border-border flex items-start justify-between gap-2 rounded-lg border px-3 py-2 text-sm"
-                      >
-                        <div className="flex flex-col gap-0.5">
-                          {(startLabel || endLabel) && (
-                            <span className="text-muted-foreground text-xs">
-                              {startLabel ?? "?"}
-                              {endLabel ? ` – ${endLabel}` : ""}
-                            </span>
-                          )}
-                          {item.title && (
-                            <span className="font-medium">{item.title}</span>
-                          )}
-                          {item.locationTag && (
-                            <span
-                              className={
-                                item.title
-                                  ? "text-muted-foreground text-xs"
-                                  : "font-medium"
-                              }
-                            >
-                              {tCategory(
-                                toTagCategory(item.locationTag.category),
-                              )}{" "}
-                              {item.locationTag.title}
-                            </span>
-                          )}
-                          {item.notes && (
-                            <span className="text-muted-foreground">
-                              {item.notes}
-                            </span>
-                          )}
-                        </div>
-                        {isOwner && (
-                          <form
-                            action={removeItineraryItemAction.bind(
-                              null,
-                              tripId,
-                              item.id,
-                            )}
-                          >
-                            <button
-                              type="submit"
-                              aria-label={tItinerary("removeButtonNamed", {
-                                name:
-                                  item.title ??
-                                  item.locationTag?.title ??
-                                  tItinerary("dayHeading", { day }),
-                              })}
-                              className="hover:bg-destructive/20 hover:text-destructive shrink-0 rounded-full p-1"
-                            >
-                              <X className="size-3.5" />
-                            </button>
-                          </form>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))
+            <ItinerarySortableTimeline
+              tripId={tripId}
+              initialItems={sortableItems}
+              isOwner={isOwner}
+              totalDays={tripDayCount}
+            />
           )}
 
           {isOwner && (
             <div className="border-t pt-4">
-              <h3 className="mb-3 text-sm font-medium">
-                {tItinerary("addHeading")}
-              </h3>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-medium">
+                  {editingItem ? tItinerary("editHeading") : tItinerary("addHeading")}
+                </h3>
+                {editingItem && (
+                  <Link
+                    href={`/trips/${tripId}#itinerary`}
+                    className="text-muted-foreground hover:text-foreground text-sm underline"
+                  >
+                    {tItinerary("cancelEdit")}
+                  </Link>
+                )}
+              </div>
+
               <ItineraryItemForm
+                key={editingItem?.id ?? "new"}
                 tripId={tripId}
-                dayCount={dayCount}
+                dayCount={Math.max(dayCount, 1) + 1}
                 tagOptions={tagOptions}
+                editingItem={
+                  editingItem
+                    ? {
+                        id: editingItem.id,
+                        day: editingItem.day,
+                        title: editingItem.title,
+                        startTime: editingItem.startTime,
+                        endTime: editingItem.endTime,
+                        notes: editingItem.notes,
+                        locationTagId: editingItem.locationTagId,
+                      }
+                    : undefined
+                }
               />
             </div>
           )}
@@ -501,7 +517,7 @@ export default async function TripDetailPage({
                       {tExpenseCategory(expense.category)} ·{" "}
                       {format.number(expense.amount)} VND
                     </span>
-                   
+
                     {expense.splitBetween.length > 0 && (
                       <span className="text-muted-foreground text-xs">
                         {expense.splitBetween.join(", ")}

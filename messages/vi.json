@@ -109,34 +109,48 @@
     "loginCta": "Đăng nhập để xem chi tiết",
     "meta": "Tạo bởi <link>{owner}</link> · {count, plural, =0 {chưa có điểm nào} other {# điểm}} trong itinerary"
   },
-  "itinerary": {
-    "heading": "Itinerary (Smart Timeline)",
-    "empty": "Chưa có điểm nào trong lịch trình.",
-    "dayHeading": "Ngày {day}",
-    "addHeading": "Thêm vào lịch trình",
-    "removeButton": "Xoá mục này",
-    "removeButtonNamed": "Xoá {name}",
-    "form": {
-      "dayLabel": "Ngày",
-      "titleLabel": "Tên hoạt động (tuỳ chọn)",
-      "titlePlaceholder": "VD: Ăn sáng ở khách sạn",
-      "dayOption": "Ngày {day}",
-      "startTimeLabel": "Giờ bắt đầu",
-      "endTimeLabel": "Giờ kết thúc",
-      "tagLabel": "Địa điểm/tip (tuỳ chọn)",
-      "noTagOption": "— Không chọn —",
-      "notesLabel": "Ghi chú",
-      "notesPlaceholder": "VD: Ăn trưa, nghỉ ngơi trước khi ra sân bay",
-      "submit": "Thêm vào lịch trình",
-      "submitPending": "Đang thêm…"
-    },
-    "errors": {
-      "loginRequired": "Cần đăng nhập để chỉnh sửa itinerary.",
-      "dayInvalid": "Ngày phải là số nguyên từ 1 trở lên.",
-      "endBeforeStart": "Giờ kết thúc phải sau giờ bắt đầu.",
-      "addFailed": "Không thể thêm mục này."
-    }
+"itinerary": {
+  "heading": "Itinerary (Smart Timeline)",
+  "empty": "Chưa có điểm nào trong lịch trình.",
+  "dayHeading": "Ngày {day}",
+  "addHeading": "Thêm vào lịch trình",
+  "editHeading": "Sửa hoạt động",
+  "cancelEdit": "Hủy sửa",
+  "removeButton": "Xoá mục này",
+  "removeButtonNamed": "Xoá {name}",
+  "editButtonNamed": "Sửa {name}",
+  "dragHandle": "Kéo để sắp xếp",
+  "overlapWarning": "Trùng thời gian với {names}",
+  "shortGapWarning": "Chỉ có {minutes} phút sau \"{name}\"",
+  "travelInfo": "↓ {distance} km · khoảng {minutes} phút từ \"{name}\"",
+  "travelWarning": "Chỉ có {available} phút để di chuyển, ước tính cần {needed} phút",
+  "reorderFailed": "Không thể lưu thứ tự lịch trình.",
+  "savingOrder": "Đang lưu thứ tự…",
+  "form": {
+    "dayLabel": "Ngày",
+    "titleLabel": "Tên hoạt động (tuỳ chọn)",
+    "titlePlaceholder": "VD: Ăn sáng ở khách sạn",
+    "dayOption": "Ngày {day}",
+    "startTimeLabel": "Giờ bắt đầu",
+    "endTimeLabel": "Giờ kết thúc",
+    "tagLabel": "Địa điểm/tip (tuỳ chọn)",
+    "noTagOption": "— Không chọn —",
+    "notesLabel": "Ghi chú",
+    "notesPlaceholder": "VD: Ăn trưa, nghỉ ngơi trước khi ra sân bay",
+    "submit": "Thêm vào lịch trình",
+    "submitPending": "Đang thêm…",
+    "submitEdit": "Lưu thay đổi",
+    "submitEditPending": "Đang lưu…"
+    
   },
+  "errors": {
+    "loginRequired": "Cần đăng nhập để chỉnh sửa itinerary.",
+    "dayInvalid": "Ngày phải là số nguyên từ 1 trở lên.",
+    "endBeforeStart": "Giờ kết thúc phải sau giờ bắt đầu.",
+    "addFailed": "Không thể thêm mục này.",
+    "updateFailed": "Không thể cập nhật hoạt động này."
+  }
+},
   "auth": {
     "login": {
       "title": "Đăng nhập TripBase",
