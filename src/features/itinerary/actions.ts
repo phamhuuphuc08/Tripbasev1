@@ -5,19 +5,16 @@ import { z } from "zod";
 import { redirect } from "@/i18n/navigation";
 import { getSession } from "@/server/auth/session";
 import {
-  addItineraryItem,
-  editItineraryItem,
-  removeItineraryItem,
-  reorderItineraryItems,
+  addItineraryComment, addItineraryItem, editItineraryItem, ItineraryError,
+  removeItineraryComment, removeItineraryItem, reorderItineraryItems, voteItineraryItem,
 } from "@/server/services/itinerary.service";
 
-export interface ItineraryFormState {
-  error?: string;
-}
-
-export interface ReorderItineraryState {
+export interface ItineraryFormState { error?: string }
+export interface ReorderItineraryState { success?: boolean; error?: "INVALID_ORDER" | "REORDER_FAILED" }
+export interface ItineraryVoteActionState { success?: boolean; error?: "LOGIN_REQUIRED" | "INVALID_VOTE" | "VOTE_FAILED" }
+export interface ItineraryCommentActionState {
   success?: boolean;
-  error?: "INVALID_ORDER" | "REORDER_FAILED";
+  error?: "LOGIN_REQUIRED" | "COMMENT_REQUIRED" | "COMMENT_TOO_LONG" | "COMMENT_FAILED" | "DELETE_FAILED";
 }
 
 const reorderSchema = z.array(z.object({
@@ -26,61 +23,68 @@ const reorderSchema = z.array(z.object({
   sortOrder: z.number().int().min(0),
 }));
 
+const itemSchema = z.object({
+  day: z.coerce.number().int().min(1),
+  title: z.string().trim().optional(),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  notes: z.string().trim().optional(),
+  locationTagId: z.string().optional(),
+});
+
 /**
- * Hiện ItineraryItem chưa lưu ngày giờ tuyệt đối.
- * day là số ngày tương đối của chuyến đi, còn startTime/endTime
- * chỉ lưu giờ trong ngày và được neo vào 1970-01-01.
- *
- * Sau này khi M02 chuyển sang timestamp thật theo Trip.startDate
- * thì phần này có thể thay đổi.
+ * Date 1970 ở đây chỉ là carrier tạm cho HH:mm.
+ * itinerary.service.ts sẽ chuyển nó thành timestamp thật:
+ * Trip.startDate + (day - 1) + HH:mm.
  */
-function parseTimeInput(value: string | undefined): Date | null {
+function parseTimeInput(value: string | undefined): Date | null | undefined {
   if (!value) return null;
 
   const match = /^(\d{2}):(\d{2})$/.exec(value);
-  if (!match) return null;
+  if (!match) return undefined;
 
   const hour = Number(match[1]);
   const minute = Number(match[2]);
 
-  if (
-    Number.isNaN(hour) ||
-    Number.isNaN(minute) ||
-    hour < 0 ||
-    hour > 23 ||
-    minute < 0 ||
-    minute > 59
-  ) {
-    return null;
-  }
+  if (!Number.isInteger(hour) || !Number.isInteger(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) return undefined;
 
   const date = new Date(Date.UTC(1970, 0, 1, hour, minute));
-
-  return Number.isNaN(date.getTime()) ? null : date;
+  return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
 function normalizeLocationTagId(value: string | undefined): string | null {
-  if (!value || value === "none") {
-    return null;
-  }
-
-  return value;
+  return !value || value === "none" ? null : value;
 }
 
-function validateTimeRange(
-  startTime: Date | null,
-  endTime: Date | null,
-): boolean {
-  if (!startTime || !endTime) {
-    return true;
-  }
-
-  // Hiện tại chưa hỗ trợ hoạt động qua ngày hôm sau.
-  // Vì vậy:
-  // 08:00 -> 10:00 = hợp lệ
-  // 08:00 -> 08:00 = không hợp lệ
-  // 23:00 -> 02:00 = không hợp lệ
+function validateTimeRange(startTime: Date | null, endTime: Date | null): boolean {
+  if (!startTime || !endTime) return true;
   return endTime.getTime() > startTime.getTime();
+}
+
+function readItemForm(formData: FormData) {
+  return itemSchema.safeParse({
+    day: formData.get("day"),
+    title: formData.get("title")?.toString() || undefined,
+    startTime: formData.get("startTime")?.toString() || undefined,
+    endTime: formData.get("endTime")?.toString() || undefined,
+    notes: formData.get("notes")?.toString() || undefined,
+    locationTagId: formData.get("locationTagId")?.toString() || undefined,
+  });
+}
+
+async function itineraryServiceError(error: unknown, fallback: "addFailed" | "updateFailed") {
+  const t = await getTranslations("itinerary.errors");
+
+  if (!(error instanceof ItineraryError)) return t(fallback);
+
+  switch (error.message) {
+    case "TRIP_START_DATE_REQUIRED": return t("tripStartDateRequired");
+    case "DAY_OUT_OF_RANGE": return t("dayInvalid");
+    case "END_BEFORE_START": return t("endBeforeStart");
+    case "DATETIME_INVALID": return t("timeInvalid");
+    case "FORBIDDEN": return t("forbidden");
+    default: return t(fallback);
+  }
 }
 
 export async function addItineraryItemAction(
@@ -91,41 +95,16 @@ export async function addItineraryItemAction(
   const session = await getSession();
   const t = await getTranslations("itinerary.errors");
 
-  if (!session) {
-    return { error: t("loginRequired") };
-  }
+  if (!session) return { error: t("loginRequired") };
 
-  const schema = z.object({
-    day: z.coerce.number().int().min(1, t("dayInvalid")),
-    title: z.string().trim().optional(),
-    startTime: z.string().optional(),
-    endTime: z.string().optional(),
-    notes: z.string().trim().optional(),
-    locationTagId: z.string().optional(),
-  });
-
-  const parsed = schema.safeParse({
-    day: formData.get("day"),
-    title: formData.get("title")?.toString() || undefined,
-    startTime: formData.get("startTime")?.toString() || undefined,
-    endTime: formData.get("endTime")?.toString() || undefined,
-    notes: formData.get("notes")?.toString() || undefined,
-    locationTagId:
-      formData.get("locationTagId")?.toString() || undefined,
-  });
-
-  if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message ?? "Invalid input.",
-    };
-  }
+  const parsed = readItemForm(formData);
+  if (!parsed.success) return { error: t("dayInvalid") };
 
   const startTime = parseTimeInput(parsed.data.startTime);
   const endTime = parseTimeInput(parsed.data.endTime);
 
-  if (!validateTimeRange(startTime, endTime)) {
-    return { error: t("endBeforeStart") };
-  }
+  if (startTime === undefined || endTime === undefined) return { error: t("timeInvalid") };
+  if (!validateTimeRange(startTime, endTime)) return { error: t("endBeforeStart") };
 
   try {
     await addItineraryItem(tripId, session.userId, {
@@ -134,20 +113,14 @@ export async function addItineraryItemAction(
       startTime,
       endTime,
       notes: parsed.data.notes?.trim() || null,
-      locationTagId: normalizeLocationTagId(
-        parsed.data.locationTagId,
-      ),
+      locationTagId: normalizeLocationTagId(parsed.data.locationTagId),
     });
-  } catch {
-    return { error: t("addFailed") };
+  } catch (error) {
+    return { error: await itineraryServiceError(error, "addFailed") };
   }
 
   const locale = await getLocale();
-
-  return redirect({
-    href: `/trips/${tripId}`,
-    locale,
-  });
+  return redirect({ href: `/trips/${tripId}#itinerary`, locale });
 }
 
 export async function updateItineraryItemAction(
@@ -159,41 +132,16 @@ export async function updateItineraryItemAction(
   const session = await getSession();
   const t = await getTranslations("itinerary.errors");
 
-  if (!session) {
-    return { error: t("loginRequired") };
-  }
+  if (!session) return { error: t("loginRequired") };
 
-  const schema = z.object({
-    day: z.coerce.number().int().min(1, t("dayInvalid")),
-    title: z.string().trim().optional(),
-    startTime: z.string().optional(),
-    endTime: z.string().optional(),
-    notes: z.string().trim().optional(),
-    locationTagId: z.string().optional(),
-  });
-
-  const parsed = schema.safeParse({
-    day: formData.get("day"),
-    title: formData.get("title")?.toString() || undefined,
-    startTime: formData.get("startTime")?.toString() || undefined,
-    endTime: formData.get("endTime")?.toString() || undefined,
-    notes: formData.get("notes")?.toString() || undefined,
-    locationTagId:
-      formData.get("locationTagId")?.toString() || undefined,
-  });
-
-  if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message ?? "Invalid input.",
-    };
-  }
+  const parsed = readItemForm(formData);
+  if (!parsed.success) return { error: t("dayInvalid") };
 
   const startTime = parseTimeInput(parsed.data.startTime);
   const endTime = parseTimeInput(parsed.data.endTime);
 
-  if (!validateTimeRange(startTime, endTime)) {
-    return { error: t("endBeforeStart") };
-  }
+  if (startTime === undefined || endTime === undefined) return { error: t("timeInvalid") };
+  if (!validateTimeRange(startTime, endTime)) return { error: t("endBeforeStart") };
 
   try {
     await editItineraryItem(itemId, session.userId, {
@@ -202,22 +150,14 @@ export async function updateItineraryItemAction(
       startTime,
       endTime,
       notes: parsed.data.notes?.trim() || null,
-      locationTagId: normalizeLocationTagId(
-        parsed.data.locationTagId,
-      ),
+      locationTagId: normalizeLocationTagId(parsed.data.locationTagId),
     });
-  } catch {
-    // Tạm dùng addFailed để không phải thêm translation key mới.
-    // Có thể đổi thành updateFailed sau khi thêm key vào vi.json/en.json.
-    return { error: t("addFailed") };
+  } catch (error) {
+    return { error: await itineraryServiceError(error, "updateFailed") };
   }
 
   const locale = await getLocale();
-
-  return redirect({
-    href: `/trips/${tripId}`,
-    locale,
-  });
+  return redirect({ href: `/trips/${tripId}#itinerary`, locale });
 }
 
 export async function removeItineraryItemAction(
@@ -225,26 +165,19 @@ export async function removeItineraryItemAction(
   itemId: string,
   _formData: FormData,
 ) {
-  // Signature required by <form action={...}>; action xoá không có field.
   void _formData;
 
-  const [session, locale] = await Promise.all([
-    getSession(),
-    getLocale(),
-  ]);
+  const [session, locale] = await Promise.all([getSession(), getLocale()]);
 
   if (session) {
     try {
       await removeItineraryItem(itemId, session.userId);
     } catch {
-      // Best-effort giống pattern hiện tại của project.
+      // Giữ best-effort để nút xoá không làm vỡ trang.
     }
   }
 
-  return redirect({
-    href: `/trips/${tripId}`,
-    locale,
-  });
+  return redirect({ href: `/trips/${tripId}#itinerary`, locale });
 }
 
 export async function reorderItineraryAction(
@@ -261,7 +194,70 @@ export async function reorderItineraryAction(
     await reorderItineraryItems(tripId, session.userId, parsed.data);
     return { success: true };
   } catch (error) {
-    if (error instanceof Error && error.message === "INVALID_ORDER") return { error: "INVALID_ORDER" };
+    if (error instanceof ItineraryError && (error.message === "INVALID_ORDER" || error.message === "DAY_OUT_OF_RANGE")) {
+      return { error: "INVALID_ORDER" };
+    }
+
     return { error: "REORDER_FAILED" };
+  }
+}
+
+export async function voteItineraryItemAction(
+  itemId: string,
+  voteType: "UP" | "DOWN",
+): Promise<ItineraryVoteActionState> {
+  const session = await getSession();
+  if (!session) return { error: "LOGIN_REQUIRED" };
+
+  const parsed = z.enum(["UP", "DOWN"]).safeParse(voteType);
+  if (!parsed.success || !itemId) return { error: "INVALID_VOTE" };
+
+  try {
+    await voteItineraryItem(itemId, session.userId, parsed.data);
+    return { success: true };
+  } catch {
+    return { error: "VOTE_FAILED" };
+  }
+}
+
+export async function addItineraryCommentAction(
+  itemId: string,
+  content: string,
+): Promise<ItineraryCommentActionState> {
+  const session = await getSession();
+  if (!session) return { error: "LOGIN_REQUIRED" };
+
+  const parsed = z.string().trim().min(1).max(1000).safeParse(content);
+
+  if (!parsed.success) {
+    const tooLong = typeof content === "string" && content.trim().length > 1000;
+    return { error: tooLong ? "COMMENT_TOO_LONG" : "COMMENT_REQUIRED" };
+  }
+
+  try {
+    await addItineraryComment(itemId, session.userId, parsed.data);
+    return { success: true };
+  } catch (error) {
+    if (error instanceof ItineraryError) {
+      if (error.message === "COMMENT_REQUIRED") return { error: "COMMENT_REQUIRED" };
+      if (error.message === "COMMENT_TOO_LONG") return { error: "COMMENT_TOO_LONG" };
+    }
+
+    return { error: "COMMENT_FAILED" };
+  }
+}
+
+export async function removeItineraryCommentAction(
+  commentId: string,
+): Promise<ItineraryCommentActionState> {
+  const session = await getSession();
+  if (!session) return { error: "LOGIN_REQUIRED" };
+  if (!commentId) return { error: "DELETE_FAILED" };
+
+  try {
+    await removeItineraryComment(commentId, session.userId);
+    return { success: true };
+  } catch {
+    return { error: "DELETE_FAILED" };
   }
 }

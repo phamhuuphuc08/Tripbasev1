@@ -1,16 +1,4 @@
-import {
-  CalendarRange,
-  Clapperboard,
-  Gauge,
-  Lock,
-  MapPin,
-  Play,
-  TriangleAlert,
-  User,
-  Users,
-  Wallet,
-  X,
-} from "lucide-react";
+import { CalendarRange, Clapperboard, Gauge, Lock, MapPin, Play, TriangleAlert, User, Users, Wallet, X } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
@@ -33,15 +21,10 @@ import { TravelerForm } from "@/features/trip/traveler-form";
 import { TripForm } from "@/features/trip/trip-form";
 import { toTagCategory } from "@/features/tag-tip/categories";
 import { getSession } from "@/server/auth/session";
+import { computeBudgetSummary, listExpenses } from "@/server/services/budget.service";
 import {
-  computeBudgetSummary,
-  listExpenses,
-} from "@/server/services/budget.service";
-import {
-  detectItineraryOverlaps,
-  detectItineraryShortGaps,
-  detectItineraryTravel,
-  listItineraryItems,
+  detectItineraryOpeningHours, detectItineraryOverlaps, detectItineraryShortGaps,
+  detectItineraryTravel, listItineraryItems, summarizeItineraryVotes,
 } from "@/server/services/itinerary.service";
 import { listTagsForPicker } from "@/server/services/location-tag.service";
 import { listStorySlides } from "@/server/services/story.service";
@@ -152,12 +135,14 @@ export default async function TripDetailPage({
   const shortGapMap = new Map(itineraryShortGaps.map((gap) => [gap.itemId, gap]));
   const itineraryTravel = detectItineraryTravel(items);
   const travelMap = new Map(itineraryTravel.map((segment) => [segment.itemId, segment]));
+  const itineraryOpeningHours = detectItineraryOpeningHours(items);
+  const openingHoursMap = new Map(itineraryOpeningHours.map((warning) => [warning.itemId, warning]));
 
-const tripDayCount = trip.startDate && trip.endDate
-  ? Math.max(1, Math.floor((Date.UTC(trip.endDate.getUTCFullYear(), trip.endDate.getUTCMonth(), trip.endDate.getUTCDate()) - Date.UTC(trip.startDate.getUTCFullYear(), trip.startDate.getUTCMonth(), trip.startDate.getUTCDate())) / 86400000) + 1)
-  : Math.max(dayCount, 1);
+  const tripDayCount = trip.startDate && trip.endDate
+    ? Math.max(1, Math.floor((Date.UTC(trip.endDate.getUTCFullYear(), trip.endDate.getUTCMonth(), trip.endDate.getUTCDate()) - Date.UTC(trip.startDate.getUTCFullYear(), trip.startDate.getUTCMonth(), trip.startDate.getUTCDate())) / 86400000) + 1)
+    : Math.max(dayCount, 1);
 
-const sortableItems = items.map((item) => {
+  const sortableItems = items.map((item) => {
   const overlappingNames = (overlapMap.get(item.id) ?? []).flatMap((overlapId) => {
     const overlapItem = itemById.get(overlapId);
     if (!overlapItem) return [];
@@ -168,6 +153,7 @@ const sortableItems = items.map((item) => {
   const previousGapItem = shortGap ? itemById.get(shortGap.previousItemId) : undefined;
   const travel = travelMap.get(item.id);
   const previousTravelItem = travel ? itemById.get(travel.previousItemId) : undefined;
+  const openingHoursWarning = openingHoursMap.get(item.id);
 
   return {
     id: item.id,
@@ -196,6 +182,13 @@ const sortableItems = items.map((item) => {
           previousName: previousTravelItem?.title || previousTravelItem?.locationTag?.title || tItinerary("dayHeading", { day: previousTravelItem?.day ?? item.day }),
         }
       : null,
+    openingHoursWarning: openingHoursWarning
+      ? { openingHours: openingHoursWarning.openingHours, placeName: openingHoursWarning.placeName }
+      : null,
+    votes: summarizeItineraryVotes(item.votes, session?.userId),
+    comments: item.comments.map((comment) => ({
+      id: comment.id, userId: comment.userId, userName: comment.user.name, content: comment.content,
+    })),
   };
 });
 
@@ -360,6 +353,7 @@ const sortableItems = items.map((item) => {
               tripId={tripId}
               initialItems={sortableItems}
               isOwner={isOwner}
+              currentUserId={session?.userId ?? null}
               totalDays={tripDayCount}
             />
           )}
@@ -383,7 +377,7 @@ const sortableItems = items.map((item) => {
               <ItineraryItemForm
                 key={editingItem?.id ?? "new"}
                 tripId={tripId}
-                dayCount={Math.max(dayCount, 1) + 1}
+                dayCount={trip.startDate && trip.endDate ? tripDayCount : Math.max(dayCount, 1) + 1}
                 tagOptions={tagOptions}
                 editingItem={
                   editingItem

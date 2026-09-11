@@ -1,23 +1,33 @@
 import { toTagCategory, type TagCategory } from "@/features/tag-tip/categories";
 import {
-  createLocationTag,
-  findAllLocationTagsForPicker,
-  findLocationTagsByCategory,
-  searchLocationTags,
+  createLocationTag, findAllLocationTagsForPicker, findLocationTagById,
+  findLocationTagsByCategory, searchLocationTags,
 } from "@/server/repositories/location-tag.repository";
 import { findPossibleDuplicate } from "@/server/services/tag-dedup.service";
+
+const OPENING_HOURS_RE = /^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$/;
 
 export function searchTags(filter: { query?: string; category?: TagCategory }) {
   return searchLocationTags(filter);
 }
 
-/** Dùng cho select box khi thêm địa điểm vào itinerary — xem M02. */
+export function getLocationTag(id: string) {
+  return findLocationTagById(id);
+}
+
+/** Dùng cho picker khi thêm địa điểm vào itinerary. */
 export async function listTagsForPicker() {
   const tags = await findAllLocationTagsForPicker();
+
   return tags.map((tag) => ({
     id: tag.id,
     title: tag.title,
     category: toTagCategory(tag.category),
+    openingHours: tag.openingHours,
+    latitude: tag.latitude,
+    longitude: tag.longitude,
+    citeTrustScore: tag.citeTrustScore,
+    possibleDuplicateOfId: tag.possibleDuplicateOfId,
   }));
 }
 
@@ -27,25 +37,37 @@ export interface CreateTagInput {
   content: string | null;
   latitude: number | null;
   longitude: number | null;
+  openingHours: string | null;
 }
 
 export type CreateTagResult =
   | { status: "created"; tag: Awaited<ReturnType<typeof createLocationTag>> }
   | { status: "duplicate"; suggestion: { id: string; title: string } };
 
+export function normalizeOpeningHours(value: string | null | undefined): string | null {
+  const normalized = value?.trim() ?? "";
+  if (!normalized) return null;
+  if (!OPENING_HOURS_RE.test(normalized)) throw new Error("OPENING_HOURS_INVALID");
+  return normalized;
+}
+
 /**
- * mục 8.1 của spec: nếu tên gần giống 1 tag cùng category đã có, gợi ý dùng
- * lại thay vì tạo mới. `force: true` (user vẫn bấm "tạo mới" dù đã cảnh
- * báo) cho tạo nhưng gắn `possibleDuplicateOfId` để Reputation Engine sau
- * này không tính đây là nguồn độc lập khi tính Cross-plan Consistency.
+ * Rule-based dedup:
+ * - tìm tag gần giống trong cùng category
+ * - nếu phát hiện trùng và force=false -> gợi ý dùng tag cũ
+ * - nếu force=true -> vẫn tạo nhưng gắn possibleDuplicateOfId
  */
 export async function createTagWithDedupCheck(
   ownerId: string,
   input: CreateTagInput,
   force = false,
 ): Promise<CreateTagResult> {
+  const title = input.title.trim();
+  if (!title) throw new Error("TITLE_REQUIRED");
+
+  const openingHours = normalizeOpeningHours(input.openingHours);
   const candidates = await findLocationTagsByCategory(input.category);
-  const duplicate = findPossibleDuplicate(candidates, input.title);
+  const duplicate = findPossibleDuplicate(candidates, title);
 
   if (duplicate && !force) {
     return {
@@ -56,11 +78,12 @@ export async function createTagWithDedupCheck(
 
   const tag = await createLocationTag({
     ownerId,
-    title: input.title,
+    title,
     category: input.category,
-    content: input.content,
+    content: input.content?.trim() || null,
     latitude: input.latitude,
     longitude: input.longitude,
+    openingHours,
     possibleDuplicateOfId: force && duplicate ? duplicate.id : null,
   });
 

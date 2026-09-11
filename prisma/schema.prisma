@@ -68,39 +68,31 @@ enum TargetType {
 // ---------------------------------------------------------------------------
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  // Avatar image path — local upload under public/uploads/avatars (see
-  // src/server/storage/avatar.ts), not an external CDN URL.
-  image        String?
-  bio          String?
-  // Fixed, app-level unions (src/features/profile/preferences.ts), not DB
-  // enums — same "free-text column, coerce at the boundary" choice already
-  // used for LocationTag.category, so adding an option never needs a
-  // migration.
+  id              String   @id @default(cuid())
+  name            String
+  email           String   @unique
+  image           String?
+  bio             String?
   travelStyle     String?  @map("travel_style")
   budgetLevel     String?  @map("budget_level")
   travelInterests String[] @default([]) @map("travel_interests")
-  // Credentials-based auth for this stage (see src/server/auth). Nullable so
-  // a future OAuth provider can create users without a local password.
-  passwordHash String?  @map("password_hash")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  passwordHash    String?  @map("password_hash")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
-  trips              Trip[]             @relation("TripOwner")
-  locationTags       LocationTag[]      @relation("TagOwner")
-  collaboratorOn     Collaborator[]     @relation("CollaboratorUser")
-  invitesSent        Collaborator[]     @relation("CollaboratorInviter")
-  shareLinksCreated  ShareLink[]
-  interactions       Interaction[]
-  planCopiesMade     PlanCopy[]
-  creatorReputation  CreatorReputation?
-  citationsMade      Citation[]         @relation("CiterUser")
-  votes              Vote[]
-  comments           Comment[]
-  expensesPaid       Expense[]
-  checklistAssigned  ChecklistItem[]
+  trips             Trip[]             @relation("TripOwner")
+  locationTags      LocationTag[]      @relation("TagOwner")
+  collaboratorOn    Collaborator[]     @relation("CollaboratorUser")
+  invitesSent       Collaborator[]     @relation("CollaboratorInviter")
+  shareLinksCreated ShareLink[]
+  interactions      Interaction[]
+  planCopiesMade    PlanCopy[]
+  creatorReputation CreatorReputation?
+  citationsMade     Citation[]         @relation("CiterUser")
+  votes             Vote[]
+  comments          Comment[]
+  expensesPaid      Expense[]
+  checklistAssigned ChecklistItem[]
 
   @@map("users")
 }
@@ -110,47 +102,42 @@ model User {
 // ---------------------------------------------------------------------------
 
 model Trip {
-  id                String         @id @default(cuid())
-  name              String
-  destination       String
-  startDate         DateTime?      @map("start_date")
-  endDate           DateTime?      @map("end_date")
-  currency          String         @default("VND")
-  ownerId           String         @map("owner_id")
-  owner             User           @relation("TripOwner", fields: [ownerId], references: [id])
-  visibility        PlanVisibility @default(PRIVATE)
-  status            PlanStatus     @default(IDEA)
-  verifiedByAuthor  Boolean        @default(false) @map("verified_by_author")
+  id               String         @id @default(cuid())
+  name             String
+  destination      String
+  startDate        DateTime?      @map("start_date")
+  endDate          DateTime?      @map("end_date")
+  currency         String         @default("VND")
+  ownerId          String         @map("owner_id")
+  owner            User           @relation("TripOwner", fields: [ownerId], references: [id])
+  visibility       PlanVisibility @default(PRIVATE)
+  status           PlanStatus     @default(IDEA)
+  verifiedByAuthor Boolean        @default(false) @map("verified_by_author")
 
-  // Trip Builder (M01) planning fields — quick numbers entered up front,
-  // separate from the actual named Traveler[] list added later.
-  travelerCount     Int            @default(1) @map("traveler_count")
-  budgetTarget      Decimal?       @map("budget_target")
-  pace              TravelPace     @default(NORMAL)
-  // Fixed taxonomy (src/features/trip/styles.ts), not free text — same
-  // "app-level union, no migration to add an option" choice used elsewhere
-  // (LocationTag.category, User.travelStyle/travelInterests).
-  travelStyle       String[]       @default([]) @map("travel_style")
+  travelerCount Int        @default(1) @map("traveler_count")
+  budgetTarget  Decimal?   @map("budget_target")
+  pace          TravelPace @default(NORMAL)
+  travelStyle   String[]   @default([]) @map("travel_style")
 
-  forkedFromPlanId  String?        @map("forked_from_plan_id")
-  forkedFrom        Trip?          @relation("PlanFork", fields: [forkedFromPlanId], references: [id])
-  forks             Trip[]         @relation("PlanFork")
+  forkedFromPlanId String? @map("forked_from_plan_id")
+  forkedFrom       Trip?   @relation("PlanFork", fields: [forkedFromPlanId], references: [id])
+  forks            Trip[]  @relation("PlanFork")
 
-  createdAt         DateTime       @default(now()) @map("created_at")
-  updatedAt         DateTime       @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  travelers         Traveler[]
-  itineraryItems    ItineraryItem[]
-  bookings          Booking[]
-  expenses          Expense[]
-  checklistItems    ChecklistItem[]
-  collaborators     Collaborator[]
-  shareLinks        ShareLink[]
-  interactions      Interaction[]
-  citations         Citation[]
-  copiesOfThisPlan  PlanCopy[]      @relation("OriginalPlan")
-  copyRecord        PlanCopy?       @relation("CopyPlan")
-  storySlides       StorySlide[]
+  travelers        Traveler[]
+  itineraryItems   ItineraryItem[]
+  bookings         Booking[]
+  expenses         Expense[]
+  checklistItems   ChecklistItem[]
+  collaborators    Collaborator[]
+  shareLinks       ShareLink[]
+  interactions     Interaction[]
+  citations        Citation[]
+  copiesOfThisPlan PlanCopy[]      @relation("OriginalPlan")
+  copyRecord       PlanCopy?       @relation("CopyPlan")
+  storySlides      StorySlide[]
 
   @@index([ownerId])
   @@index([visibility, status])
@@ -158,12 +145,12 @@ model Trip {
 }
 
 model Traveler {
-  id          String  @id @default(cuid())
-  tripId      String  @map("trip_id")
-  trip        Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  tripId      String   @map("trip_id")
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
   name        String
   role        String?
-  ageGroup    String? @map("age_group")
+  ageGroup    String?  @map("age_group")
   preferences String[]
 
   @@index([tripId])
@@ -175,38 +162,39 @@ model Traveler {
 // ---------------------------------------------------------------------------
 
 model Place {
-  id              String   @id @default(cuid())
-  name            String
-  latitude        Float?
-  longitude       Float?
-  category        String?
-  openingHours    String?  @map("opening_hours")
-  costEstimate    Decimal? @map("cost_estimate")
-  citeTrustScore  Float    @default(0) @map("cite_trust_score")
+  id             String   @id @default(cuid())
+  name           String
+  latitude       Float?
+  longitude      Float?
+  category       String?
+  openingHours   String?  @map("opening_hours")
+  costEstimate   Decimal? @map("cost_estimate")
+  citeTrustScore Float    @default(0) @map("cite_trust_score")
 
-  itineraryItems  ItineraryItem[]
-  citations       Citation[]
+  itineraryItems ItineraryItem[]
+  citations      Citation[]
 
   @@map("places")
 }
 
 model LocationTag {
-  id                  String       @id @default(cuid())
-  ownerId             String       @map("owner_id")
-  owner               User         @relation("TagOwner", fields: [ownerId], references: [id])
-  title               String
-  content             String?
-  category            String?
-  latitude            Float?
-  longitude           Float?
-  possibleDuplicateOfId String?    @map("possible_duplicate_of")
-  possibleDuplicateOf LocationTag? @relation("TagDuplicate", fields: [possibleDuplicateOfId], references: [id])
-  duplicates          LocationTag[] @relation("TagDuplicate")
-  citeTrustScore      Float        @default(0) @map("cite_trust_score")
-  createdAt           DateTime     @default(now()) @map("created_at")
+  id                    String        @id @default(cuid())
+  ownerId               String        @map("owner_id")
+  owner                 User          @relation("TagOwner", fields: [ownerId], references: [id])
+  title                 String
+  content               String?
+  category              String?
+  latitude              Float?
+  longitude             Float?
+  openingHours          String?       @map("opening_hours")
+  possibleDuplicateOfId String?       @map("possible_duplicate_of")
+  possibleDuplicateOf   LocationTag?  @relation("TagDuplicate", fields: [possibleDuplicateOfId], references: [id])
+  duplicates            LocationTag[] @relation("TagDuplicate")
+  citeTrustScore        Float         @default(0) @map("cite_trust_score")
+  createdAt             DateTime      @default(now()) @map("created_at")
 
-  itineraryItems      ItineraryItem[]
-  citations           Citation[]
+  itineraryItems ItineraryItem[]
+  citations      Citation[]
 
   @@index([ownerId])
   @@map("location_tags")
@@ -221,10 +209,7 @@ model ItineraryItem {
   tripId        String       @map("trip_id")
   trip          Trip         @relation(fields: [tripId], references: [id], onDelete: Cascade)
   day           Int
-  // Optional freeform label for items with no linked tag (e.g. "Ăn sáng ở
-  // khách sạn") — when a tag is linked, its title is still what's shown as
-  // the primary label; this fills the gap for untagged items.
-  title         String?
+  title         String
   startTime     DateTime?    @map("start_time")
   endTime       DateTime?    @map("end_time")
   placeId       String?      @map("place_id")
@@ -232,21 +217,15 @@ model ItineraryItem {
   locationTagId String?      @map("location_tag_id")
   locationTag   LocationTag? @relation(fields: [locationTagId], references: [id])
   notes         String?
-  // Reserved for manual drag-and-drop reordering within a day — not wired
-  // into any query's ORDER BY yet (still day/startTime), so it's inert
-  // until that UI exists.
   sortOrder     Int          @default(0) @map("sort_order")
 
-  createdAt     DateTime     @default(now()) @map("created_at")
-  // `@default(now())` here too (unlike other @updatedAt fields in this
-  // file) because this column is being added to a table that already has
-  // rows — needs a backfill value for the migration to apply cleanly.
-  updatedAt     DateTime     @default(now()) @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  votes         Vote[]
-  comments      Comment[]
+  votes    Vote[]
+  comments Comment[]
 
-  @@index([tripId, day])
+  @@index([tripId, day, sortOrder])
   @@map("itinerary_items")
 }
 
@@ -265,63 +244,46 @@ model Booking {
 }
 
 model Expense {
-  id            String   @id @default(cuid())
-  tripId        String   @map("trip_id")
-  trip          Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  // Fixed taxonomy (src/features/budget/categories.ts), same "coerce at the
-  // boundary" pattern as LocationTag.category and Trip.travelStyle.
-  category      String
-  amount        Decimal
-  note          String?
-  paidById      String   @map("paid_by")
-  paidBy        User     @relation(fields: [paidById], references: [id])
-  // Traveler *names* (freeform, matches mục 12's loose split_between design
-  // — not a hard FK to Traveler, since a trip's travelers aren't
-  // necessarily registered Users either).
-  splitBetween  String[] @map("split_between")
-  createdAt     DateTime @default(now()) @map("created_at")
+  id           String   @id @default(cuid())
+  tripId       String   @map("trip_id")
+  trip         Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  category     String
+  amount       Decimal
+  note         String?
+  paidById     String   @map("paid_by")
+  paidBy       User     @relation(fields: [paidById], references: [id])
+  splitBetween String[] @map("split_between")
+  createdAt    DateTime @default(now()) @map("created_at")
 
   @@index([tripId])
   @@map("expenses")
 }
 
 model ChecklistItem {
-  id          String          @id @default(cuid())
-  tripId      String          @map("trip_id")
-  trip        Trip            @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  title       String
-  dueDate     DateTime?       @map("due_date")
-  assignedToId String?        @map("assigned_to")
-  assignedTo  User?           @relation(fields: [assignedToId], references: [id])
-  status      ChecklistStatus @default(PENDING)
+  id           String          @id @default(cuid())
+  tripId       String          @map("trip_id")
+  trip         Trip            @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  title        String
+  dueDate      DateTime?       @map("due_date")
+  assignedToId String?         @map("assigned_to")
+  assignedTo   User?           @relation(fields: [assignedToId], references: [id])
+  status       ChecklistStatus @default(PENDING)
 
   @@index([tripId])
   @@map("checklist_items")
 }
 
 // ---------------------------------------------------------------------------
-// Trip Story — M12 (Travel Memory), phase 1
-// Not literally spec'd (mục 4/6a only says "album, note, tổng kết chi phí,
-// review itinerary"); this is our own take on it — a swipeable,
-// Instagram/TikTok-Stories-style narrative the trip owner writes by hand
-// (no AI, no auto-generated captions), aimed at younger travelers who
-// already think in "stories" and want something shareable, not a static
-// summary page. See src/features/story/.
+// Trip Story
 // ---------------------------------------------------------------------------
 
 model StorySlide {
   id        String   @id @default(cuid())
   tripId    String   @map("trip_id")
   trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  // null = a trip-level cover slide, not tied to one day.
   day       Int?
-  // The narrative text itself — always handwritten by the owner.
   caption   String
-  // Fixed gradient palette (src/features/story/themes.ts), same
-  // "app-level union, coerce at the boundary" pattern as ExpenseCategory.
   theme     String   @default("SUNSET")
-  // Optional background photo, local-disk upload — same mechanism as
-  // User.image (src/server/storage/avatar.ts), separate helper/folder.
   photo     String?
   sortOrder Int      @default(0) @map("sort_order")
   createdAt DateTime @default(now()) @map("created_at")
@@ -335,28 +297,30 @@ model StorySlide {
 // ---------------------------------------------------------------------------
 
 model Vote {
-  id         String     @id @default(cuid())
-  targetType TargetType @map("target_type")
-  itemId     String?    @map("item_id")
+  id         String         @id @default(cuid())
+  targetType TargetType     @map("target_type")
+  itemId     String?        @map("item_id")
   item       ItineraryItem? @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  userId     String     @map("user_id")
-  user       User       @relation(fields: [userId], references: [id])
-  voteType   VoteType   @map("vote_type")
-  createdAt  DateTime   @default(now()) @map("created_at")
+  userId     String         @map("user_id")
+  user       User           @relation(fields: [userId], references: [id])
+  voteType   VoteType       @map("vote_type")
+  createdAt  DateTime       @default(now()) @map("created_at")
 
+  @@index([targetType, itemId, userId])
   @@map("votes")
 }
 
 model Comment {
-  id         String     @id @default(cuid())
-  targetType TargetType @map("target_type")
-  itemId     String?    @map("item_id")
+  id         String         @id @default(cuid())
+  targetType TargetType     @map("target_type")
+  itemId     String?        @map("item_id")
   item       ItineraryItem? @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  userId     String     @map("user_id")
-  user       User       @relation(fields: [userId], references: [id])
+  userId     String         @map("user_id")
+  user       User           @relation(fields: [userId], references: [id])
   content    String
-  createdAt  DateTime   @default(now()) @map("created_at")
+  createdAt  DateTime       @default(now()) @map("created_at")
 
+  @@index([itemId, createdAt])
   @@map("comments")
 }
 
@@ -365,47 +329,47 @@ model Comment {
 // ---------------------------------------------------------------------------
 
 model Collaborator {
-  id         String           @id @default(cuid())
-  planId     String           @map("plan_id")
-  plan       Trip             @relation(fields: [planId], references: [id], onDelete: Cascade)
-  userId     String           @map("user_id")
-  user       User             @relation("CollaboratorUser", fields: [userId], references: [id])
-  role       CollaboratorRole
-  invitedById String          @map("invited_by")
-  invitedBy  User             @relation("CollaboratorInviter", fields: [invitedById], references: [id])
-  invitedAt  DateTime         @default(now()) @map("invited_at")
+  id          String           @id @default(cuid())
+  planId      String           @map("plan_id")
+  plan        Trip             @relation(fields: [planId], references: [id], onDelete: Cascade)
+  userId      String           @map("user_id")
+  user        User             @relation("CollaboratorUser", fields: [userId], references: [id])
+  role        CollaboratorRole
+  invitedById String           @map("invited_by")
+  invitedBy   User             @relation("CollaboratorInviter", fields: [invitedById], references: [id])
+  invitedAt   DateTime         @default(now()) @map("invited_at")
 
   @@unique([planId, userId])
   @@map("collaborators")
 }
 
 model ShareLink {
-  id         String        @id @default(cuid())
-  planId     String        @map("plan_id")
-  plan       Trip          @relation(fields: [planId], references: [id], onDelete: Cascade)
-  token      String        @unique
-  type       ShareLinkType
-  createdById String       @map("created_by")
-  createdBy  User          @relation(fields: [createdById], references: [id])
-  expiresAt  DateTime?     @map("expires_at")
-  revokedAt  DateTime?     @map("revoked_at")
+  id          String        @id @default(cuid())
+  planId      String        @map("plan_id")
+  plan        Trip          @relation(fields: [planId], references: [id], onDelete: Cascade)
+  token       String        @unique
+  type        ShareLinkType
+  createdById String        @map("created_by")
+  createdBy   User          @relation(fields: [createdById], references: [id])
+  expiresAt   DateTime?     @map("expires_at")
+  revokedAt   DateTime?     @map("revoked_at")
 
   @@index([planId])
   @@map("share_links")
 }
 
 // ---------------------------------------------------------------------------
-// Light-weight interactions (do NOT feed reputation scores)
+// Light-weight interactions
 // ---------------------------------------------------------------------------
 
 model Interaction {
-  id        String           @id @default(cuid())
-  planId    String           @map("plan_id")
-  plan      Trip             @relation(fields: [planId], references: [id], onDelete: Cascade)
-  userId    String           @map("user_id")
-  user      User             @relation(fields: [userId], references: [id])
+  id        String          @id @default(cuid())
+  planId    String          @map("plan_id")
+  plan      Trip            @relation(fields: [planId], references: [id], onDelete: Cascade)
+  userId    String          @map("user_id")
+  user      User            @relation(fields: [userId], references: [id])
   type      InteractionType
-  createdAt DateTime         @default(now()) @map("created_at")
+  createdAt DateTime        @default(now()) @map("created_at")
 
   @@unique([planId, userId, type])
   @@map("interactions")
@@ -416,48 +380,48 @@ model Interaction {
 // ---------------------------------------------------------------------------
 
 model PlanCopy {
-  id               String   @id @default(cuid())
-  planId           String   @unique @map("plan_id")
-  plan             Trip     @relation("CopyPlan", fields: [planId], references: [id], onDelete: Cascade)
-  originalPlanId   String   @map("original_plan_id")
-  originalPlan     Trip     @relation("OriginalPlan", fields: [originalPlanId], references: [id])
-  copierUserId     String   @map("copier_user_id")
-  copierUser       User     @relation(fields: [copierUserId], references: [id])
-  copiedAt         DateTime @default(now()) @map("copied_at")
-  retentionRate    Float?   @map("retention_rate")
-  completed        Boolean  @default(false)
-  postTripRating   Float?   @map("post_trip_rating")
+  id             String   @id @default(cuid())
+  planId         String   @unique @map("plan_id")
+  plan           Trip     @relation("CopyPlan", fields: [planId], references: [id], onDelete: Cascade)
+  originalPlanId String   @map("original_plan_id")
+  originalPlan   Trip     @relation("OriginalPlan", fields: [originalPlanId], references: [id])
+  copierUserId   String   @map("copier_user_id")
+  copierUser     User     @relation(fields: [copierUserId], references: [id])
+  copiedAt       DateTime @default(now()) @map("copied_at")
+  retentionRate  Float?   @map("retention_rate")
+  completed      Boolean  @default(false)
+  postTripRating Float?   @map("post_trip_rating")
 
   @@index([originalPlanId])
   @@map("plan_copies")
 }
 
 model CreatorReputation {
-  id             String   @id @default(cuid())
-  userId         String   @unique @map("user_id")
-  user           User     @relation(fields: [userId], references: [id])
-  copyplanScore  Float    @default(0) @map("copyplan_score")
-  totalPlans     Int      @default(0) @map("total_plans")
-  totalCopies    Int      @default(0) @map("total_copies")
-  lastUpdated    DateTime @updatedAt @map("last_updated")
+  id            String   @id @default(cuid())
+  userId        String   @unique @map("user_id")
+  user          User     @relation(fields: [userId], references: [id])
+  copyplanScore Float    @default(0) @map("copyplan_score")
+  totalPlans    Int      @default(0) @map("total_plans")
+  totalCopies   Int      @default(0) @map("total_copies")
+  lastUpdated   DateTime @updatedAt @map("last_updated")
 
   @@map("creator_reputations")
 }
 
 model Citation {
-  id              String       @id @default(cuid())
-  placeId         String?      @map("place_id")
-  place           Place?       @relation(fields: [placeId], references: [id])
-  locationTagId   String?      @map("tip_id")
-  locationTag     LocationTag? @relation(fields: [locationTagId], references: [id])
-  planId          String       @map("plan_id")
-  plan            Trip         @relation(fields: [planId], references: [id], onDelete: Cascade)
-  citerUserId     String       @map("citer_user_id")
-  citerUser       User         @relation("CiterUser", fields: [citerUserId], references: [id])
-  ownerIdOfTag    String       @map("owner_id_of_tag")
-  isSelfCite      Boolean      @default(false) @map("is_self_cite")
-  verifiedVisit   Boolean      @default(false) @map("verified_visit")
-  createdAt       DateTime     @default(now()) @map("created_at")
+  id            String       @id @default(cuid())
+  placeId       String?      @map("place_id")
+  place         Place?       @relation(fields: [placeId], references: [id])
+  locationTagId String?      @map("tip_id")
+  locationTag   LocationTag? @relation(fields: [locationTagId], references: [id])
+  planId        String       @map("plan_id")
+  plan          Trip         @relation(fields: [planId], references: [id], onDelete: Cascade)
+  citerUserId   String       @map("citer_user_id")
+  citerUser     User         @relation("CiterUser", fields: [citerUserId], references: [id])
+  ownerIdOfTag  String       @map("owner_id_of_tag")
+  isSelfCite    Boolean      @default(false) @map("is_self_cite")
+  verifiedVisit Boolean      @default(false) @map("verified_visit")
+  createdAt     DateTime     @default(now()) @map("created_at")
 
   @@index([planId])
   @@map("citations")
