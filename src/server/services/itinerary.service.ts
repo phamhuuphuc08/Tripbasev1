@@ -1,4 +1,5 @@
 import { estimateTravelBetween, formatDistanceKm, isValidGeoPoint } from "@/features/map/geo";
+import { prisma } from "@/server/db/client";
 import {
   createItineraryComment as createItineraryCommentRepo, createItineraryItem, createItineraryVote,
   deleteItineraryComment as deleteItineraryCommentRepo, deleteItineraryItem, deleteItineraryVotesByUser,
@@ -402,9 +403,31 @@ export async function reorderItineraryItems(
   return reorderItineraryItemsRepo(normalizedItems);
 }
 
-export async function voteItineraryItem(itemId: string, userId: string, voteType: "UP" | "DOWN") {
+async function assertCanInteractWithTrip(tripId: string, userId: string) {
+  const trip = await findTripById(tripId);
+  if (!trip) throw new ItineraryError("TRIP_NOT_FOUND");
+
+  if (trip.ownerId === userId || trip.visibility === "PUBLIC") return trip;
+
+  const collaborator = await prisma.collaborator.findFirst({
+    where: { planId: tripId, userId },
+    select: { id: true, role: true },
+  });
+
+  if (!collaborator) throw new ItineraryError("FORBIDDEN");
+  return trip;
+}
+
+async function assertCanInteractWithItem(itemId: string, userId: string) {
   const item = await findItineraryItemById(itemId);
   if (!item) throw new ItineraryError("NOT_FOUND");
+
+  await assertCanInteractWithTrip(item.trip.id, userId);
+  return item;
+}
+
+export async function voteItineraryItem(itemId: string, userId: string, voteType: "UP" | "DOWN") {
+  await assertCanInteractWithItem(itemId, userId);
 
   const existing = await findItineraryVoteByUser(itemId, userId);
 
@@ -423,8 +446,7 @@ export async function voteItineraryItem(itemId: string, userId: string, voteType
 }
 
 export async function addItineraryComment(itemId: string, userId: string, content: string) {
-  const item = await findItineraryItemById(itemId);
-  if (!item) throw new ItineraryError("NOT_FOUND");
+  await assertCanInteractWithItem(itemId, userId);
 
   const normalized = content.trim();
 
@@ -439,6 +461,8 @@ export async function removeItineraryComment(commentId: string, userId: string) 
 
   if (!comment) throw new ItineraryError("COMMENT_NOT_FOUND");
   if (comment.targetType !== "ITINERARY_ITEM" || !comment.item) throw new ItineraryError("COMMENT_NOT_FOUND");
+
+  await assertCanInteractWithTrip(comment.item.tripId, userId);
 
   const isAuthor = comment.userId === userId;
   const isTripOwner = comment.item.trip.ownerId === userId;

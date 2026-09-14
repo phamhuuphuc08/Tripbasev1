@@ -260,11 +260,14 @@
       "createFailed": "Không thể tạo tag này."
     }
   },
-  "map": {
-    "heading": "Map Planner",
-    "empty": "Chưa có điểm nào có toạ độ để hiện trên bản đồ — thêm vĩ độ/kinh độ khi tạo tag trong Tag & Tip Library.",
-    "backtrackWarning": "Ngày {day} có thể đang đi vòng — thử sắp xếp lại các điểm theo khu vực gần nhau."
-  },
+"map": {
+  "heading": "Map Planner",
+  "empty": "Chưa có điểm nào có toạ độ để hiện trên bản đồ — thêm vĩ độ/kinh độ khi tạo tag trong Tag & Tip Library.",
+  "backtrackWarning": "Ngày {day} có thể đang đi vòng — thử sắp xếp lại các điểm theo khu vực gần nhau.",
+  "openingHours": "Giờ mở cửa: {hours}",
+  "openAtTime": "Trong giờ mở cửa",
+  "closedAtTime": "Ngoài giờ mở cửa"
+},
   "placeholders": {
     "explore": {
       "title": "Explore / Plan Marketplace",
@@ -350,36 +353,45 @@
     "CONTINGENCY": "🛟 Dự phòng",
     "OTHER": "📦 Khác"
   },
-  "budget": {
-    "heading": "Ngân sách",
-    "totalSpentLabel": "Đã chi",
-    "targetLabel": "Ngân sách dự kiến",
-    "remainingLabel": "Còn lại",
-    "overBudgetLabel": "Vượt ngân sách",
-    "noTargetHint": "Chưa đặt ngân sách dự kiến — đặt trong phần chỉnh sửa trip.",
-    "byCategoryHeading": "Theo hạng mục",
-    "splitHeading": "Chia tiền theo người",
-    "expenseListEmpty": "Chưa có khoản chi nào.",
-    "addHeading": "Thêm khoản chi",
-    "removeButton": "Xoá",
-    "removeButtonNamed": "Xoá {name}",
-    "form": {
-      "categoryLabel": "Hạng mục",
-      "amountLabel": "Số tiền",
-      "amountPlaceholder": "VD: 500000",
-      "noteLabel": "Ghi chú (tuỳ chọn)",
-      "notePlaceholder": "VD: Vé máy bay khứ hồi",
-      "splitLabel": "Chia cho",
-      "splitHint": "Chọn người cùng chia khoản này (chia đều).",
-      "submit": "Thêm khoản chi",
-      "submitPending": "Đang thêm…"
-    },
-    "errors": {
-      "loginRequired": "Cần đăng nhập để thêm khoản chi.",
-      "amountInvalid": "Số tiền phải lớn hơn 0.",
-      "addFailed": "Không thể thêm khoản chi này."
-    }
+"budget": {
+  "heading": "Ngân sách",
+  "totalSpentLabel": "Đã chi",
+  "targetLabel": "Ngân sách dự kiến",
+  "remainingLabel": "Còn lại",
+  "overBudgetLabel": "Vượt ngân sách",
+  "noTargetHint": "Chưa đặt ngân sách dự kiến — đặt trong phần chỉnh sửa trip.",
+  "byCategoryHeading": "Theo hạng mục",
+  "splitHeading": "Chia tiền theo người",
+  "settlementHeading": "Ai cần thanh toán?",
+  "settled": "Mọi người đã cân bằng chi phí, không cần thanh toán thêm.",
+  "expenseListEmpty": "Chưa có khoản chi nào.",
+  "addHeading": "Thêm khoản chi",
+  "editHeading": "Sửa khoản chi",
+  "cancelEdit": "Huỷ sửa",
+  "editButtonNamed": "Sửa {name}",
+  "removeButton": "Xoá",
+  "removeButtonNamed": "Xoá {name}",
+  "form": {
+    "categoryLabel": "Hạng mục",
+    "amountLabel": "Số tiền",
+    "amountPlaceholder": "VD: 500000",
+    "noteLabel": "Ghi chú (tuỳ chọn)",
+    "notePlaceholder": "VD: Vé máy bay khứ hồi",
+    "splitLabel": "Chia cho",
+    "splitHint": "Chọn người cùng chia khoản này (chia đều).",
+    "submit": "Thêm khoản chi",
+    "submitPending": "Đang thêm…",
+    "updateSubmit": "Lưu thay đổi",
+    "updatePending": "Đang lưu…"
   },
+  "errors": {
+    "loginRequired": "Cần đăng nhập để quản lý khoản chi.",
+    "amountInvalid": "Số tiền phải lớn hơn 0.",
+    "addFailed": "Không thể thêm khoản chi này.",
+    "updateFailed": "Không thể cập nhật khoản chi này."
+  }
+},
+
   "story": {
     "heading": "Story Hành Trình",
     "subtitle": "Viết chuyến đi thành story vuốt xem được — chọn tông màu, viết vài dòng, chia sẻ link.",

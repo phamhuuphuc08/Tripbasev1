@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import dynamic from "next/dynamic";
+import { useActionState, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,12 +10,41 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TAG_CATEGORIES, type TagCategory } from "@/features/tag-tip/categories";
 import { createTagAction, type CreateTagFormState } from "@/features/tag-tip/actions";
 
+const LocationPickerMap = dynamic(
+  () => import("@/features/map/location-picker-map").then((mod) => mod.LocationPickerMap),
+  {
+    ssr: false,
+    loading: () => <div className="bg-muted h-80 w-full animate-pulse rounded-xl" />,
+  },
+);
+
 const initialState: CreateTagFormState = { attempt: 0 };
+
+function inputValue(value: string | number | null | undefined) {
+  return value == null ? "" : String(value);
+}
+
+function coordinateNumber(value: string): number | null {
+  if (!value.trim()) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 export function CreateTagForm({ initialTitle }: { initialTitle?: string }) {
   const t = useTranslations("tagTip.form");
   const tCategory = useTranslations("tagCategory");
   const [state, formAction, pending] = useActionState(createTagAction, initialState);
+
+  const [latitude, setLatitude] = useState(() => inputValue(state.submitted?.latitude));
+  const [longitude, setLongitude] = useState(() => inputValue(state.submitted?.longitude));
+
+  useEffect(() => {
+    setLatitude(inputValue(state.submitted?.latitude));
+    setLongitude(inputValue(state.submitted?.longitude));
+  }, [state.attempt, state.submitted?.latitude, state.submitted?.longitude]);
+
+  const latitudeNumber = coordinateNumber(latitude);
+  const longitudeNumber = coordinateNumber(longitude);
 
   return (
     <form key={state.attempt} action={formAction} className="flex flex-col gap-4">
@@ -81,6 +111,17 @@ export function CreateTagForm({ initialTitle }: { initialTitle?: string }) {
 
       <p className="text-muted-foreground -mt-2 text-xs">{t("openingHoursHint")}</p>
 
+      <div className="overflow-hidden rounded-xl border">
+        <LocationPickerMap
+          latitude={latitudeNumber}
+          longitude={longitudeNumber}
+          onChange={(value) => {
+            setLatitude(value.latitude.toFixed(6));
+            setLongitude(value.longitude.toFixed(6));
+          }}
+        />
+      </div>
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="tag-lat">{t("latitudeLabel")}</Label>
@@ -91,8 +132,9 @@ export function CreateTagForm({ initialTitle }: { initialTitle?: string }) {
             step="any"
             min="-90"
             max="90"
-            placeholder="10.7626"
-            defaultValue={state.submitted?.latitude}
+            placeholder="10.762600"
+            value={latitude}
+            onChange={(event) => setLatitude(event.target.value)}
           />
         </div>
 
@@ -105,8 +147,9 @@ export function CreateTagForm({ initialTitle }: { initialTitle?: string }) {
             step="any"
             min="-180"
             max="180"
-            placeholder="106.6602"
-            defaultValue={state.submitted?.longitude}
+            placeholder="106.660200"
+            value={longitude}
+            onChange={(event) => setLongitude(event.target.value)}
           />
         </div>
       </div>

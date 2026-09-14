@@ -260,11 +260,14 @@
       "createFailed": "Could not create this tag."
     }
   },
-  "map": {
-    "heading": "Map Planner",
-    "empty": "No geolocated points to show yet — add latitude/longitude when creating a tag in the Tag & Tip Library.",
-    "backtrackWarning": "Day {day} may be backtracking — try reordering these stops by area."
-  },
+"map": {
+  "heading": "Map Planner",
+  "empty": "No geolocated points to show yet — add latitude/longitude when creating a tag in the Tag & Tip Library.",
+  "backtrackWarning": "Day {day} may be backtracking — try reordering these stops by area.",
+  "openingHours": "Opening hours: {hours}",
+  "openAtTime": "Within opening hours",
+  "closedAtTime": "Outside opening hours"
+},
   "placeholders": {
     "explore": {
       "title": "Explore / Plan Marketplace",
@@ -350,36 +353,44 @@
     "CONTINGENCY": "🛟 Contingency",
     "OTHER": "📦 Other"
   },
-  "budget": {
-    "heading": "Budget",
-    "totalSpentLabel": "Spent",
-    "targetLabel": "Estimated budget",
-    "remainingLabel": "Remaining",
-    "overBudgetLabel": "Over budget",
-    "noTargetHint": "No budget target set yet — set one when editing the trip.",
-    "byCategoryHeading": "By category",
-    "splitHeading": "Split between travelers",
-    "expenseListEmpty": "No expenses yet.",
-    "addHeading": "Add an expense",
-    "removeButton": "Remove",
-    "removeButtonNamed": "Remove {name}",
-    "form": {
-      "categoryLabel": "Category",
-      "amountLabel": "Amount",
-      "amountPlaceholder": "e.g. 500000",
-      "noteLabel": "Note (optional)",
-      "notePlaceholder": "e.g. Round-trip flight ticket",
-      "splitLabel": "Split between",
-      "splitHint": "Pick who shares this expense (split equally).",
-      "submit": "Add expense",
-      "submitPending": "Adding…"
-    },
-    "errors": {
-      "loginRequired": "You need to log in to add an expense.",
-      "amountInvalid": "Amount must be greater than 0.",
-      "addFailed": "Couldn't add this expense."
-    }
+"budget": {
+  "heading": "Budget",
+  "totalSpentLabel": "Spent",
+  "targetLabel": "Estimated budget",
+  "remainingLabel": "Remaining",
+  "overBudgetLabel": "Over budget",
+  "noTargetHint": "No budget target set yet — set one when editing the trip.",
+  "byCategoryHeading": "By category",
+  "splitHeading": "Split between travelers",
+  "settlementHeading": "Who needs to pay?",
+  "settled": "Everyone is settled up. No further payment is needed.",
+  "expenseListEmpty": "No expenses yet.",
+  "addHeading": "Add an expense",
+  "editHeading": "Edit expense",
+  "cancelEdit": "Cancel edit",
+  "editButtonNamed": "Edit {name}",
+  "removeButton": "Remove",
+  "removeButtonNamed": "Remove {name}",
+  "form": {
+    "categoryLabel": "Category",
+    "amountLabel": "Amount",
+    "amountPlaceholder": "e.g. 500000",
+    "noteLabel": "Note (optional)",
+    "notePlaceholder": "e.g. Round-trip flight ticket",
+    "splitLabel": "Split between",
+    "splitHint": "Pick who shares this expense (split equally).",
+    "submit": "Add expense",
+    "submitPending": "Adding…",
+    "updateSubmit": "Save changes",
+    "updatePending": "Saving…"
   },
+  "errors": {
+    "loginRequired": "You need to log in to manage expenses.",
+    "amountInvalid": "Amount must be greater than 0.",
+    "addFailed": "Couldn't add this expense.",
+    "updateFailed": "Couldn't update this expense."
+  }
+},
   "story": {
     "heading": "Trip Story",
     "subtitle": "Write your trip as a swipeable story — pick a vibe, add a line, share the link.",

@@ -20,7 +20,7 @@ Tổng quan kiến trúc: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 | M13 | [Auth (login/register)](#m13--auth-loginregister)             | —       | ✅         | ✅      | ✅  | ✅         |
 | M14 | [i18n & UI polish](#m14--i18n--ui-polish)                     | —       | —          | ✅      | ✅  | ✅         |
 | M01 | [Trip Builder](#m01--trip-builder)                            | P0      | ✅         | ✅      | 🟨  | 🟨         |
-| M02 | [Itinerary / Smart Timeline](#m02--itinerary--smart-timeline) | P0      | ✅         | ✅      | 🟨  | 🟨         |
+| M02 | [Itinerary / Smart Timeline](#m02--itinerary--smart-timeline) | P0      | ✅         | ✅      | ✅  | ✅         |
 | M03 | [Map Planner](#m03--map-planner)                              | P0      | ✅         | ✅      | 🟨  | 🟨         |
 | M04 | [Budget Board](#m04--budget-board)                            | P0      | ✅         | ✅      | 🟨  | 🟨         |
 | M05 | [Booking Vault](#m05--booking-vault)                          | P1      | ✅         | ⬜      | ⬜  | ⬜         |
@@ -229,6 +229,10 @@ Ghi chú kỹ thuật:
       tiêu đề trip. Đây là các field mục 4 của spec mà bản đầu tiên của
       M01 còn thiếu — coi thêm chi tiết ở mục "Rà soát nhánh cộng sự" trong
       Changelog.
+- [x] Khi sửa `Trip.startDate`, `trip.service.updateTrip` đồng bộ lại
+      `ItineraryItem.startTime/endTime` theo `startDate + (day - 1)` nhưng
+      giữ nguyên giờ/phút; cập nhật Trip + toàn bộ itinerary trong cùng
+      Prisma transaction để tránh trạng thái nửa cập nhật.
 
 Chưa làm:
 
@@ -245,51 +249,66 @@ Chưa làm:
 ## M02 — Itinerary / Smart Timeline
 
 - **Ưu tiên:** P0 · **Spec:** mục 4, 5, 6a
-- **Code:** `src/features/itinerary/`, model `ItineraryItem`
-- **Trạng thái:** 🟨 Đang làm (thêm/xoá item theo ngày+giờ xong, chưa có kéo
-  thả/cảnh báo)
+- **Code:** `src/features/itinerary/`,
+  `src/server/{repositories,itinerary.service.ts}`, model `ItineraryItem`,
+  `Vote`, `Comment`
+- **Trạng thái:** ✅ Xong phạm vi MVP hiện tại (2026-09-14)
 
 Đã làm:
 
-- [x] `itinerary.service.ts`: `listItineraryItems`, `addItineraryItem`,
-      `removeItineraryItem` (check ownership qua `trip.repository.findTripById`,
-      cùng pattern với `trip.service`)
-- [x] Section "Itinerary (Smart Timeline)" trên trang chi tiết trip: nhóm
-      item theo `day`, sắp xếp theo `startTime` trong mỗi ngày; form thêm
-      item (ngày, giờ bắt đầu/kết thúc, ghi chú) chỉ hiện cho chủ sở hữu,
-      ai xem được trip thì xem được itinerary
-- [x] **Liên kết với Tag & Tip Library (M11)**: form thêm item có select
-      "Địa điểm/tip (tuỳ chọn)" liệt kê toàn bộ `LocationTag` hiện có
-      (`listTagsForPicker`) — chọn 1 tag thay vì gõ tên tự do, tránh tạo
-      trùng lặp ngay từ lúc lập itinerary (đúng tinh thần "lookup" của M11)
-- [x] Verify qua trình duyệt thật: thêm 2 item (1 có link tag, 1 không) →
-      hiện đúng thứ tự theo giờ trong đúng ngày, tag hiện icon + category +
-      tên; xoá từng item → cập nhật đúng
-- [x] `title` tuỳ chọn trên mỗi item (migration
-      `add_trip_builder_and_itinerary_fields`) — đặt tên hoạt động tự do
-      cho item không gắn tag (VD: "Ăn sáng ở khách sạn"); nếu vừa có
-      `title` vừa có tag liên kết, `title` hiện làm nhãn chính, tag hiện
-      phụ bên dưới nhỏ hơn. Cũng thêm `sortOrder`/`createdAt`/`updatedAt`
-      vào model — `sortOrder` mới chỉ nằm trong schema (default 0), **chưa
-      dùng để sắp xếp** (vẫn sort theo `day`+`startTime` như cũ), dành chỗ
-      cho kéo-thả thật sau này.
+- [x] CRUD activity đầy đủ: thêm, sửa, xoá; check ownership ở service thay
+      vì chỉ dựa vào UI.
+- [x] Smart Timeline nhóm theo `day`, ưu tiên thời gian thực trong ngày và
+      dùng `sortOrder` cho thứ tự kéo-thả.
+- [x] **Drag & Drop thật**: sắp xếp trong cùng ngày và kéo activity qua ngày
+      khác; server validate toàn bộ item thuộc đúng trip trước khi lưu.
+- [x] Cảnh báo **trùng giờ** và **khoảng nghỉ ngắn** dưới 15 phút giữa các
+      activity trong cùng ngày.
+- [x] Cảnh báo **travel time/buffer** giữa 2 activity liên tiếp có tọa độ:
+      dùng Haversine + heuristic thời gian di chuyển rule-based; hiện khoảng
+      cách, thời gian ước tính và cảnh báo khi thời gian trống không đủ.
+- [x] `LocationTag.openingHours` + form nhập giờ mở/đóng cửa; Smart Timeline
+      cảnh báo khi activity nằm ngoài giờ mở cửa. Hỗ trợ khung giờ qua nửa
+      đêm như `18:00-02:00`.
+- [x] Liên kết Tag & Tip Library: picker chọn `LocationTag` có sẵn, có ô tìm
+      kiếm và **inline dedup suggestion ngay lúc gõ**; dùng chung thuật toán
+      normalize + Levenshtein/token similarity với `tag-dedup.service.ts`
+      (`DUPLICATE_THRESHOLD = 0.72`) thay vì duy trì 2 bản logic khác nhau.
+- [x] `startTime`/`endTime` là **timestamp thật** theo
+      `Trip.startDate + (day - 1)`; không còn tạo dữ liệu mới neo ở
+      `1970-01-01`. Migration có backfill các timestamp cũ năm 1970 khi Trip
+      có `startDate`.
+- [x] Khi kéo activity sang ngày khác, timestamp được dựng lại theo ngày mới
+      nhưng giữ nguyên giờ. Khi sửa `Trip.startDate`, `trip.service` cũng
+      dịch toàn bộ timestamp itinerary tương ứng trong cùng transaction.
+- [x] **Vote trên từng activity**: UP/DOWN, bấm lại cùng lựa chọn để bỏ vote,
+      đổi UP↔DOWN được; UI hiển thị tổng UP/DOWN/score và vote hiện tại.
+- [x] **Comment trên từng activity**: thêm comment, giới hạn 1000 ký tự;
+      tác giả comment hoặc chủ Trip được xoá.
+- [x] Siết quyền Vote/Comment ở service: chủ Trip và user đăng nhập trên Trip
+      PUBLIC được tương tác; Trip PRIVATE/FRIENDS yêu cầu owner hoặc có bản
+      ghi `Collaborator`. Biết `itemId`/`commentId` trực tiếp không đủ để
+      vượt quyền.
+- [x] i18n vi/en cho toàn bộ phần mới: drag/drop, travel warning, opening
+      hours, inline dedup, vote/comment và error state.
+- [x] Migration lịch sử Prisma được khôi phục đúng thứ tự; migration
+      `20260911074035_add_location_tag_opening_hours` chứa `opening_hours`,
+      index Vote/Comment và backfill timestamp cũ. Không dùng
+      `prisma migrate reset`.
+- [x] Trước commit M02 `fbfaa93`, `prisma format`, `prisma validate`,
+      `prisma generate` và `npm run typecheck` đều pass; code đã push lên
+      branch `dev`.
 
-Chưa làm:
+Ghi chú xác minh cuối:
 
-- [ ] Kéo thả (drag-and-drop) — MVP hiện dùng form nhập ngày/giờ + tự sắp
-      xếp theo `startTime`, **không phải** kéo thả thật; cần đánh giá có
-      đáng thêm thư viện DnD hay không trước khi làm. Đã có sẵn cột
-      `sortOrder` trong schema chờ dùng.
-- [ ] Cảnh báo travel time/buffer, giờ mở cửa — cần dữ liệu toạ độ/giờ mở
-      cửa (Place hoặc LocationTag) mà hiện chưa bắt buộc nhập
-- [ ] Gợi ý dedup **ngay trong lúc gõ** tên địa điểm mới (mục 8.1) — hiện
-      chỉ chọn từ danh sách có sẵn qua select, chưa có ô tự tạo tag mới
-      ngay tại chỗ (phải qua `/tags` riêng)
-- [ ] `startTime`/`endTime` chỉ lưu giờ-trong-ngày (anchor về 1970-01-01),
-      chưa phải timestamp thật gắn với ngày cụ thể của trip — xem comment
-      trong `src/features/itinerary/actions.ts`
-- [ ] Sửa item đã tạo (hiện chỉ thêm/xoá)
-- [ ] Vote/Comment trên từng item (model đã có, chưa có UI)
+- Sau khi bổ sung hardening quyền Vote/Comment ngày 2026-09-14, lần
+  `typecheck` đầu tiên bắt được 1 lỗi type ở
+  `comment.item.trip.id`; đã sửa sang `comment.item.tripId`. Cần chạy lại
+  `npm run typecheck` trước commit tiếp theo để ghi nhận trạng thái cuối
+  cùng của patch bảo mật này.
+- M02 được coi là feature-complete cho MVP; các mở rộng như realtime
+  collaboration/presence hoặc notification không nằm trong phạm vi M02 hiện
+  tại và sẽ được tách sang module phù hợp nếu cần.
 
 ---
 
@@ -321,6 +340,9 @@ Mapbox/Google Maps — miễn phí, không cần API key/tài khoản.
       trở lên trong cùng 1 ngày
 - [x] Seed 8 location tag mẫu đã có toạ độ thật (Đà Nẵng, Hà Nội, Hội An,
       Hạ Long, Đà Lạt, TP.HCM) để map có dữ liệu ngay
+- [x] `LocationTag` đã có `openingHours`; dữ liệu này hiện được Smart
+      Timeline (M02) dùng để cảnh báo ngoài giờ mở cửa, nên M03 có thể tái
+      sử dụng cùng nguồn dữ liệu thay vì tạo model giờ mở cửa riêng.
 - [x] Verify qua trình duyệt thật với dữ liệu thật: tạo trip Đà Nẵng, thêm
       3 điểm (Bánh Xèo Bà Dưỡng 08:00, Phố cổ Hội An 11:00, Muong Thanh
       Grand Đà Nẵng 15:00) → map hiện đúng 3 marker đúng vị trí thực tế;
@@ -333,8 +355,9 @@ Chưa làm:
       ngày, không nhóm các điểm gần nhau về mặt không gian
 - [ ] Bắt buộc/gợi ý nhập toạ độ khi tạo tag (map chọn điểm trên bản đồ
       thay vì gõ số) — hiện phải biết số thật, UX chưa thân thiện
-- [ ] Cảnh báo giờ mở cửa (opening hours) — `Place`/`LocationTag` chưa có
-      trường giờ mở cửa được dùng ở đây
+- [ ] Hiển thị giờ mở cửa/trạng thái đang mở-đóng trực tiếp trên Map
+      Planner/popup — dữ liệu + logic cảnh báo đã có ở M02, nhưng Map UI chưa
+      trực quan hoá phần này.
 - [ ] Hiển thị marker cho `Place` (model riêng, chưa dùng đến) — M03 hiện
       chỉ vẽ từ `LocationTag`, phù hợp với hướng "1 nguồn dữ liệu địa điểm"
       đã chọn từ M11 thay vì trùng lặp 2 model
@@ -598,8 +621,8 @@ Chưa làm:
 
 - **Ưu tiên:** P1 · **Spec:** mục 4, 8.1
 - **Code:** `src/features/tag-tip/`, model `LocationTag`
-- **Trạng thái:** 🟨 Đang làm (lookup + dedup lõi xong; đã liên kết vào
-  itinerary qua tag-picker từ M02 — chỉ chưa có gợi ý dedup ngay lúc gõ)
+- **Trạng thái:** 🟨 Đang làm (lookup + dedup lõi + inline dedup trong
+  itinerary đã xong; còn geo-radius, citation và CRUD tag)
 
 Đã làm:
 
@@ -624,6 +647,12 @@ Chưa làm:
       so trong cùng category, ngưỡng `DUPLICATE_THRESHOLD = 0.72` — **chưa**
       thêm điều kiện bán kính toạ độ (spec mục 8.1 có nhắc, nhưng tag hiện
       chưa bắt buộc nhập lat/lng nên chưa áp dụng được ngay)
+- [x] Inline dedup trong `ItineraryItemForm`: gõ tên địa điểm → tìm ứng
+      viên gần giống và cho chọn dùng lại ngay. Logic normalize/fuzzy được
+      dùng chung với `tag-dedup.service.ts`, không còn bản Levenshtein riêng
+      trong client.
+- [x] `LocationTag` hỗ trợ `openingHours` dạng `HH:mm-HH:mm`; form tạo tag có
+      2 ô giờ mở/đóng cửa, validate cặp giờ và hỗ trợ khung qua nửa đêm.
 - [x] Tạo tag (`createTagAction`) → nếu nghi trùng, hiện cảnh báo + nút
       "Vẫn tạo mới"; nếu user vẫn tạo, set `possibleDuplicateOfId` trỏ về
       tag gốc — đúng guardrail mục 13 (không tính là nguồn độc lập)
@@ -644,9 +673,6 @@ trị đã submit (`submitted`) + tăng 1 counter (`attempt`) dùng làm `key` c
 
 Chưa làm:
 
-- [ ] Gắn dedup-suggestion vào lúc thêm địa điểm trong itinerary (mục 8.1:
-      "gợi ý ngay trong lúc gõ") — phụ thuộc Itinerary (M02) chưa tồn tại,
-      hiện chỉ có trang lookup độc lập `/tags`
 - [ ] Bán kính toạ độ trong dedup — cần bắt buộc lat/lng khi tạo LocationTag
       (hiện optional, chưa có input map/pick toạ độ trên form)
 - [ ] Citation thật (model `Citation`) khi 1 plan trích dẫn 1 tag — chưa
@@ -1092,3 +1118,42 @@ origin/main` để đưa `main` về đúng trạng thái đã push trước đ�
     slide; quy tắc truy cập PUBLIC-không-cần-login và PRIVATE-vẫn-chặn
     đều đúng; xoá hết slide → hiện đúng màn "Chưa có story".
     `lint`/`typecheck`/`build` pass. Xoá dữ liệu test sau khi xong.
+
+### 2026-09-11
+
+- **Hoàn thiện M02 — Smart Timeline + collaboration cơ bản**:
+  - Bổ sung sửa activity, Drag & Drop, overlap warning, short-gap warning,
+    travel distance/time warning và giữ toàn bộ logic cũ của Timeline.
+  - Chuyển `startTime`/`endTime` sang timestamp thật theo ngày Trip; migration
+    backfill dữ liệu cũ neo ở năm 1970.
+  - `LocationTag` thêm `openingHours`; form Tag & Tip nhập giờ mở/đóng cửa;
+    Timeline cảnh báo activity ngoài giờ mở cửa.
+  - Thêm inline dedup khi tìm/chọn LocationTag trong itinerary; chuẩn hoá
+    thuật toán fuzzy dedup để dùng chung với flow tạo tag.
+  - Thêm Vote UP/DOWN + Comment trên từng activity, cùng i18n vi/en.
+  - Khôi phục 2 migration lịch sử
+    `20260904081248_add_trip_builder_fields` và
+    `20260904093245_add_itinerary_fields`; loại migration reconciliation
+    trùng; không reset database.
+  - `prisma format`, `prisma validate`, `prisma generate` và
+    `npm run typecheck` pass trước commit. Commit
+    `fbfaa93 feat: complete M02 itinerary collaboration and scheduling`
+    đã push lên `dev`.
+
+### 2026-09-14
+
+- **Đóng các edge case còn lại của M02 trước khi tiếp tục M03**:
+  - `trip.service.updateTrip`: khi đổi `Trip.startDate`, tự đồng bộ ngày thật
+    của toàn bộ `ItineraryItem.startTime/endTime` theo `day`, giữ nguyên giờ;
+    Trip + itinerary được update trong cùng Prisma transaction.
+  - Hardening Vote/Comment: PUBLIC cho user đăng nhập tương tác; PRIVATE/
+    FRIENDS yêu cầu owner hoặc `Collaborator`; xóa comment vẫn chỉ dành cho
+    tác giả comment hoặc chủ Trip.
+  - `typecheck` của patch quyền ban đầu phát hiện đúng 1 lỗi type do repository
+    chỉ expose `comment.item.trip.ownerId`; sửa lời gọi từ
+    `comment.item.trip.id` sang `comment.item.tripId`. Chưa ghi nhận output
+    của lần `npm run typecheck` chạy lại sau sửa này trong log hiện tại.
+  - Cập nhật Dev Plan: M02 chuyển sang ✅ feature-complete cho MVP; M03 là
+    module P0 tiếp theo cần tiếp tục, ưu tiên **Map Picker** (click bản đồ để
+    lấy lat/lng) rồi mới làm geo-clustering.
+
