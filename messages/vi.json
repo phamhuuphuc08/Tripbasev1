@@ -392,6 +392,55 @@
   }
 },
 
+"share": {
+  "invite": {
+    "heading": "Mời thành viên",
+    "emailLabel": "Email người được mời",
+    "emailPlaceholder": "VD: ban@example.com",
+    "roleLabel": "Quyền",
+    "roleEditor": "Editor — được chỉnh sửa",
+    "roleViewer": "Viewer — chỉ xem",
+    "roleHint": "Editor có thể chỉnh sửa nội dung trip. Viewer chỉ có quyền xem.",
+    "success": "Đã gửi lời mời tới {email}.",
+    "submit": "Gửi lời mời",
+    "submitPending": "Đang gửi…",
+    "errors": {
+      "loginRequired": "Bạn cần đăng nhập để mời thành viên.",
+      "invalidEmail": "Email không hợp lệ.",
+      "invalidRole": "Quyền được chọn không hợp lệ.",
+      "cannotInviteSelf": "Bạn không thể mời chính mình.",
+      "alreadyCollaborator": "Người này đã là thành viên của trip.",
+      "alreadyPending": "Email này đã có lời mời đang chờ.",
+      "alreadyAccepted": "Lời mời này đã được chấp nhận.",
+      "tripNotFound": "Không tìm thấy trip.",
+      "forbidden": "Chỉ chủ trip mới có quyền mời thành viên.",
+      "inviteFailed": "Không thể gửi lời mời. Vui lòng thử lại."
+    }
+  },
+  "invitations": {
+    "heading": "Lời mời của tôi",
+    "description": "Các lời mời tham gia chuyến đi đang chờ bạn phản hồi.",
+    "empty": "Bạn không có lời mời nào đang chờ.",
+    "loginRequired": "Bạn cần đăng nhập để xem lời mời.",
+    "loginButton": "Đăng nhập",
+    "roleEditor": "Editor",
+    "roleViewer": "Viewer",
+    "invitedBy": "Được mời bởi {name}",
+    "invitedEmail": "Email nhận lời mời: {email}",
+    "accept": "Chấp nhận",
+    "acceptPending": "Đang chấp nhận…",
+    "decline": "Từ chối",
+    "declinePending": "Đang từ chối…",
+    "errors": {
+      "loginRequired": "Bạn cần đăng nhập.",
+      "notFound": "Không tìm thấy lời mời này.",
+      "notPending": "Lời mời này đã được xử lý.",
+      "emailMismatch": "Lời mời này không dành cho tài khoản của bạn.",
+      "userNotFound": "Không tìm thấy tài khoản.",
+      "responseFailed": "Không thể xử lý lời mời. Vui lòng thử lại."
+    }
+  }
+},
   "story": {
     "heading": "Story Hành Trình",
     "subtitle": "Viết chuyến đi thành story vuốt xem được — chọn tông màu, viết vài dòng, chia sẻ link.",

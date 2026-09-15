@@ -1,8 +1,4 @@
-import {
-  PlanVisibility,
-  type PlanStatus,
-  type TravelPace,
-} from "@prisma/client";
+import { PlanVisibility, type PlanStatus, type TravelPace } from "@prisma/client";
 import { prisma } from "@/server/db/client";
 import {
   createTrip as createTripRepo,
@@ -15,6 +11,12 @@ import {
   deleteTraveler,
   findTravelerById,
 } from "@/server/repositories/traveler.repository";
+import {
+  assertCanEditTrip,
+  getTripRole,
+  PermissionError,
+  roleCanEdit,
+} from "@/server/services/permission.service";
 
 export class TripError extends Error {}
 
@@ -35,21 +37,46 @@ function rebuildItineraryDate(tripStartDate: Date, day: number, currentTime: Dat
   ));
 }
 
+async function assertOwner(tripId: string, userId: string) {
+  const trip = await findTripById(tripId);
+  if (!trip) throw new TripError("NOT_FOUND");
+  if (trip.ownerId !== userId) throw new TripError("FORBIDDEN");
+  return trip;
+}
+
+async function assertEditorOrOwner(tripId: string, userId: string) {
+  try {
+    const result = await assertCanEditTrip(tripId, userId);
+    return result.trip;
+  } catch (error) {
+    if (error instanceof PermissionError) {
+      if (error.code === "TRIP_NOT_FOUND") throw new TripError("NOT_FOUND");
+      throw new TripError("FORBIDDEN");
+    }
+    throw error;
+  }
+}
+
 export async function getTripDetail(id: string, viewerId?: string) {
   const trip = await findTripById(id);
   if (!trip) return null;
 
-  const isOwner = viewerId != null && trip.ownerId === viewerId;
+  const role = await getTripRole(id, viewerId);
+  const isOwner = role === "OWNER";
+  const canEdit = roleCanEdit(role);
   const isPublic = trip.visibility === PlanVisibility.PUBLIC;
 
-  // Private and not yours: behave like it doesn't exist, don't leak that a
-  // private plan with this id is out there.
-  if (!isPublic && !isOwner) return null;
+  if (!isPublic && role === "NONE") return null;
 
-  // mục 3.3/6b của spec: xem chi tiết plan public vẫn cần đăng nhập.
   const requiresLogin = viewerId == null;
 
-  return { trip, isOwner, requiresLogin };
+  return {
+    trip,
+    role,
+    isOwner,
+    canEdit,
+    requiresLogin,
+  };
 }
 
 export function listOwnedTrips(ownerId: string) {
@@ -73,20 +100,9 @@ export function createTrip(
   return createTripRepo({ ownerId, ...input });
 }
 
-async function assertOwner(tripId: string, ownerId: string) {
-  const trip = await findTripById(tripId);
-  if (!trip) throw new TripError("NOT_FOUND");
-
-  // UI only ever renders owner-only controls for the owner — this is
-  // defense-in-depth, not the primary access check.
-  if (trip.ownerId !== ownerId) throw new TripError("FORBIDDEN");
-
-  return trip;
-}
-
 export async function updateTrip(
   tripId: string,
-  ownerId: string,
+  userId: string,
   input: {
     name: string;
     destination: string;
@@ -100,7 +116,7 @@ export async function updateTrip(
     travelStyle: string[];
   },
 ) {
-  const currentTrip = await assertOwner(tripId, ownerId);
+  const currentTrip = await assertEditorOrOwner(tripId, userId);
   const startDateChanged = tripDateKey(currentTrip.startDate) !== tripDateKey(input.startDate);
 
   return prisma.$transaction(async (tx) => {
@@ -109,12 +125,6 @@ export async function updateTrip(
       data: input,
     });
 
-    // Khi Trip.startDate đổi, đồng bộ lại ngày thật của tất cả activity
-    // nhưng giữ nguyên giờ/phút hiện tại.
-    //
-    // VD:
-    // Trip cũ: 10/09, Day 2 08:30 -> 11/09 08:30
-    // Trip mới: 20/09, Day 2 08:30 -> 21/09 08:30
     if (startDateChanged && input.startDate) {
       const items = await tx.itineraryItem.findMany({
         where: {
@@ -152,24 +162,24 @@ export async function updateTrip(
   });
 }
 
-export async function deleteTrip(tripId: string, ownerId: string) {
-  await assertOwner(tripId, ownerId);
+export async function deleteTrip(tripId: string, userId: string) {
+  await assertOwner(tripId, userId);
   return deleteTripRepo(tripId);
 }
 
 export async function addTraveler(
   tripId: string,
-  ownerId: string,
+  userId: string,
   input: { name: string; ageGroup: string | null },
 ) {
-  await assertOwner(tripId, ownerId);
+  await assertEditorOrOwner(tripId, userId);
   return createTraveler({ tripId, ...input });
 }
 
-export async function removeTraveler(travelerId: string, ownerId: string) {
+export async function removeTraveler(travelerId: string, userId: string) {
   const traveler = await findTravelerById(travelerId);
   if (!traveler) throw new TripError("NOT_FOUND");
 
-  await assertOwner(traveler.tripId, ownerId);
+  await assertEditorOrOwner(traveler.tripId, userId);
   return deleteTraveler(travelerId);
 }

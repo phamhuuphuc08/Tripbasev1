@@ -38,6 +38,12 @@ enum CollaboratorRole {
   EDITOR
 }
 
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
 enum ShareLinkType {
   VIEW
   EDIT
@@ -80,19 +86,20 @@ model User {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  trips             Trip[]             @relation("TripOwner")
-  locationTags      LocationTag[]      @relation("TagOwner")
-  collaboratorOn    Collaborator[]     @relation("CollaboratorUser")
-  invitesSent       Collaborator[]     @relation("CollaboratorInviter")
-  shareLinksCreated ShareLink[]
-  interactions      Interaction[]
-  planCopiesMade    PlanCopy[]
-  creatorReputation CreatorReputation?
-  citationsMade     Citation[]         @relation("CiterUser")
-  votes             Vote[]
-  comments          Comment[]
-  expensesPaid      Expense[]
-  checklistAssigned ChecklistItem[]
+  trips               Trip[]             @relation("TripOwner")
+  locationTags        LocationTag[]      @relation("TagOwner")
+  collaboratorOn      Collaborator[]     @relation("CollaboratorUser")
+  invitesSent         Collaborator[]     @relation("CollaboratorInviter")
+  tripInvitationsSent TripInvitation[]   @relation("TripInvitationInviter")
+  shareLinksCreated   ShareLink[]
+  interactions        Interaction[]
+  planCopiesMade      PlanCopy[]
+  creatorReputation   CreatorReputation?
+  citationsMade       Citation[]         @relation("CiterUser")
+  votes               Vote[]
+  comments            Comment[]
+  expensesPaid        Expense[]
+  checklistAssigned   ChecklistItem[]
 
   @@map("users")
 }
@@ -132,11 +139,12 @@ model Trip {
   expenses         Expense[]
   checklistItems   ChecklistItem[]
   collaborators    Collaborator[]
+  invitations      TripInvitation[]
   shareLinks       ShareLink[]
   interactions     Interaction[]
   citations        Citation[]
-  copiesOfThisPlan PlanCopy[]      @relation("OriginalPlan")
-  copyRecord       PlanCopy?       @relation("CopyPlan")
+  copiesOfThisPlan PlanCopy[]       @relation("OriginalPlan")
+  copyRecord       PlanCopy?        @relation("CopyPlan")
   storySlides      StorySlide[]
 
   @@index([ownerId])
@@ -340,7 +348,32 @@ model Collaborator {
   invitedAt   DateTime         @default(now()) @map("invited_at")
 
   @@unique([planId, userId])
+  @@index([userId])
+  @@index([planId, role])
   @@map("collaborators")
+}
+
+model TripInvitation {
+  id     String @id @default(cuid())
+  tripId String @map("trip_id")
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  email  String
+  role   CollaboratorRole
+  status InvitationStatus @default(PENDING)
+
+  invitedById String @map("invited_by")
+  invitedBy   User   @relation("TripInvitationInviter", fields: [invitedById], references: [id])
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  respondedAt DateTime? @map("responded_at")
+
+  @@unique([tripId, email])
+  @@index([tripId, status])
+  @@index([email, status])
+  @@index([invitedById])
+  @@map("trip_invitations")
 }
 
 model ShareLink {

@@ -391,6 +391,57 @@
     "updateFailed": "Couldn't update this expense."
   }
 },
+
+"share": {
+  "invite": {
+    "heading": "Invite members",
+    "emailLabel": "Invitee email",
+    "emailPlaceholder": "e.g. friend@example.com",
+    "roleLabel": "Permission",
+    "roleEditor": "Editor — can edit",
+    "roleViewer": "Viewer — view only",
+    "roleHint": "Editors can modify trip content. Viewers can only view the trip.",
+    "success": "Invitation sent to {email}.",
+    "submit": "Send invitation",
+    "submitPending": "Sending…",
+    "errors": {
+      "loginRequired": "You need to log in to invite members.",
+      "invalidEmail": "Invalid email address.",
+      "invalidRole": "The selected role is invalid.",
+      "cannotInviteSelf": "You cannot invite yourself.",
+      "alreadyCollaborator": "This person is already a trip member.",
+      "alreadyPending": "This email already has a pending invitation.",
+      "alreadyAccepted": "This invitation has already been accepted.",
+      "tripNotFound": "Trip not found.",
+      "forbidden": "Only the trip owner can invite members.",
+      "inviteFailed": "Could not send the invitation. Please try again."
+    }
+  },
+  "invitations": {
+    "heading": "My invitations",
+    "description": "Trip invitations waiting for your response.",
+    "empty": "You don't have any pending invitations.",
+    "loginRequired": "You need to log in to view your invitations.",
+    "loginButton": "Log in",
+    "roleEditor": "Editor",
+    "roleViewer": "Viewer",
+    "invitedBy": "Invited by {name}",
+    "invitedEmail": "Invitation email: {email}",
+    "accept": "Accept",
+    "acceptPending": "Accepting…",
+    "decline": "Decline",
+    "declinePending": "Declining…",
+    "errors": {
+      "loginRequired": "You need to log in.",
+      "notFound": "This invitation could not be found.",
+      "notPending": "This invitation has already been handled.",
+      "emailMismatch": "This invitation does not belong to your account.",
+      "userNotFound": "User account not found.",
+      "responseFailed": "Could not process the invitation. Please try again."
+    }
+  }
+},
+
   "story": {
     "heading": "Trip Story",
     "subtitle": "Write your trip as a swipeable story — pick a vibe, add a line, share the link.",

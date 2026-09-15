@@ -21,6 +21,7 @@ import { Link } from "@/i18n/navigation";
 import { removeExpenseAction } from "@/features/budget/actions";
 import { toExpenseCategory } from "@/features/budget/categories";
 import { ExpenseForm } from "@/features/budget/expense-form";
+import { InviteForm } from "@/features/share/invite-form";
 import { ItineraryItemForm } from "@/features/itinerary/itinerary-item-form";
 import { ItinerarySortableTimeline } from "@/features/itinerary/itinerary-sortable-timeline";
 import { detectBacktrack } from "@/features/map/geo";
@@ -90,33 +91,35 @@ export default async function TripDetailPage({
 
   if (!result) notFound();
 
-  const { trip, isOwner, requiresLogin } = result;
+  const { trip, isOwner, canEdit, requiresLogin } = result;
 
-  const [
-    t,
-    tStatus,
-    tForm,
-    tTravelers,
-    tItinerary,
-    tCategory,
-    tMap,
-    tBudget,
-    tExpenseCategory,
-    tStory,
-    format,
-  ] = await Promise.all([
-    getTranslations("tripDetail"),
-    getTranslations("tripStatus"),
-    getTranslations("trip.form"),
-    getTranslations("trip.travelers"),
-    getTranslations("itinerary"),
-    getTranslations("tagCategory"),
-    getTranslations("map"),
-    getTranslations("budget"),
-    getTranslations("expenseCategory"),
-    getTranslations("story"),
-    getFormatter(),
-  ]);
+const [
+  t,
+  tStatus,
+  tForm,
+  tTravelers,
+  tItinerary,
+  tCategory,
+  tMap,
+  tBudget,
+  tExpenseCategory,
+  tShare,
+  tStory,
+  format,
+] = await Promise.all([
+  getTranslations("tripDetail"),
+  getTranslations("tripStatus"),
+  getTranslations("trip.form"),
+  getTranslations("trip.travelers"),
+  getTranslations("itinerary"),
+  getTranslations("tagCategory"),
+  getTranslations("map"),
+  getTranslations("budget"),
+  getTranslations("expenseCategory"),
+  getTranslations("share.invite"),
+  getTranslations("story"),
+  getFormatter(),
+]);
 
   if (requiresLogin) {
     return (
@@ -155,7 +158,7 @@ export default async function TripDetailPage({
     storySlides,
   ] = await Promise.all([
     listItineraryItems(tripId),
-    isOwner ? listTagsForPicker() : Promise.resolve([]),
+    canEdit ? listTagsForPicker() : Promise.resolve([]),
     listExpenses(tripId),
     computeBudgetSummary(tripId),
     listStorySlides(tripId),
@@ -171,12 +174,12 @@ export default async function TripDetailPage({
       : 0;
 
   const editingItem =
-    isOwner && editItem
+    canEdit && editItem
       ? items.find((item) => item.id === editItem)
       : undefined;
 
   const editingExpense =
-    isOwner && editExpense
+    canEdit && editExpense
       ? expenses.find(
           (expense) => expense.id === editExpense,
         )
@@ -544,7 +547,7 @@ export default async function TripDetailPage({
                         </span>
                       )}
 
-                      {isOwner && (
+                      {canEdit && (
                         <form
                           action={removeTravelerAction.bind(
                             null,
@@ -574,13 +577,27 @@ export default async function TripDetailPage({
             </ul>
           )}
 
-          {isOwner && (
+          {canEdit && (
             <TravelerForm
               tripId={tripId}
             />
           )}
         </CardContent>
       </Card>
+
+      {isOwner && (
+        <Card id="share">
+          <CardHeader>
+            <CardTitle className="text-base">
+              {tShare("heading")}
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <InviteForm tripId={tripId} />
+          </CardContent>
+        </Card>
+      )}
 
       <Card id="itinerary">
         <CardHeader>
@@ -600,7 +617,7 @@ export default async function TripDetailPage({
               initialItems={
                 sortableItems
               }
-              isOwner={isOwner}
+              isOwner={canEdit}
               currentUserId={
                 session?.userId ?? null
               }
@@ -610,7 +627,7 @@ export default async function TripDetailPage({
             />
           )}
 
-          {isOwner && (
+          {canEdit && (
             <div className="border-t pt-4">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <h3 className="text-sm font-medium">
@@ -960,7 +977,7 @@ export default async function TripDetailPage({
                       )}
                     </div>
 
-                    {isOwner && (
+                    {canEdit && (
                       <div className="flex shrink-0 items-center gap-1">
                         <Link
                           href={`/trips/${tripId}?editExpense=${expense.id}#budget`}
@@ -1011,7 +1028,7 @@ export default async function TripDetailPage({
             </ul>
           )}
 
-          {isOwner && (
+          {canEdit && (
             <div className="border-t pt-4">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <h3 className="text-sm font-medium">
@@ -1187,12 +1204,10 @@ export default async function TripDetailPage({
         </CardContent>
       </Card>
 
-      {isOwner && (
+      {canEdit && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">
-              {tForm("editTitle")}
-            </CardTitle>
+            <CardTitle className="text-base">{tForm("editTitle")}</CardTitle>
           </CardHeader>
 
           <CardContent className="flex flex-col gap-4">
@@ -1201,40 +1216,23 @@ export default async function TripDetailPage({
               defaultValues={{
                 id: trip.id,
                 name: trip.name,
-                destination:
-                  trip.destination,
-                startDate:
-                  toDateInputValue(
-                    trip.startDate,
-                  ),
-                endDate:
-                  toDateInputValue(
-                    trip.endDate,
-                  ),
-                travelerCount:
-                  trip.travelerCount,
-                budgetTarget:
-                  trip.budgetTarget?.toString() ??
-                  "",
+                destination: trip.destination,
+                startDate: toDateInputValue(trip.startDate),
+                endDate: toDateInputValue(trip.endDate),
+                travelerCount: trip.travelerCount,
+                budgetTarget: trip.budgetTarget?.toString() ?? "",
                 pace: trip.pace,
-                travelStyle:
-                  toTripStyles(
-                    trip.travelStyle,
-                  ),
-                visibility:
-                  trip.visibility,
+                travelStyle: toTripStyles(trip.travelStyle),
+                visibility: trip.visibility,
                 status: trip.status,
               }}
             />
 
-            <Link
-              href={`/trips/${trip.id}/delete`}
-              className="text-destructive self-start text-sm underline"
-            >
-              {tForm(
-                "deleteLink",
-              )}
-            </Link>
+            {isOwner && (
+              <Link href={`/trips/${trip.id}/delete`} className="text-destructive self-start text-sm underline">
+                {tForm("deleteLink")}
+              </Link>
+            )}
           </CardContent>
         </Card>
       )}

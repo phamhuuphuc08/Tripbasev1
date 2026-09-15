@@ -7,6 +7,7 @@ import {
   reorderItineraryItems as reorderItineraryItemsRepo, updateItineraryItem,
 } from "@/server/repositories/itinerary.repository";
 import { findTripById } from "@/server/repositories/trip.repository";
+import { assertCanEditTrip, PermissionError } from "@/server/services/permission.service";
 
 export class ItineraryError extends Error {}
 
@@ -296,17 +297,25 @@ export function summarizeItineraryVotes(
   return { up, down, score: up - down, currentUserVote };
 }
 
-async function assertTripOwner(tripId: string, ownerId: string) {
+async function assertTripEditor(tripId: string, userId: string) {
   const trip = await findTripById(tripId);
-
   if (!trip) throw new ItineraryError("TRIP_NOT_FOUND");
-  if (trip.ownerId !== ownerId) throw new ItineraryError("FORBIDDEN");
+
+  try {
+    await assertCanEditTrip(tripId, userId);
+  } catch (error) {
+    if (error instanceof PermissionError) {
+      if (error.code === "TRIP_NOT_FOUND") throw new ItineraryError("TRIP_NOT_FOUND");
+      throw new ItineraryError("FORBIDDEN");
+    }
+    throw error;
+  }
 
   return trip;
 }
 
-export async function addItineraryItem(tripId: string, ownerId: string, input: ItineraryItemInput) {
-  const trip = await assertTripOwner(tripId, ownerId);
+export async function addItineraryItem(tripId: string, userId: string, input: ItineraryItemInput) {
+  const trip = await assertTripEditor(tripId, userId);
   const schedule = normalizeSchedule(input.day, input.startTime, input.endTime, trip.startDate, trip.endDate);
   const existingItems = await findItineraryItemsByTrip(tripId);
   const dayItems = existingItems.filter((item) => item.day === input.day);
@@ -328,11 +337,11 @@ export async function addItineraryItem(tripId: string, ownerId: string, input: I
   });
 }
 
-export async function editItineraryItem(itemId: string, ownerId: string, input: ItineraryItemInput) {
+export async function editItineraryItem(itemId: string, userId: string, input: ItineraryItemInput) {
   const item = await findItineraryItemById(itemId);
 
   if (!item) throw new ItineraryError("NOT_FOUND");
-  if (item.trip.ownerId !== ownerId) throw new ItineraryError("FORBIDDEN");
+  await assertTripEditor(item.trip.id, userId);
 
   const schedule = normalizeSchedule(input.day, input.startTime, input.endTime, item.trip.startDate, item.trip.endDate);
 
@@ -347,21 +356,21 @@ export async function editItineraryItem(itemId: string, ownerId: string, input: 
   });
 }
 
-export async function removeItineraryItem(itemId: string, ownerId: string) {
+export async function removeItineraryItem(itemId: string, userId: string) {
   const item = await findItineraryItemById(itemId);
 
   if (!item) throw new ItineraryError("NOT_FOUND");
-  if (item.trip.ownerId !== ownerId) throw new ItineraryError("FORBIDDEN");
+  await assertTripEditor(item.trip.id, userId);
 
   return deleteItineraryItem(itemId);
 }
 
 export async function reorderItineraryItems(
   tripId: string,
-  ownerId: string,
+  userId: string,
   items: { id: string; day: number; sortOrder: number }[],
 ) {
-  const trip = await assertTripOwner(tripId, ownerId);
+  const trip = await assertTripEditor(tripId, userId);
 
   if (
     !items.length ||

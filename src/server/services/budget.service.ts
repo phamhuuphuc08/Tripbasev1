@@ -7,6 +7,7 @@ import {
   updateExpense as updateExpenseRepo,
 } from "@/server/repositories/expense.repository";
 import { findTripById } from "@/server/repositories/trip.repository";
+import { assertCanEditTrip, PermissionError } from "@/server/services/permission.service";
 
 export class BudgetError extends Error {}
 
@@ -40,10 +41,20 @@ export interface BudgetSummary {
   settlements: BudgetSettlement[];
 }
 
-async function assertTripOwner(tripId: string, ownerId: string) {
+async function assertTripEditor(tripId: string, userId: string) {
   const trip = await findTripById(tripId);
   if (!trip) throw new BudgetError("TRIP_NOT_FOUND");
-  if (trip.ownerId !== ownerId) throw new BudgetError("FORBIDDEN");
+
+  try {
+    await assertCanEditTrip(tripId, userId);
+  } catch (error) {
+    if (error instanceof PermissionError) {
+      if (error.code === "TRIP_NOT_FOUND") throw new BudgetError("TRIP_NOT_FOUND");
+      throw new BudgetError("FORBIDDEN");
+    }
+    throw error;
+  }
+
   return trip;
 }
 
@@ -57,6 +68,7 @@ function roundMoney(value: number) {
 
 export async function listExpenses(tripId: string) {
   const expenses = await findExpensesByTrip(tripId);
+
   return expenses.map((expense) => ({
     ...expense,
     category: toExpenseCategory(expense.category),
@@ -65,12 +77,12 @@ export async function listExpenses(tripId: string) {
   }));
 }
 
-export async function addExpense(tripId: string, ownerId: string, input: ExpenseInput) {
-  await assertTripOwner(tripId, ownerId);
+export async function addExpense(tripId: string, userId: string, input: ExpenseInput) {
+  await assertTripEditor(tripId, userId);
 
   return createExpense({
     tripId,
-    paidById: ownerId,
+    paidById: userId,
     category: input.category,
     amount: input.amount,
     note: input.note,
@@ -78,11 +90,11 @@ export async function addExpense(tripId: string, ownerId: string, input: Expense
   });
 }
 
-export async function editExpense(expenseId: string, ownerId: string, input: ExpenseInput) {
+export async function editExpense(expenseId: string, userId: string, input: ExpenseInput) {
   const expense = await findExpenseById(expenseId);
   if (!expense) throw new BudgetError("NOT_FOUND");
 
-  await assertTripOwner(expense.tripId, ownerId);
+  await assertTripEditor(expense.tripId, userId);
 
   return updateExpenseRepo(expenseId, {
     category: input.category,
@@ -92,11 +104,11 @@ export async function editExpense(expenseId: string, ownerId: string, input: Exp
   });
 }
 
-export async function removeExpense(expenseId: string, ownerId: string) {
+export async function removeExpense(expenseId: string, userId: string) {
   const expense = await findExpenseById(expenseId);
   if (!expense) throw new BudgetError("NOT_FOUND");
 
-  await assertTripOwner(expense.tripId, ownerId);
+  await assertTripEditor(expense.tripId, userId);
   return deleteExpense(expenseId);
 }
 
@@ -143,9 +155,7 @@ export async function computeBudgetSummary(tripId: string): Promise<BudgetSummar
     expenses.reduce((sum, expense) => sum + expense.amount, 0),
   );
 
-  const budgetTarget =
-    trip?.budgetTarget != null ? Number(trip.budgetTarget) : null;
-
+  const budgetTarget = trip?.budgetTarget != null ? Number(trip.budgetTarget) : null;
   const byCategoryMap = new Map<string, number>();
   const owedMap = new Map<string, number>();
   const paidMap = new Map<string, number>();
@@ -153,16 +163,12 @@ export async function computeBudgetSummary(tripId: string): Promise<BudgetSummar
   for (const expense of expenses) {
     byCategoryMap.set(
       expense.category,
-      roundMoney(
-        (byCategoryMap.get(expense.category) ?? 0) + expense.amount,
-      ),
+      roundMoney((byCategoryMap.get(expense.category) ?? 0) + expense.amount),
     );
 
     paidMap.set(
       expense.paidByName,
-      roundMoney(
-        (paidMap.get(expense.paidByName) ?? 0) + expense.amount,
-      ),
+      roundMoney((paidMap.get(expense.paidByName) ?? 0) + expense.amount),
     );
 
     const members = normalizeSplitBetween(expense.splitBetween);
@@ -171,10 +177,7 @@ export async function computeBudgetSummary(tripId: string): Promise<BudgetSummar
       const share = expense.amount / members.length;
 
       for (const name of members) {
-        owedMap.set(
-          name,
-          roundMoney((owedMap.get(name) ?? 0) + share),
-        );
+        owedMap.set(name, roundMoney((owedMap.get(name) ?? 0) + share));
       }
     }
   }
@@ -201,10 +204,7 @@ export async function computeBudgetSummary(tripId: string): Promise<BudgetSummar
   return {
     totalSpent,
     budgetTarget,
-    remaining:
-      budgetTarget != null
-        ? roundMoney(budgetTarget - totalSpent)
-        : null,
+    remaining: budgetTarget != null ? roundMoney(budgetTarget - totalSpent) : null,
     byCategory: [...byCategoryMap.entries()].map(([category, total]) => ({
       category,
       total,
