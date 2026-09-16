@@ -89,29 +89,28 @@ export async function inviteToTrip(
     if (collaborator) throw new InvitationError("ALREADY_COLLABORATOR");
   }
 
-  const existingInvitation = await findTripInvitationByTripAndEmail(tripId, email);
+const existingInvitation = await findTripInvitationByTripAndEmail(
+  tripId,
+  email,
+);
 
-  if (existingInvitation) {
-    if (existingInvitation.status === "PENDING") {
-      throw new InvitationError("ALREADY_PENDING");
-    }
-
-    if (existingInvitation.status === "ACCEPTED") {
-      throw new InvitationError("ALREADY_ACCEPTED");
-    }
-
-    return reopenTripInvitation(existingInvitation.id, {
-      role: input.role,
-      invitedById: inviterId,
-    });
+if (existingInvitation) {
+  if (existingInvitation.status === "PENDING") {
+    throw new InvitationError("ALREADY_PENDING");
   }
 
-  return createTripInvitation({
-    tripId,
-    email,
+  return reopenTripInvitation(existingInvitation.id, {
     role: input.role,
     invitedById: inviterId,
   });
+}
+
+return createTripInvitation({
+  tripId,
+  email,
+  role: input.role,
+  invitedById: inviterId,
+});
 }
 
 export async function listTripInvitations(tripId: string, requesterId: string) {

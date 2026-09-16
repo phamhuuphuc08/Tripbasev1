@@ -14,6 +14,7 @@ import {
 import {
   assertCanEditTrip,
   getTripRole,
+  getTripShareLinkType,
   PermissionError,
   roleCanEdit,
 } from "@/server/services/permission.service";
@@ -57,18 +58,27 @@ async function assertEditorOrOwner(tripId: string, userId: string) {
   }
 }
 
-export async function getTripDetail(id: string, viewerId?: string) {
+export async function getTripDetail(
+  id: string,
+  viewerId?: string | null,
+  shareToken?: string | null,
+) {
   const trip = await findTripById(id);
   if (!trip) return null;
 
-  const role = await getTripRole(id, viewerId);
+  const [role, shareLinkType] = await Promise.all([
+    getTripRole(id, viewerId),
+    getTripShareLinkType(id, shareToken),
+  ]);
+
   const isOwner = role === "OWNER";
-  const canEdit = roleCanEdit(role);
   const isPublic = trip.visibility === PlanVisibility.PUBLIC;
+  const canView = isPublic || role !== "NONE" || shareLinkType !== null;
+  const canEdit = roleCanEdit(role) || (shareLinkType === "EDIT" && viewerId != null);
 
-  if (!isPublic && role === "NONE") return null;
+  if (!canView) return null;
 
-  const requiresLogin = viewerId == null;
+  const requiresLogin = viewerId == null && shareLinkType == null;
 
   return {
     trip,
@@ -76,6 +86,7 @@ export async function getTripDetail(id: string, viewerId?: string) {
     isOwner,
     canEdit,
     requiresLogin,
+    shareLinkType,
   };
 }
 

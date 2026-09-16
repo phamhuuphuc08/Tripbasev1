@@ -12,6 +12,13 @@ import {
   Wallet,
   X,
 } from "lucide-react";
+import { ChecklistManager } from "@/features/checklist/checklist-manager";
+import {
+  listChecklistAssignees,
+  listChecklistItems,
+} from "@/server/services/checklist.service";
+import { ShareLinkManager } from "@/features/share/share-link-manager";
+import { listTripShareLinks } from "@/server/services/share-link.service";
 import { notFound } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +28,7 @@ import { Link } from "@/i18n/navigation";
 import { removeExpenseAction } from "@/features/budget/actions";
 import { toExpenseCategory } from "@/features/budget/categories";
 import { ExpenseForm } from "@/features/budget/expense-form";
+import { CollaboratorManager } from "@/features/share/collaborator-manager";
 import { InviteForm } from "@/features/share/invite-form";
 import { ItineraryItemForm } from "@/features/itinerary/itinerary-item-form";
 import { ItinerarySortableTimeline } from "@/features/itinerary/itinerary-sortable-timeline";
@@ -35,6 +43,7 @@ import { TravelerForm } from "@/features/trip/traveler-form";
 import { TripForm } from "@/features/trip/trip-form";
 import { toTagCategory } from "@/features/tag-tip/categories";
 import { getSession } from "@/server/auth/session";
+import { listTripCollaborators } from "@/server/services/collaborator.service";
 import {
   computeBudgetSummary,
   listExpenses,
@@ -81,13 +90,14 @@ export default async function TripDetailPage({
   searchParams: Promise<{
     editItem?: string;
     editExpense?: string;
+    shareToken?: string;
   }>;
 }) {
   const { tripId } = await params;
-  const { editItem, editExpense } = await searchParams;
+  const { editItem, editExpense, shareToken } = await searchParams;
 
   const session = await getSession();
-  const result = await getTripDetail(tripId, session?.userId);
+  const result = await getTripDetail(tripId, session?.userId, shareToken);
 
   if (!result) notFound();
 
@@ -104,6 +114,7 @@ const [
   tBudget,
   tExpenseCategory,
   tShare,
+  tChecklist,
   tStory,
   format,
 ] = await Promise.all([
@@ -117,6 +128,7 @@ const [
   getTranslations("budget"),
   getTranslations("expenseCategory"),
   getTranslations("share.invite"),
+  getTranslations("checklist"),
   getTranslations("story"),
   getFormatter(),
 ]);
@@ -150,19 +162,56 @@ const [
     );
   }
 
-  const [
-    items,
-    tagOptions,
-    expenses,
-    budgetSummary,
-    storySlides,
-  ] = await Promise.all([
-    listItineraryItems(tripId),
-    canEdit ? listTagsForPicker() : Promise.resolve([]),
-    listExpenses(tripId),
-    computeBudgetSummary(tripId),
-    listStorySlides(tripId),
-  ]);
+const [
+  items,
+  tagOptions,
+  expenses,
+  budgetSummary,
+  storySlides,
+  collaborators,
+  shareLinks,
+  checklistItems,
+  checklistAssignees,
+] = await Promise.all([
+  listItineraryItems(tripId),
+  canEdit ? listTagsForPicker() : Promise.resolve([]),
+  listExpenses(tripId),
+  computeBudgetSummary(tripId),
+  listStorySlides(tripId),
+  isOwner && session
+    ? listTripCollaborators(tripId, session.userId)
+    : Promise.resolve([]),
+  isOwner && session
+    ? listTripShareLinks(tripId, session.userId)
+    : Promise.resolve([]),
+listChecklistItems(tripId, session?.userId, shareToken),
+canEdit && session
+  ? listChecklistAssignees(tripId, session.userId, shareToken)
+  : Promise.resolve([]),
+]);
+
+const shareLinkItems = shareLinks.map((link) => ({
+  id: link.id,
+  token: link.token,
+  type: link.type,
+  expiresAt: link.expiresAt?.toISOString() ?? null,
+  revokedAt: link.revokedAt?.toISOString() ?? null,
+}));
+
+const checklistManagerItems = checklistItems.map((item) => ({
+  id: item.id,
+  title: item.title,
+  dueDate: item.dueDate
+    ? item.dueDate.toISOString().slice(0, 10)
+    : null,
+  status: item.status,
+  assignedTo: item.assignedTo
+    ? {
+        id: item.assignedTo.id,
+        name: item.assignedTo.name,
+      }
+    : null,
+}));
 
   const sortedDays = [
     ...new Set(items.map((item) => item.day)),
@@ -585,19 +634,48 @@ const [
         </CardContent>
       </Card>
 
-      {isOwner && (
-        <Card id="share">
-          <CardHeader>
-            <CardTitle className="text-base">
-              {tShare("heading")}
-            </CardTitle>
-          </CardHeader>
+{isOwner && (
+  <Card id="share">
+    <CardHeader>
+      <CardTitle className="text-base">{tShare("heading")}</CardTitle>
+    </CardHeader>
 
-          <CardContent>
-            <InviteForm tripId={tripId} />
-          </CardContent>
-        </Card>
-      )}
+    <CardContent className="flex flex-col gap-6">
+      <InviteForm tripId={tripId} />
+
+      <div className="border-t pt-5">
+        <CollaboratorManager
+          tripId={tripId}
+          collaborators={collaborators}
+        />
+      </div>
+
+      <div className="border-t pt-5">
+        <ShareLinkManager
+          tripId={tripId}
+          links={shareLinkItems}
+        />
+      </div>
+    </CardContent>
+  </Card>
+)}
+
+<Card id="checklist">
+  <CardHeader>
+    <CardTitle className="text-base">
+      {tChecklist("heading")}
+    </CardTitle>
+  </CardHeader>
+
+  <CardContent>
+    <ChecklistManager
+      tripId={tripId}
+      items={checklistManagerItems}
+      assignees={checklistAssignees}
+      canEdit={canEdit}
+    />
+  </CardContent>
+</Card>
 
       <Card id="itinerary">
         <CardHeader>

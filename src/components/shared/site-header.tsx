@@ -6,12 +6,19 @@ import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { logoutAction } from "@/features/auth/actions";
 import { getSession } from "@/server/auth/session";
+import { listMyPendingInvitations } from "@/server/services/invitation.service";
 
 export async function SiteHeader() {
   const [session, t] = await Promise.all([
     getSession(),
     getTranslations("nav"),
   ]);
+
+  const pendingInvitations = session
+    ? await listMyPendingInvitations(session.userId)
+    : [];
+
+  const pendingInvitationCount = pendingInvitations.length;
 
   return (
     <header className="bg-background/85 sticky top-0 z-40 border-b backdrop-blur-sm">
@@ -30,18 +37,38 @@ export async function SiteHeader() {
           >
             {t("trips")}
           </Link>
+
           <Link
             href="/explore"
             className="hover:text-foreground transition-colors"
           >
             {t("explore")}
           </Link>
+
           <Link
             href="/saved"
             className="hover:text-foreground transition-colors"
           >
             {t("saved")}
           </Link>
+
+          {session && (
+            <Link
+              href="/invitations"
+              className="hover:text-foreground flex items-center gap-1.5 transition-colors"
+            >
+              <span>{t("invitations")}</span>
+
+              {pendingInvitationCount > 0 && (
+                <span className="bg-primary text-primary-foreground flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none">
+                  {pendingInvitationCount > 99
+                    ? "99+"
+                    : pendingInvitationCount}
+                </span>
+              )}
+            </Link>
+          )}
+
           <Link
             href="/tags"
             className="hover:text-foreground transition-colors"
@@ -61,6 +88,7 @@ export async function SiteHeader() {
             >
               {session.name}
             </Link>
+
             <form action={logoutAction}>
               <Button type="submit" variant="ghost" size="sm">
                 {t("logout")}
@@ -77,6 +105,7 @@ export async function SiteHeader() {
             >
               {t("login")}
             </Button>
+
             <Button
               render={<Link href="/register" />}
               nativeButton={false}

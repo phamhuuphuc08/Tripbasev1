@@ -21,11 +21,11 @@ Tổng quan kiến trúc: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 | M14 | [i18n & UI polish](#m14--i18n--ui-polish)                     | —       | —          | ✅      | ✅  | ✅         |
 | M01 | [Trip Builder](#m01--trip-builder)                            | P0      | ✅         | ✅      | 🟨  | 🟨         |
 | M02 | [Itinerary / Smart Timeline](#m02--itinerary--smart-timeline) | P0      | ✅         | ✅      | ✅  | ✅         |
-| M03 | [Map Planner](#m03--map-planner)                              | P0      | ✅         | ✅      | 🟨  | 🟨         |
+| M03 | [Map Planner](#m03--map-planner)                              | P0      | ✅         | ✅      | ✅  | ✅         |
 | M04 | [Budget Board](#m04--budget-board)                            | P0      | ✅         | ✅      | 🟨  | 🟨         |
 | M05 | [Booking Vault](#m05--booking-vault)                          | P1      | ✅         | ⬜      | ⬜  | ⬜         |
-| M06 | [Checklist](#m06--checklist)                                  | P0      | ✅         | ⬜      | ⬜  | ⬜         |
-| M07 | [Share & Permission](#m07--share--permission)                 | P0      | ✅         | ⬜      | ⬜  | ⬜         |
+| M06 | [Checklist](#m06--checklist)                                  | P0      | ✅         | ✅      | ✅  | ✅         |
+| M07 | [Share & Permission](#m07--share--permission)                 | P0      | ✅         | 🟨      | 🟨  | 🟨         |
 | M08 | [CopyPlan Engine](#m08--copyplan-engine)                      | P0      | ✅         | ⬜      | ⬜  | ⬜         |
 | M09 | [Reputation Engine](#m09--reputation-engine)                  | P1      | ✅         | 🟨      | 🟨  | 🟨         |
 | M10 | [Plan Marketplace / Explore](#m10--plan-marketplace--explore) | P1      | ✅         | 🟨      | 🟨  | 🟨         |
@@ -191,58 +191,42 @@ Ghi chú kỹ thuật:
 
 - **Ưu tiên:** P0 · **Spec:** mục 4, 5, 6a
 - **Code:** `src/features/trip/{trip-form,styles,actions}.tsx`, `src/server/services/trip.service.ts`, model `Trip`, `Traveler`
-- **Trạng thái:** 🟨 Đang làm (CRUD + travelers + xoá + ngân sách/sở thích/
-  nhịp độ xong, chưa có Map/Budget board thật)
+- **Trạng thái:** 🟨 Gần hoàn thiện MVP (CRUD/travelers/các field lập kế hoạch + quyền Editor đã chạy; còn guardrail Verified by Author và phần Edit Link của M07 chưa nối hết vào Server Action)
 
 Đã làm:
 
-- [x] Đọc chi tiết 1 trip thật từ DB (`getTripDetail`), có gate: plan không
-      public + không phải chủ sở hữu → 404; plan public nhưng chưa đăng
-      nhập → yêu cầu login (`/trips/[tripId]`)
+- [x] Đọc chi tiết 1 trip thật từ DB (`getTripDetail`), phân quyền theo OWNER/
+      EDITOR/VIEWER và hiện đã nhận thêm `shareToken` từ M07 để mở trip qua
+      View/Edit Link hợp lệ.
 - [x] Trip dashboard thật (`/trips`, yêu cầu đăng nhập) — danh sách trip của
-      user, badge trạng thái + visibility, nút "Tạo trip mới"
+      user, badge trạng thái + visibility, nút "Tạo trip mới".
 - [x] Form tạo trip (`/trips/new`): tên, điểm đến, ngày bắt đầu/kết thúc
-      (optional), visibility — `createTripAction` → redirect vào trip mới
-- [x] Form chỉnh sửa (trên `/trips/[tripId]`, chỉ hiện cho chủ sở hữu):
-      sửa mọi field ở trên + đổi trạng thái Ý tưởng/Đã lên lịch/Đã đi và
-      visibility Riêng tư/Bạn bè-nhóm/Public — `updateTripAction`
-      (`src/features/trip/{actions.ts,trip-form.tsx}`), có check ownership
-      ở `trip.service.updateTrip` (defense-in-depth, UI đã gate trước)
-- [x] `TripForm` dùng chung create/edit, shadcn `Select` (Base UI) —
-      lưu ý: `Select.Value` không tự tra nhãn theo item như Radix, phải
-      truyền render-prop map giá trị → nhãn dịch thủ công
-- [x] Số người tham gia (`Traveler`): thêm/xoá trên trip detail (chỉ chủ sở
-      hữu) — tên + độ tuổi tuỳ chọn, `addTravelerAction`/`removeTravelerAction`
-      (`src/features/trip/traveler-form.tsx`, server component thuần vì
-      không cần client state)
-- [x] Xoá trip: trang xác nhận riêng `/trips/[tripId]/delete` (không dùng
-      `window.confirm`), `deleteTripAction` — chỉ chủ sở hữu truy cập được
-      (check bằng `getTripDetail` + `isOwner`, không phải `notFound` mặc định)
-- [x] Verify qua trình duyệt thật: tạo trip → sửa status/visibility → lưu
-      → xuất hiện đúng trên dashboard **và** trên search public ở Home;
-      thêm/xoá traveler; xoá trip → về `/trips`, biến mất khỏi danh sách
-      và DB (dữ liệu thật trong Postgres)
-- [x] Số người dự kiến, ngân sách dự kiến, phong cách chuyến đi (4 tag cố
-      định: Ẩm thực/Mua sắm/Văn hoá/Thiên nhiên), nhịp độ (Thong thả/Vừa
-      phải/Dày lịch) — `Trip.{travelerCount,budgetTarget,travelStyle,pace}`
-      (migration `add_trip_builder_and_itinerary_fields`), hiện ngay dưới
-      tiêu đề trip. Đây là các field mục 4 của spec mà bản đầu tiên của
-      M01 còn thiếu — coi thêm chi tiết ở mục "Rà soát nhánh cộng sự" trong
-      Changelog.
-- [x] Khi sửa `Trip.startDate`, `trip.service.updateTrip` đồng bộ lại
-      `ItineraryItem.startTime/endTime` theo `startDate + (day - 1)` nhưng
-      giữ nguyên giờ/phút; cập nhật Trip + toàn bộ itinerary trong cùng
-      Prisma transaction để tránh trạng thái nửa cập nhật.
+      (optional), visibility — `createTripAction` → redirect vào trip mới.
+- [x] Form chỉnh sửa trên `/trips/[tripId]`: OWNER và collaborator EDITOR thấy
+      quyền sửa (`canEdit`); VIEWER chỉ xem. Xoá trip vẫn chỉ OWNER.
+- [x] `TripForm` dùng chung create/edit, shadcn `Select` (Base UI) — render-prop
+      map giá trị → nhãn dịch thủ công.
+- [x] `Traveler`: thêm/xoá tên + độ tuổi tuỳ chọn; OWNER/EDITOR collaborator
+      thao tác được qua service permission, VIEWER chỉ xem.
+- [x] Xoá trip: trang xác nhận riêng `/trips/[tripId]/delete`, `deleteTripAction`
+      chỉ dành cho OWNER.
+- [x] Số người dự kiến, ngân sách dự kiến, phong cách chuyến đi (Ẩm thực/Mua
+      sắm/Văn hoá/Thiên nhiên), nhịp độ (Thong thả/Vừa phải/Dày lịch) đã lưu
+      trong `Trip.{travelerCount,budgetTarget,travelStyle,pace}` và hiển thị trên
+      Trip Detail.
+- [x] Khi sửa `Trip.startDate`, `trip.service.updateTrip` đồng bộ
+      `ItineraryItem.startTime/endTime` theo `startDate + (day - 1)` nhưng giữ
+      nguyên giờ/phút; cập nhật Trip + itinerary trong cùng Prisma transaction.
+- [x] Budget thực chi đã được tách và triển khai ở M04; Map Planner đã có MVP ở
+      M03 nên không còn là blocker của Trip Builder.
 
 Chưa làm:
 
-- [ ] Ngân sách **thực chi** theo hạng mục (Budget board thật, `Expense`,
-      M04) — `budgetTarget` ở trên chỉ là con số ước lượng lúc lập kế
-      hoạch, chưa so sánh được với chi tiêu thật
-- [ ] Badge "Verified by Author" khi chuyển sang "Đã đi" — cố ý chưa làm:
-      cần bằng chứng tối thiểu (ảnh/booking) theo guardrail mục 13, phụ
-      thuộc Travel Memory (M12) chưa tồn tại; hiện tự do đổi status không
-      bị chặn nhưng field `verifiedByAuthor` luôn `false`
+- [ ] Badge "Verified by Author" khi chuyển sang "Đã đi" — cần bằng chứng tối
+      thiểu (ảnh/booking) theo guardrail mục 13; phụ thuộc M05/M12.
+- [ ] Hoàn tất quyền chỉnh sửa bằng **Edit Link** cho các Server Action của Trip
+      (truyền `shareToken` xuống action/service); phần đọc trang và `canEdit`
+      theo token đã có ở M07.
 
 ---
 
@@ -301,14 +285,14 @@ Chưa làm:
 
 Ghi chú xác minh cuối:
 
-- Sau khi bổ sung hardening quyền Vote/Comment ngày 2026-09-14, lần
-  `typecheck` đầu tiên bắt được 1 lỗi type ở
-  `comment.item.trip.id`; đã sửa sang `comment.item.tripId`. Cần chạy lại
-  `npm run typecheck` trước commit tiếp theo để ghi nhận trạng thái cuối
-  cùng của patch bảo mật này.
-- M02 được coi là feature-complete cho MVP; các mở rộng như realtime
-  collaboration/presence hoặc notification không nằm trong phạm vi M02 hiện
-  tại và sẽ được tách sang module phù hợp nếu cần.
+- Sau hardening Vote/Comment ngày 2026-09-14, lỗi type
+  `comment.item.trip.id` đã được sửa sang `comment.item.tripId`; các lần
+  `npm run typecheck` tiếp theo trong đợt M06/M07 ngày 2026-09-16 đã chạy sạch.
+- M02 được coi là feature-complete cho MVP; OWNER/EDITOR collaborator có quyền
+  chỉnh sửa, VIEWER chỉ xem. Quyền chỉnh sửa bằng **Edit Link token** vẫn thuộc
+  phần tích hợp còn lại của M07, không mở lại phạm vi M02.
+- Các mở rộng như realtime collaboration/presence hoặc notification không nằm
+  trong phạm vi M02 hiện tại và sẽ được tách sang module phù hợp nếu cần.
 
 ---
 
@@ -316,7 +300,7 @@ Ghi chú xác minh cuối:
 
 - **Ưu tiên:** P0 · **Spec:** mục 4, 6a, 11
 - **Code:** `src/features/map/`, model `LocationTag` (dùng lat/lng thay vì `Place`)
-- **Trạng thái:** 🟨 Đang làm (bản đồ + cảnh báo đi vòng xong trên Trip Detail)
+- **Trạng thái:** ✅ Xong phạm vi MVP hiện tại (bản đồ + marker theo ngày + cảnh báo đi vòng; các mục geo-clustering/map picker là nâng cấp sau MVP)
 
 Quyết định (user chọn khi được hỏi): **Leaflet + OpenStreetMap**, không phải
 Mapbox/Google Maps — miễn phí, không cần API key/tài khoản.
@@ -375,52 +359,33 @@ Ghi chú kỹ thuật:
 
 - **Ưu tiên:** P0 · **Spec:** mục 4, 5, 11
 - **Code:** `src/features/budget/`, `src/server/services/budget.service.ts`, model `Expense`
-- **Trạng thái:** 🟨 Đang làm (CRUD + chia tiền cơ bản xong, chưa có
-  Booking Vault liên kết)
+- **Trạng thái:** 🟨 Gần hoàn thiện (CRUD + tổng hợp/chia tiền + settlement + quyền Editor đã có; còn payer picker/receipt và Edit Link token)
 
 Đã làm:
 
-- [x] Thêm/xoá khoản chi trên trang chi tiết trip (chỉ chủ sở hữu), 8 hạng
-      mục cố định (`src/features/budget/categories.ts`: Vé máy bay, Khách
-      sạn, Ăn uống, Vé tham quan, Di chuyển, Mua sắm, Dự phòng, Khác) —
-      cùng pattern "union cố định, coerce ở boundary" với các module khác
-- [x] `Expense` thêm `note` (ghi chú tuỳ chọn) + `createdAt` (migration
-      `add_expense_note_and_created_at`); `paidById` mặc định là chủ sở
-      hữu trip (người duy nhất có quyền thêm hiện tại, chưa có form chọn
-      người trả vì chưa có Share & Permission/M07)
-- [x] Money View cơ bản (mục 11, rule-based không AI):
-      `computeBudgetSummary` — tổng đã chi, so với `Trip.budgetTarget`
-      (còn lại/vượt ngân sách), phân theo hạng mục, và **chia tiền cơ
-      bản**: mỗi expense có `splitBetween` (tên các Traveler, không phải
-      FK cứng — đúng thiết kế "lỏng" ở mục 12 của spec) được chia đều,
-      cộng dồn theo tên ra tổng mỗi người phải trả. Đây là chia đều đơn
-      giản, **không phải** thuật toán settle-up tối ưu (ai trả ai bao
-      nhiêu để cân bằng số dư).
-- [x] Debug đáng chú ý: phát hiện 3 nút "Xoá" khác nhau trên cùng trang
-      chi tiết trip (traveler/itinerary/budget) từng dùng chung
-      `aria-label` gần giống nhau ("Remove") — kịch bản test tự động bấm
-      nhầm nút xoá traveler thay vì xoá expense. Sửa bằng cách thêm
-      `removeButtonNamed` (interpolate tên/hạng mục cụ thể) cho cả 3 nút,
-      vừa hết nhầm lẫn cho test tự động vừa tốt hơn cho accessibility
-      (screen reader phân biệt được đang xoá cái gì).
-- [x] Verify qua trình duyệt thật + Postgres thật: tạo trip ngân sách
-      5.000.000đ, thêm 2 traveler (An, Binh), thêm 1 khoản chi 2.000.000đ
-      chia cho cả 2 → hiện đúng "Đã chi 2.000.000 / Còn lại 3.000.000",
-      đúng "An: 1.000.000 · Binh: 1.000.000"; xoá khoản chi (sau khi sửa
-      aria-label) → đúng khoản chi biến mất, traveler không bị ảnh hưởng;
-      kiểm tra trực tiếp qua `psql` khớp 100%. `lint`/`typecheck`/`build`
-      pass.
+- [x] CRUD khoản chi trên Trip Detail: thêm, **sửa**, xoá; 8 hạng mục cố định
+      (`Vé máy bay`, `Khách sạn`, `Ăn uống`, `Vé tham quan`, `Di chuyển`,
+      `Mua sắm`, `Dự phòng`, `Khác`).
+- [x] `Expense` có `note`, `createdAt`, `splitBetween`; form sửa dùng
+      `?editExpense=<id>#budget`, giữ chung một luồng create/edit.
+- [x] Quyền collaborator M07 đã nối vào Budget: OWNER và EDITOR có thể
+      thêm/sửa/xoá, VIEWER chỉ xem; service kiểm tra quyền chứ không chỉ gate UI.
+- [x] Khi EDITOR thêm khoản chi, `paidById` dùng user đang thao tác; chưa có
+      picker để chọn một người trả khác.
+- [x] `computeBudgetSummary`: tổng đã chi, còn lại/vượt ngân sách, tổng theo
+      hạng mục, tổng chia theo thành viên, balances và settlement "ai trả ai"
+      được hiển thị trên Trip Detail.
+- [x] Các nút sửa/xoá dùng `aria-label` có tên/hạng mục cụ thể để tránh nhầm
+      giữa traveler/itinerary/budget và tốt hơn cho accessibility.
+- [x] Luồng Budget đã được kiểm tra cùng permission matrix OWNER/EDITOR/VIEWER
+      trong đợt hoàn thiện M07.
 
 Chưa làm:
 
-- [ ] Sửa khoản chi đã tạo (hiện chỉ thêm/xoá)
-- [ ] Chọn người trả (`paidById`) khác chủ sở hữu — cần Share & Permission
-      (M07) để có người khác ngoài chủ sở hữu thao tác trên trip trước
-- [ ] Thuật toán settle-up ("ai nợ ai bao nhiêu", tối thiểu hoá số giao
-      dịch) — hiện chỉ có tổng mỗi người phải trả, chưa tính chênh lệch
-      giữa người trả tiền thật và người nợ
-- [ ] Upload hoá đơn/receipt cho từng khoản chi — liên quan Booking Vault
-      (M05), chưa xây
+- [ ] Picker chọn `paidById` tuỳ ý trong nhóm thay vì mặc định user đang thao tác.
+- [ ] Upload hoá đơn/receipt cho từng khoản chi — liên quan Booking Vault (M05).
+- [ ] Nối **Edit Link token** vào Server Action Budget để user đăng nhập qua
+      link EDIT có thể lưu/sửa/xoá; phần page-level `canEdit` đã có ở M07.
 
 ---
 
@@ -441,29 +406,103 @@ Chưa làm:
 ## M06 — Checklist
 
 - **Ưu tiên:** P0 · **Spec:** mục 4, 5
-- **Code:** `src/features/checklist/`, model `ChecklistItem`
-- **Trạng thái:** ⬜ Chưa bắt đầu
+- **Code:** `src/features/checklist/`, `src/server/repositories/checklist.repository.ts`,
+  `src/server/services/checklist.service.ts`, `src/features/checklist/{actions,checklist-manager}.tsx`,
+  model `ChecklistItem`
+- **Trạng thái:** ✅ Xong phạm vi MVP hiện tại (2026-09-16)
 
-Chưa làm:
+Đã làm:
 
-- [ ] CRUD checklist item, gán người phụ trách, due date
-- [ ] Preset checklist theo loại chuyến đi (visa, SIM, bảo hiểm...)
+- [x] CRUD checklist item: thêm, sửa, xoá.
+- [x] Check Done/Pending trực tiếp trên danh sách.
+- [x] `dueDate` và giao việc (`assignedToId`) cho OWNER hoặc collaborator thuộc
+      trip; service chặn assignee ngoài trip.
+- [x] UI `ChecklistManager` trên Trip Detail: danh sách, inline edit, giao việc,
+      hạn hoàn thành, toggle trạng thái và xoá.
+- [x] Permission matrix đã kiểm tra thành công:
+      **OWNER → thêm/sửa/xoá/Done/giao việc**,
+      **EDITOR → thêm/sửa/xoá/Done/giao việc**,
+      **VIEWER → chỉ xem**.
+- [x] Permission được kiểm tra ở service bằng `assertCanViewTrip`/
+      `assertCanEditTrip`, không chỉ ẩn nút ở client.
+- [x] `checklist.service.ts` đã nhận `shareToken` cho luồng đọc trang và danh
+      sách assignee; PRIVATE trip mở bằng View/Edit Link hợp lệ không còn bị
+      chặn ở bước load Checklist.
+- [x] i18n vi/en cho toàn bộ UI và error state. `npm run typecheck` sạch sau
+      tích hợp M06/M07 ngày 2026-09-16.
+
+Nâng cấp sau MVP:
+
+- [ ] Preset checklist theo loại chuyến đi (visa, SIM, bảo hiểm...) — không còn
+      là blocker để đóng M06 MVP.
+- [ ] Server Action Checklist qua **Edit Link token** vẫn là phần tích hợp M07:
+      service đã có tham số token nhưng action/UI chưa truyền token khi mutate.
 
 ---
 
 ## M07 — Share & Permission
 
 - **Ưu tiên:** P0 · **Spec:** mục 3.3, 4, 5, 13
-- **Code:** `src/features/share/`, model `Collaborator`, `ShareLink`
-- **Trạng thái:** ⬜ Chưa bắt đầu
+- **Code:** `src/features/share/`, `src/server/repositories/{collaborator,trip-invitation,share-link}.repository.ts`,
+  `src/server/services/{permission,invitation,collaborator,share-link}.service.ts`,
+  routes `/invitations`, `/share/[token]`, models `Collaborator`, `TripInvitation`, `ShareLink`
+- **Trạng thái:** 🟨 Gần hoàn thiện — Invite/Collaborator permission đã chạy và test; Share Link tạo/revoke/expiry + page-level access đã có, còn nối Edit Link vào toàn bộ Server Action
 
-Chưa làm:
+Đã làm — Invite & Collaborator:
 
-- [ ] Invite đích danh (viewer/editor)
-- [ ] View Link / Edit Link — tạo, revoke, tạo lại
-- [ ] Expiry cho Edit Link (guardrail mục 13)
-- [ ] Auth/permission check theo `visibility` + `Collaborator.role` (hiện
-      `trip.service.ts` mới chỉ tự check owner, chưa check Collaborator)
+- [x] OWNER vẫn được suy ra từ `Trip.ownerId`; `CollaboratorRole` chỉ có
+      `EDITOR`/`VIEWER`, không tạo OWNER giả trong collaborator.
+- [x] Thêm `TripInvitation` + `InvitationStatus`
+      (`PENDING/ACCEPTED/DECLINED`), migration
+      `20260915044309_add_trip_invitations`.
+- [x] Mời đích danh qua email với role EDITOR/VIEWER; người chưa có tài khoản
+      vẫn có thể giữ invitation PENDING.
+- [x] Trang `/invitations`: accept/decline; Header có mục **Lời mời** và badge
+      đếm số pending invitation; badge đã test thành công.
+- [x] OWNER có `CollaboratorManager`: đổi EDITOR↔VIEWER, xoá thành viên.
+- [x] Permission matrix đã test:
+      OWNER chỉnh sửa + quản lý thành viên/xoá trip;
+      EDITOR chỉnh Trip/M02/M04/M06;
+      VIEWER chỉ xem.
+- [x] Logic re-invite không bị kẹt bởi invitation `ACCEPTED` cũ sau khi
+      collaborator đã bị xoá: nếu không còn collaborator và invitation không
+      còn PENDING thì record được reopen thay vì chặn vĩnh viễn.
+
+Đã làm — Share Link:
+
+- [x] `share-link.repository.ts` + `share-link.service.ts`: tạo token bằng
+      `crypto.randomBytes(24)`, list theo trip, resolve token, revoke bằng
+      `revokedAt`, kiểm tra `expiresAt`.
+- [x] OWNER tạo được **VIEW** hoặc **EDIT** link; expiry hỗ trợ
+      Không hết hạn / 1 ngày / 7 ngày / 30 ngày.
+- [x] `ShareLinkManager`: tạo link, liệt kê link từ DB, copy URL, hiển thị
+      active/expired/revoked và thu hồi link.
+- [x] Route `src/app/[locale]/(app)/share/[token]/page.tsx` resolve token rồi
+      chuyển tới `/trips/[tripId]?shareToken=...`.
+- [x] `permission.service.ts` có `getTripShareLinkType()`:
+      token sai/trip khác/revoked/expired → vô hiệu;
+      VIEW → cho xem;
+      EDIT → chỉ cho `canEdit` khi user đã đăng nhập.
+- [x] `trip.service.getTripDetail(id, viewerId, shareToken)` + Trip Detail đọc
+      `searchParams.shareToken`, nên PRIVATE trip có View/Edit Link hợp lệ có
+      thể mở đúng thay vì 404.
+- [x] `checklist.service.ts` đã truyền token vào `assertCanViewTrip`/
+      `assertCanEditTrip`; lỗi PRIVATE + Share Link khi load Checklist đã được
+      xử lý và user xác nhận test thành công.
+- [x] Các lần `npm run typecheck` sau repository/service/actions/UI/route/
+      permission integration đều chạy sạch theo kết quả user cung cấp.
+
+Chưa làm để đóng M07:
+
+- [ ] Truyền `shareToken` vào **Server Action mutate** của M01 Trip/Traveler,
+      M02 Itinerary, M04 Budget, M06 Checklist. Hiện EDIT Link có thể làm
+      page-level `canEdit = true`, nhưng mutation vẫn cần token ở backend.
+- [ ] Giữ `shareToken` qua các internal link/query như edit itinerary,
+      `?editExpense=`, cancel edit và redirect sau Server Action.
+- [ ] Test end-to-end EDIT Link: login → thêm/sửa/xoá ở M01/M02/M04/M06 →
+      revoke link → quyền sửa mất ngay; test expiry tương tự.
+- [ ] Chạy lại matrix cuối cho View Link anonymous, Edit Link authenticated,
+      revoked/expired token và token của trip khác trước khi đánh dấu M07 ✅.
 
 ---
 
@@ -505,9 +544,8 @@ Chưa làm:
       tag đã thêm (`LocationTag.count` theo `ownerId`), tổng `citeTrustScore`
       cộng dồn trên các tag đó ("Điểm tin cậy tag" — chỉ là phép cộng đơn
       giản trên field có sẵn, **không phải** công thức Cite Trust Score có
-      trọng số ở mục 8), và số comment (`Comment.count` theo `userId` — luôn
-      ra 0 vì tính năng comment (M06/M07) chưa xây, số liệu vẫn thật chứ
-      không phải giả)
+      trọng số ở mục 8), và số comment (`Comment.count` theo `userId`) — hiện đếm trực tiếp dữ liệu
+      Comment thật của M02, không còn giả định luôn bằng 0
 - [x] Gắn link tới profile ở mọi nơi đang hiện tên chủ sở hữu: tên user
       đăng nhập ở `SiteHeader`, "by {name}" trên card trip ở trang chủ, "by
       {name}" trên card tag ở `/tags`, "Created by {owner}" ở trang chi tiết
@@ -1151,9 +1189,61 @@ origin/main` để đưa `main` về đúng trạng thái đã push trước đ�
     tác giả comment hoặc chủ Trip.
   - `typecheck` của patch quyền ban đầu phát hiện đúng 1 lỗi type do repository
     chỉ expose `comment.item.trip.ownerId`; sửa lời gọi từ
-    `comment.item.trip.id` sang `comment.item.tripId`. Chưa ghi nhận output
-    của lần `npm run typecheck` chạy lại sau sửa này trong log hiện tại.
+    `comment.item.trip.id` sang `comment.item.tripId`. Các lần `npm run typecheck`
+    tiếp theo trong đợt M06/M07 ngày 2026-09-16 đã chạy sạch.
   - Cập nhật Dev Plan: M02 chuyển sang ✅ feature-complete cho MVP; M03 là
     module P0 tiếp theo cần tiếp tục, ưu tiên **Map Picker** (click bản đồ để
     lấy lat/lng) rồi mới làm geo-clustering.
+
+### 2026-09-15
+
+- **M07 — Invite, collaborator và permission nền:**
+  - Chốt mô hình quyền: OWNER lấy từ `Trip.ownerId`; `Collaborator` chỉ lưu
+    EDITOR/VIEWER; không thêm OWNER vào enum collaborator và không tạo
+    `TripMember` trùng chức năng.
+  - Thêm `TripInvitation` + `InvitationStatus`, repository/service cho invite,
+    accept/decline/reopen; migration `20260915044309_add_trip_invitations`.
+  - Thêm UI mời qua email, `/invitations`, accept/decline, quản lý collaborator
+    (đổi role, xoá thành viên) và permission service dùng chung.
+  - Tích hợp quyền vào Trip/M02/M04: OWNER/EDITOR được chỉnh, VIEWER chỉ xem;
+    OWNER vẫn là người duy nhất quản lý thành viên và xoá Trip.
+  - Header thêm mục "Lời mời" + badge pending invitation; user xác nhận test
+    badge thành công.
+  - Xử lý edge case invitation `ACCEPTED` còn sót sau khi collaborator bị xoá:
+    re-invite sẽ reopen record nếu không còn collaborator thay vì báo đã chấp
+    nhận mãi.
+
+### 2026-09-16
+
+- **M06 — Checklist hoàn tất MVP:**
+  - Tạo repository/service/actions/UI `ChecklistManager`: CRUD, due date,
+    assignee, Done/Pending.
+  - Assignee chỉ được là owner hoặc collaborator của đúng Trip.
+  - Permission backend + UI: OWNER/EDITOR đầy đủ thao tác; VIEWER chỉ xem.
+  - User test thành công cả 3 vai trò:
+    `OWNER → thêm/sửa/xoá/check Done/giao việc`,
+    `EDITOR → thêm/sửa/xoá/check Done/giao việc`,
+    `VIEWER → chỉ xem`.
+  - M06 chuyển sang ✅ MVP; preset checklist được dời thành nâng cấp sau MVP.
+
+- **M07 — Share Link Phase 1 + page-level permission:**
+  - Tạo `share-link.repository.ts`, `share-link.service.ts`,
+    `ShareLinkManager`, Server Actions tạo/revoke và i18n vi/en.
+  - Token ngẫu nhiên bằng `randomBytes(24)`; hỗ trợ VIEW/EDIT, revoke và
+    expiry (Never/1d/7d/30d).
+  - Trip Detail OWNER load danh sách link từ DB; UI copy/revoke và giữ trạng
+    thái sau refresh.
+  - Thêm `/share/[token]` → resolve token → redirect sang
+    `/trips/[tripId]?shareToken=...`.
+  - `permission.service.ts` + `trip.service.ts` nhận `shareToken`: VIEW link
+    hợp lệ có thể mở trip riêng tư; EDIT link yêu cầu đăng nhập để có
+    page-level `canEdit`; revoked/expired/trip-mismatch bị vô hiệu.
+  - Sửa `checklist.service.ts` nhận token ở luồng view/edit khi load trang;
+    lỗi Share Link trên PRIVATE trip được xử lý và user xác nhận hết lỗi,
+    test thành công.
+  - `npm run typecheck` được user chạy nhiều lần trong chuỗi thay đổi và đều
+    kết thúc sạch ở trạng thái hiện tại.
+  - **Còn lại trước khi đóng M07:** nối `shareToken` vào Server Actions mutate
+    của Trip/Itinerary/Budget/Checklist + giữ token qua redirect/internal link,
+    rồi test revoke/expiry end-to-end cho Edit Link.
 

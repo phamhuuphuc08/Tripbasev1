@@ -88,7 +88,7 @@ export function ExpenseForm({
               name="amount"
               type="number"
               min={1}
-              step={1000}
+              step={1}
               inputMode="numeric"
               required
               defaultValue={editingExpense?.amount ?? ""}

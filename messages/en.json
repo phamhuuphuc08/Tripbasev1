@@ -3,6 +3,7 @@
     "trips": "Trips",
     "explore": "Explore",
     "saved": "Saved",
+    "invitations": "Invitations",
     "tags": "Tag & Tip",
     "login": "Log in",
     "register": "Sign up",
@@ -439,7 +440,59 @@
       "userNotFound": "User account not found.",
       "responseFailed": "Could not process the invitation. Please try again."
     }
+  },
+"members": {
+  "heading": "Members",
+  "description": "Manage permissions for people who joined this trip.",
+  "empty": "There are no members yet.",
+  "roleEditor": "Editor",
+  "roleViewer": "Viewer",
+  "saveRole": "Save role",
+  "saving": "Saving…",
+  "remove": "Remove",
+  "removing": "Removing…",
+  "errors": {
+    "loginRequired": "You need to log in.",
+    "invalidRole": "The selected role is invalid.",
+    "tripNotFound": "Trip not found.",
+    "forbidden": "Only the trip owner can manage members.",
+    "notFound": "This member could not be found.",
+    "manageFailed": "Could not update this member. Please try again."
   }
+},
+"links": {
+  "heading": "Share by link",
+  "description": "Create a view-only or edit link for this trip.",
+  "typeLabel": "Access",
+  "expiryLabel": "Expiration",
+  "view": "View only",
+  "edit": "Edit",
+  "never": "Never expires",
+  "oneDay": "1 day",
+  "sevenDays": "7 days",
+  "thirtyDays": "30 days",
+  "create": "Create link",
+  "creating": "Creating…",
+  "listHeading": "Share links",
+  "empty": "No share links yet.",
+  "active": "Active",
+  "revoked": "Revoked",
+  "expired": "Expired",
+  "copy": "Copy",
+  "copied": "Copied",
+  "revoke": "Revoke",
+  "revoking": "Revoking…",
+  "expiresAt": "Expires: {date}",
+  "errors": {
+    "LOGIN_REQUIRED": "Please sign in.",
+    "INVALID_TYPE": "Invalid link type.",
+    "INVALID_EXPIRY": "Invalid expiration.",
+    "TRIP_NOT_FOUND": "Trip not found.",
+    "FORBIDDEN": "You cannot manage these links.",
+    "NOT_FOUND": "Share link not found.",
+    "SAVE_FAILED": "Could not update the share link. Please try again."
+  }
+}
 },
 
   "story": {
@@ -481,5 +534,37 @@
       "photoTooLarge": "Image is larger than 4MB.",
       "photoUnsupportedType": "Unsupported image format (JPG/PNG/WebP/GIF only)."
     }
+  },
+"checklist": {
+  "heading": "Preparation checklist",
+  "empty": "There are no checklist items yet.",
+  "addHeading": "Add preparation task",
+  "titleLabel": "Task",
+  "titlePlaceholder": "E.g. Check passport",
+  "dueDateLabel": "Due date",
+  "assigneeLabel": "Assignee",
+  "unassigned": "Unassigned",
+  "assignedTo": "Assigned to: {name}",
+  "dueDate": "Due: {date}",
+  "noDetails": "No assignee or due date.",
+  "add": "Add",
+  "adding": "Adding…",
+  "save": "Save",
+  "saving": "Saving…",
+  "cancel": "Cancel",
+  "edit": "Edit",
+  "remove": "Remove",
+  "markDone": "Mark as done",
+  "markPending": "Mark as pending",
+  "errors": {
+    "loginRequired": "You need to log in.",
+    "titleRequired": "Please enter a task.",
+    "invalidAssignee": "The assignee is not a member of this trip.",
+    "tripNotFound": "Trip not found.",
+    "notFound": "Checklist item not found.",
+    "forbidden": "You do not have permission to edit this checklist.",
+    "invalidStatus": "Invalid status.",
+    "saveFailed": "Could not update the checklist. Please try again."
   }
+}
 }

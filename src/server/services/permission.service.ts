@@ -1,19 +1,12 @@
-import type { PlanVisibility } from "@prisma/client";
+import type { PlanVisibility, ShareLinkType } from "@prisma/client";
 import { findCollaboratorByTripAndUser } from "@/server/repositories/collaborator.repository";
+import { findShareLinkByToken } from "@/server/repositories/share-link.repository";
 import { findTripById } from "@/server/repositories/trip.repository";
 
-export type TripPermissionRole =
-  | "OWNER"
-  | "EDITOR"
-  | "VIEWER"
-  | "NONE";
+export type TripPermissionRole = "OWNER" | "EDITOR" | "VIEWER" | "NONE";
 
 export class PermissionError extends Error {
-  constructor(
-    public code:
-      | "TRIP_NOT_FOUND"
-      | "FORBIDDEN",
-  ) {
+  constructor(public code: "TRIP_NOT_FOUND" | "FORBIDDEN") {
     super(code);
     this.name = "PermissionError";
   }
@@ -27,82 +20,74 @@ export async function getTripRole(
 
   const trip = await findTripById(tripId);
   if (!trip) return "NONE";
+  if (trip.ownerId === userId) return "OWNER";
 
-  if (trip.ownerId === userId) {
-    return "OWNER";
-  }
-
-  const collaborator =
-    await findCollaboratorByTripAndUser(
-      tripId,
-      userId,
-    );
-
+  const collaborator = await findCollaboratorByTripAndUser(tripId, userId);
   if (!collaborator) return "NONE";
 
   return collaborator.role;
 }
 
-export function roleCanEdit(
-  role: TripPermissionRole,
-) {
-  return (
-    role === "OWNER" ||
-    role === "EDITOR"
-  );
+export async function getTripShareLinkType(
+  tripId: string,
+  shareToken?: string | null,
+): Promise<ShareLinkType | null> {
+  const token = shareToken?.trim();
+  if (!token) return null;
+
+  const shareLink = await findShareLinkByToken(token);
+  if (!shareLink || shareLink.planId !== tripId) return null;
+  if (shareLink.revokedAt) return null;
+  if (shareLink.expiresAt && shareLink.expiresAt.getTime() <= Date.now()) return null;
+
+  return shareLink.type;
 }
 
-export function roleCanManageMembers(
-  role: TripPermissionRole,
-) {
+export function roleCanEdit(role: TripPermissionRole) {
+  return role === "OWNER" || role === "EDITOR";
+}
+
+export function roleCanManageMembers(role: TripPermissionRole) {
   return role === "OWNER";
 }
 
-export function roleCanDeleteTrip(
-  role: TripPermissionRole,
-) {
+export function roleCanDeleteTrip(role: TripPermissionRole) {
   return role === "OWNER";
 }
 
-export function roleCanView(
-  role: TripPermissionRole,
-  visibility: PlanVisibility,
-) {
-  if (visibility === "PUBLIC") {
-    return true;
-  }
-
+export function roleCanView(role: TripPermissionRole, visibility: PlanVisibility) {
+  if (visibility === "PUBLIC") return true;
   return role !== "NONE";
 }
 
 export async function canViewTrip(
   tripId: string,
   userId?: string | null,
+  shareToken?: string | null,
 ) {
   const trip = await findTripById(tripId);
   if (!trip) return false;
 
-  const role = await getTripRole(
-    tripId,
-    userId,
-  );
+  const role = await getTripRole(tripId, userId);
+  if (roleCanView(role, trip.visibility)) return true;
 
-  return roleCanView(
-    role,
-    trip.visibility,
-  );
+  const shareLinkType = await getTripShareLinkType(tripId, shareToken);
+  return shareLinkType !== null;
 }
 
 export async function canEditTrip(
   tripId: string,
   userId?: string | null,
+  shareToken?: string | null,
 ) {
-  const role = await getTripRole(
-    tripId,
-    userId,
-  );
+  const role = await getTripRole(tripId, userId);
+  if (roleCanEdit(role)) return true;
 
-  return roleCanEdit(role);
+  // Edit Link yêu cầu người dùng đăng nhập.
+  if (!userId) return false;
+
+  const shareLinkType = await getTripShareLinkType(tripId, shareToken);
+  return shareLinkType === "EDIT";
 }
 
 export async function isTripOwner(
@@ -112,77 +97,44 @@ export async function isTripOwner(
   if (!userId) return false;
 
   const trip = await findTripById(tripId);
-
-  return Boolean(
-    trip &&
-      trip.ownerId === userId,
-  );
+  return Boolean(trip && trip.ownerId === userId);
 }
 
 export async function assertCanViewTrip(
   tripId: string,
   userId?: string | null,
+  shareToken?: string | null,
 ) {
   const trip = await findTripById(tripId);
+  if (!trip) throw new PermissionError("TRIP_NOT_FOUND");
 
-  if (!trip) {
-    throw new PermissionError(
-      "TRIP_NOT_FOUND",
-    );
+  const role = await getTripRole(tripId, userId);
+  const shareLinkType = await getTripShareLinkType(tripId, shareToken);
+
+  if (!roleCanView(role, trip.visibility) && !shareLinkType) {
+    throw new PermissionError("FORBIDDEN");
   }
 
-  const role = await getTripRole(
-    tripId,
-    userId,
-  );
-
-  if (
-    !roleCanView(
-      role,
-      trip.visibility,
-    )
-  ) {
-    throw new PermissionError(
-      "FORBIDDEN",
-    );
-  }
-
-  return {
-    trip,
-    role,
-  };
+  return { trip, role, shareLinkType };
 }
 
 export async function assertCanEditTrip(
   tripId: string,
   userId: string,
+  shareToken?: string | null,
 ) {
   const trip = await findTripById(tripId);
+  if (!trip) throw new PermissionError("TRIP_NOT_FOUND");
 
-  if (!trip) {
-    throw new PermissionError(
-      "TRIP_NOT_FOUND",
-    );
-  }
+  const role: TripPermissionRole =
+    trip.ownerId === userId ? "OWNER" : await getTripRole(tripId, userId);
 
-  const role =
-    trip.ownerId === userId
-      ? "OWNER"
-      : await getTripRole(
-          tripId,
-          userId,
-        );
+  if (roleCanEdit(role)) return { trip, role, shareLinkType: null };
 
-  if (!roleCanEdit(role)) {
-    throw new PermissionError(
-      "FORBIDDEN",
-    );
-  }
+  const shareLinkType = await getTripShareLinkType(tripId, shareToken);
+  if (shareLinkType !== "EDIT") throw new PermissionError("FORBIDDEN");
 
-  return {
-    trip,
-    role,
-  };
+  return { trip, role, shareLinkType };
 }
 
 export async function assertTripOwner(
@@ -190,18 +142,8 @@ export async function assertTripOwner(
   userId: string,
 ) {
   const trip = await findTripById(tripId);
-
-  if (!trip) {
-    throw new PermissionError(
-      "TRIP_NOT_FOUND",
-    );
-  }
-
-  if (trip.ownerId !== userId) {
-    throw new PermissionError(
-      "FORBIDDEN",
-    );
-  }
+  if (!trip) throw new PermissionError("TRIP_NOT_FOUND");
+  if (trip.ownerId !== userId) throw new PermissionError("FORBIDDEN");
 
   return trip;
 }

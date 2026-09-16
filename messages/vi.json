@@ -3,6 +3,7 @@
     "trips": "Chuyến đi",
     "explore": "Khám phá",
     "saved": "Đã lưu",
+    "invitations": "Lời mời",
     "tags": "Tag & Tip",
     "login": "Đăng nhập",
     "register": "Đăng ký",
@@ -439,7 +440,59 @@
       "userNotFound": "Không tìm thấy tài khoản.",
       "responseFailed": "Không thể xử lý lời mời. Vui lòng thử lại."
     }
+  },
+"members": {
+  "heading": "Thành viên",
+  "description": "Quản lý quyền của những người đã tham gia chuyến đi.",
+  "empty": "Chưa có thành viên nào.",
+  "roleEditor": "Editor",
+  "roleViewer": "Viewer",
+  "saveRole": "Lưu quyền",
+  "saving": "Đang lưu…",
+  "remove": "Xóa",
+  "removing": "Đang xóa…",
+  "errors": {
+    "loginRequired": "Bạn cần đăng nhập.",
+    "invalidRole": "Quyền được chọn không hợp lệ.",
+    "tripNotFound": "Không tìm thấy trip.",
+    "forbidden": "Chỉ chủ trip mới được quản lý thành viên.",
+    "notFound": "Không tìm thấy thành viên này.",
+    "manageFailed": "Không thể cập nhật thành viên. Vui lòng thử lại."
   }
+},
+"links": {
+  "heading": "Chia sẻ bằng liên kết",
+  "description": "Tạo liên kết chỉ xem hoặc chỉnh sửa chuyến đi.",
+  "typeLabel": "Quyền truy cập",
+  "expiryLabel": "Thời hạn",
+  "view": "Chỉ xem",
+  "edit": "Chỉnh sửa",
+  "never": "Không hết hạn",
+  "oneDay": "1 ngày",
+  "sevenDays": "7 ngày",
+  "thirtyDays": "30 ngày",
+  "create": "Tạo liên kết",
+  "creating": "Đang tạo…",
+  "listHeading": "Liên kết đã tạo",
+  "empty": "Chưa có liên kết chia sẻ.",
+  "active": "Đang hoạt động",
+  "revoked": "Đã thu hồi",
+  "expired": "Đã hết hạn",
+  "copy": "Sao chép",
+  "copied": "Đã sao chép",
+  "revoke": "Thu hồi",
+  "revoking": "Đang thu hồi…",
+  "expiresAt": "Hết hạn: {date}",
+  "errors": {
+    "LOGIN_REQUIRED": "Bạn cần đăng nhập.",
+    "INVALID_TYPE": "Loại liên kết không hợp lệ.",
+    "INVALID_EXPIRY": "Thời hạn không hợp lệ.",
+    "TRIP_NOT_FOUND": "Không tìm thấy chuyến đi.",
+    "FORBIDDEN": "Bạn không có quyền quản lý liên kết.",
+    "NOT_FOUND": "Không tìm thấy liên kết.",
+    "SAVE_FAILED": "Không thể cập nhật liên kết. Vui lòng thử lại."
+  }
+}
 },
   "story": {
     "heading": "Story Hành Trình",
@@ -480,5 +533,37 @@
       "photoTooLarge": "Ảnh vượt quá 4MB.",
       "photoUnsupportedType": "Định dạng ảnh không hỗ trợ (chỉ JPG/PNG/WebP/GIF)."
     }
+  },
+"checklist": {
+  "heading": "Checklist chuẩn bị",
+  "empty": "Chưa có việc nào trong checklist.",
+  "addHeading": "Thêm việc cần chuẩn bị",
+  "titleLabel": "Công việc",
+  "titlePlaceholder": "VD: Kiểm tra hộ chiếu",
+  "dueDateLabel": "Hạn hoàn thành",
+  "assigneeLabel": "Người phụ trách",
+  "unassigned": "Chưa giao",
+  "assignedTo": "Phụ trách: {name}",
+  "dueDate": "Hạn: {date}",
+  "noDetails": "Chưa có người phụ trách hoặc hạn hoàn thành.",
+  "add": "Thêm",
+  "adding": "Đang thêm…",
+  "save": "Lưu",
+  "saving": "Đang lưu…",
+  "cancel": "Huỷ",
+  "edit": "Chỉnh sửa",
+  "remove": "Xoá",
+  "markDone": "Đánh dấu hoàn thành",
+  "markPending": "Đánh dấu chưa hoàn thành",
+  "errors": {
+    "loginRequired": "Bạn cần đăng nhập.",
+    "titleRequired": "Vui lòng nhập công việc.",
+    "invalidAssignee": "Người phụ trách không thuộc chuyến đi này.",
+    "tripNotFound": "Không tìm thấy trip.",
+    "notFound": "Không tìm thấy công việc này.",
+    "forbidden": "Bạn không có quyền chỉnh sửa checklist.",
+    "invalidStatus": "Trạng thái không hợp lệ.",
+    "saveFailed": "Không thể cập nhật checklist. Vui lòng thử lại."
   }
+}
 }
