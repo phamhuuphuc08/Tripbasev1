@@ -673,6 +673,7 @@ const checklistManagerItems = checklistItems.map((item) => ({
       items={checklistManagerItems}
       assignees={checklistAssignees}
       canEdit={canEdit}
+      shareToken={shareToken}
     />
   </CardContent>
 </Card>

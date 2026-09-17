@@ -26,6 +26,14 @@ type ChecklistItem = {
   assignedTo: Assignee | null;
 };
 
+type ChecklistManagerProps = {
+  tripId: string;
+  items: ChecklistItem[];
+  assignees: Assignee[];
+  canEdit: boolean;
+  shareToken?: string | null;
+};
+
 const initialState: ChecklistActionState = {};
 
 const ERROR_KEYS = {
@@ -44,30 +52,33 @@ function ChecklistRow({
   item,
   assignees,
   canEdit,
+  shareToken,
 }: {
   tripId: string;
   item: ChecklistItem;
   assignees: Assignee[];
   canEdit: boolean;
+  shareToken?: string | null;
 }) {
   const t = useTranslations("checklist");
   const locale = useLocale();
   const [editing, setEditing] = useState(false);
+  const token = shareToken ?? null;
 
   const [editState, editAction, editPending] = useActionState(
-    editChecklistItemAction.bind(null, tripId, item.id),
+    editChecklistItemAction.bind(null, tripId, item.id, token),
     initialState,
   );
 
   const nextStatus = item.status === "DONE" ? "PENDING" : "DONE";
 
   const [statusState, statusAction, statusPending] = useActionState(
-    changeChecklistStatusAction.bind(null, tripId, item.id, nextStatus),
+    changeChecklistStatusAction.bind(null, tripId, item.id, nextStatus, token),
     initialState,
   );
 
   const [removeState, removeAction, removePending] = useActionState(
-    removeChecklistItemAction.bind(null, tripId, item.id),
+    removeChecklistItemAction.bind(null, tripId, item.id, token),
     initialState,
   );
 
@@ -88,9 +99,7 @@ function ChecklistRow({
       {editing && canEdit ? (
         <form action={editAction} className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
-            <label htmlFor={`title-${item.id}`} className="text-sm font-medium">
-              {t("titleLabel")}
-            </label>
+            <label htmlFor={`title-${item.id}`} className="text-sm font-medium">{t("titleLabel")}</label>
             <input
               id={`title-${item.id}`}
               name="title"
@@ -104,9 +113,7 @@ function ChecklistRow({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor={`due-${item.id}`} className="text-sm font-medium">
-                {t("dueDateLabel")}
-              </label>
+              <label htmlFor={`due-${item.id}`} className="text-sm font-medium">{t("dueDateLabel")}</label>
               <input
                 id={`due-${item.id}`}
                 name="dueDate"
@@ -118,10 +125,7 @@ function ChecklistRow({
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor={`assignee-${item.id}`} className="text-sm font-medium">
-                {t("assigneeLabel")}
-              </label>
-
+              <label htmlFor={`assignee-${item.id}`} className="text-sm font-medium">{t("assigneeLabel")}</label>
               <select
                 id={`assignee-${item.id}`}
                 name="assignedToId"
@@ -130,11 +134,8 @@ function ChecklistRow({
                 className="border-input bg-background h-9 rounded-md border px-3 text-sm"
               >
                 <option value="">{t("unassigned")}</option>
-
                 {assignees.map((assignee) => (
-                  <option key={assignee.id} value={assignee.id}>
-                    {assignee.name}
-                  </option>
+                  <option key={assignee.id} value={assignee.id}>{assignee.name}</option>
                 ))}
               </select>
             </div>
@@ -166,31 +167,20 @@ function ChecklistRow({
       ) : (
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <p
-              className={
-                item.status === "DONE"
-                  ? "text-muted-foreground text-sm line-through"
-                  : "text-sm font-medium"
-              }
-            >
+            <p className={item.status === "DONE"
+              ? "text-muted-foreground text-sm line-through"
+              : "text-sm font-medium"
+            }>
               {item.title}
             </p>
 
             <div className="text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
               {item.assignedTo && (
-                <span>
-                  {t("assignedTo", {
-                    name: item.assignedTo.name,
-                  })}
-                </span>
+                <span>{t("assignedTo", { name: item.assignedTo.name })}</span>
               )}
 
               {dueDateLabel && (
-                <span>
-                  {t("dueDate", {
-                    date: dueDateLabel,
-                  })}
-                </span>
+                <span>{t("dueDate", { date: dueDateLabel })}</span>
               )}
 
               {!item.assignedTo && !dueDateLabel && <span>{t("noDetails")}</span>}
@@ -205,22 +195,13 @@ function ChecklistRow({
                   size="icon-sm"
                   variant="outline"
                   disabled={pending}
-                  aria-label={
-                    item.status === "DONE"
-                      ? t("markPending")
-                      : t("markDone")
-                  }
-                  title={
-                    item.status === "DONE"
-                      ? t("markPending")
-                      : t("markDone")
-                  }
+                  aria-label={item.status === "DONE" ? t("markPending") : t("markDone")}
+                  title={item.status === "DONE" ? t("markPending") : t("markDone")}
                 >
-                  {item.status === "DONE" ? (
-                    <RotateCcw className="size-4" />
-                  ) : (
-                    <Check className="size-4" />
-                  )}
+                  {item.status === "DONE"
+                    ? <RotateCcw className="size-4" />
+                    : <Check className="size-4" />
+                  }
                 </Button>
               </form>
 
@@ -267,16 +248,13 @@ export function ChecklistManager({
   items,
   assignees,
   canEdit,
-}: {
-  tripId: string;
-  items: ChecklistItem[];
-  assignees: Assignee[];
-  canEdit: boolean;
-}) {
+  shareToken,
+}: ChecklistManagerProps) {
   const t = useTranslations("checklist");
+  const token = shareToken ?? null;
 
   const [addState, addAction, addPending] = useActionState(
-    addChecklistItemAction.bind(null, tripId),
+    addChecklistItemAction.bind(null, tripId, token),
     initialState,
   );
 
@@ -293,6 +271,7 @@ export function ChecklistManager({
               item={item}
               assignees={assignees}
               canEdit={canEdit}
+              shareToken={token}
             />
           ))}
         </div>
@@ -304,10 +283,7 @@ export function ChecklistManager({
 
           <form action={addAction} className="flex flex-col gap-3">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="checklist-title" className="text-sm font-medium">
-                {t("titleLabel")}
-              </label>
-
+              <label htmlFor="checklist-title" className="text-sm font-medium">{t("titleLabel")}</label>
               <input
                 id="checklist-title"
                 name="title"
@@ -321,10 +297,7 @@ export function ChecklistManager({
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="checklist-due-date" className="text-sm font-medium">
-                  {t("dueDateLabel")}
-                </label>
-
+                <label htmlFor="checklist-due-date" className="text-sm font-medium">{t("dueDateLabel")}</label>
                 <input
                   id="checklist-due-date"
                   name="dueDate"
@@ -335,10 +308,7 @@ export function ChecklistManager({
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="checklist-assignee" className="text-sm font-medium">
-                  {t("assigneeLabel")}
-                </label>
-
+                <label htmlFor="checklist-assignee" className="text-sm font-medium">{t("assigneeLabel")}</label>
                 <select
                   id="checklist-assignee"
                   name="assignedToId"
@@ -347,11 +317,8 @@ export function ChecklistManager({
                   className="border-input bg-background h-9 rounded-md border px-3 text-sm"
                 >
                   <option value="">{t("unassigned")}</option>
-
                   {assignees.map((assignee) => (
-                    <option key={assignee.id} value={assignee.id}>
-                      {assignee.name}
-                    </option>
+                    <option key={assignee.id} value={assignee.id}>{assignee.name}</option>
                   ))}
                 </select>
               </div>

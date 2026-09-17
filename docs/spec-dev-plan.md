@@ -14,23 +14,24 @@ Tổng quan kiến trúc: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Tổng quan tiến độ
 
-| Mã  | Module                                                        | Ưu tiên | Data model | Service | UI  | Trạng thái |
-| --- | ------------------------------------------------------------- | ------- | ---------- | ------- | --- | ---------- |
-| M00 | [Infra/Scaffold](#m00--infrascaffold)                         | —       | ✅         | —       | —   | ✅         |
-| M13 | [Auth (login/register)](#m13--auth-loginregister)             | —       | ✅         | ✅      | ✅  | ✅         |
-| M14 | [i18n & UI polish](#m14--i18n--ui-polish)                     | —       | —          | ✅      | ✅  | ✅         |
-| M01 | [Trip Builder](#m01--trip-builder)                            | P0      | ✅         | ✅      | 🟨  | 🟨         |
-| M02 | [Itinerary / Smart Timeline](#m02--itinerary--smart-timeline) | P0      | ✅         | ✅      | ✅  | ✅         |
-| M03 | [Map Planner](#m03--map-planner)                              | P0      | ✅         | ✅      | ✅  | ✅         |
-| M04 | [Budget Board](#m04--budget-board)                            | P0      | ✅         | ✅      | 🟨  | 🟨         |
-| M05 | [Booking Vault](#m05--booking-vault)                          | P1      | ✅         | ⬜      | ⬜  | ⬜         |
-| M06 | [Checklist](#m06--checklist)                                  | P0      | ✅         | ✅      | ✅  | ✅         |
-| M07 | [Share & Permission](#m07--share--permission)                 | P0      | ✅         | 🟨      | 🟨  | 🟨         |
-| M08 | [CopyPlan Engine](#m08--copyplan-engine)                      | P0      | ✅         | ⬜      | ⬜  | ⬜         |
-| M09 | [Reputation Engine](#m09--reputation-engine)                  | P1      | ✅         | 🟨      | 🟨  | 🟨         |
-| M10 | [Plan Marketplace / Explore](#m10--plan-marketplace--explore) | P1      | ✅         | 🟨      | 🟨  | 🟨         |
-| M11 | [Tag & Tip Library](#m11--tag--tip-library)                   | P1      | ✅         | ✅      | ✅  | 🟨         |
-| M12 | [Travel Memory](#m12--travel-memory)                          | P2      | ✅         | ✅      | 🟨  | 🟨         |
+| Mã  | Module                                                        | Ưu tiên | Data model | Service | UI | Trạng thái |
+| --- | ------------------------------------------------------------- | ------- | ---------- | ------- | -- | ---------- |
+| M00 | [Infra/Scaffold](#m00--infrascaffold)                         | —       | ✅          | —       | —  | ✅          |
+| M13 | [Auth (login/register)](#m13--auth-loginregister)             | —       | ✅          | ✅       | ✅  | ✅          |
+| M14 | [i18n & UI polish](#m14--i18n--ui-polish)                     | —       | —          | ✅       | ✅  | ✅          |
+| M01 | [Trip Builder](#m01--trip-builder)                            | P0      | ✅          | ✅       | 🟨 | 🟨         |
+| M02 | [Itinerary / Smart Timeline](#m02--itinerary--smart-timeline) | P0      | ✅          | ✅       | ✅  | ✅          |
+| M03 | [Map Planner](#m03--map-planner)                              | P0      | ✅          | ✅       | ✅  | ✅          |
+| M04 | [Budget Board](#m04--budget-board)                            | P0      | ✅          | ✅       | 🟨 | 🟨         |
+| M05 | [Booking Vault](#m05--booking-vault)                          | P1      | ✅          | ⬜       | ⬜  | ⬜          |
+| M06 | [Checklist](#m06--checklist)                                  | P0      | ✅          | ✅       | ✅  | ✅          |
+| M07 | [Share & Permission](#m07--share--permission)                 | P0      | ✅          | 🟨      | 🟨 | 🟨         |
+| M08 | [CopyPlan Engine](#m08--copyplan-engine)                      | P0      | ✅          | ⬜       | ⬜  | ⬜          |
+| M09 | [Reputation Engine](#m09--reputation-engine)                  | P1      | ✅          | 🟨      | 🟨 | 🟨         |
+| M10 | [Plan Marketplace / Explore](#m10--plan-marketplace--explore) | P1      | ✅          | 🟨      | 🟨 | 🟨         |
+| M11 | [Tag & Tip Library](#m11--tag--tip-library)                   | P1      | ✅          | ✅       | ✅  | 🟨         |
+| M12 | [Travel Memory](#m12--travel-memory)                          | P2      | ✅          | ✅       | 🟨 | 🟨         |
+
 
 "Data model ✅" nghĩa là entity đã có trong `prisma/schema.prisma` **và** đã
 migrate vào DB thật — chưa có nghĩa là service/business rule đã implement.
