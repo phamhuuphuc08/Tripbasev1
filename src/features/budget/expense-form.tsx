@@ -37,17 +37,20 @@ export function ExpenseForm({
   tripId,
   travelerNames,
   editingExpense,
+  shareToken,
 }: {
   tripId: string;
   travelerNames: string[];
   editingExpense?: EditingExpense;
+  shareToken?: string | null;
 }) {
   const t = useTranslations("budget.form");
   const tCategory = useTranslations("expenseCategory");
+  const token = shareToken ?? null;
 
   const action = editingExpense
-    ? updateExpenseAction.bind(null, tripId, editingExpense.id)
-    : addExpenseAction.bind(null, tripId);
+    ? updateExpenseAction.bind(null, tripId, editingExpense.id, token)
+    : addExpenseAction.bind(null, tripId, token);
 
   const [state, formAction, pending] = useActionState(action, initialState);
 

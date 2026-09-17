@@ -11,6 +11,18 @@ export interface ExpenseFormState {
   error?: string;
 }
 
+function normalizeShareToken(shareToken: string | null) {
+  const token = shareToken?.trim();
+  return token || null;
+}
+
+function budgetHref(tripId: string, shareToken: string | null) {
+  const token = normalizeShareToken(shareToken);
+  return token
+    ? `/trips/${tripId}?shareToken=${encodeURIComponent(token)}#budget`
+    : `/trips/${tripId}#budget`;
+}
+
 async function parseExpenseForm(formData: FormData) {
   const t = await getTranslations("budget.errors");
 
@@ -46,6 +58,7 @@ async function parseExpenseForm(formData: FormData) {
 
 export async function addExpenseAction(
   tripId: string,
+  shareToken: string | null,
   _prevState: ExpenseFormState,
   formData: FormData,
 ): Promise<ExpenseFormState> {
@@ -58,18 +71,19 @@ export async function addExpenseAction(
   if (!parsed.success) return { error: parsed.error };
 
   try {
-    await addExpense(tripId, session.userId, parsed.data);
+    await addExpense(tripId, session.userId, parsed.data, normalizeShareToken(shareToken));
   } catch {
     return { error: t("addFailed") };
   }
 
   const locale = await getLocale();
-  return redirect({ href: `/trips/${tripId}#budget`, locale });
+  return redirect({ href: budgetHref(tripId, shareToken), locale });
 }
 
 export async function updateExpenseAction(
   tripId: string,
   expenseId: string,
+  shareToken: string | null,
   _prevState: ExpenseFormState,
   formData: FormData,
 ): Promise<ExpenseFormState> {
@@ -82,18 +96,19 @@ export async function updateExpenseAction(
   if (!parsed.success) return { error: parsed.error };
 
   try {
-    await editExpense(expenseId, session.userId, parsed.data);
+    await editExpense(expenseId, session.userId, parsed.data, normalizeShareToken(shareToken));
   } catch {
     return { error: t("updateFailed") };
   }
 
   const locale = await getLocale();
-  return redirect({ href: `/trips/${tripId}#budget`, locale });
+  return redirect({ href: budgetHref(tripId, shareToken), locale });
 }
 
 export async function removeExpenseAction(
   tripId: string,
   expenseId: string,
+  shareToken: string | null,
   _formData: FormData,
 ) {
   void _formData;
@@ -105,11 +120,11 @@ export async function removeExpenseAction(
 
   if (session) {
     try {
-      await removeExpense(expenseId, session.userId);
+      await removeExpense(expenseId, session.userId, normalizeShareToken(shareToken));
     } catch {
       // Best-effort delete.
     }
   }
 
-  return redirect({ href: `/trips/${tripId}#budget`, locale });
+  return redirect({ href: budgetHref(tripId, shareToken), locale });
 }

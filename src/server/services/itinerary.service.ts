@@ -297,12 +297,12 @@ export function summarizeItineraryVotes(
   return { up, down, score: up - down, currentUserVote };
 }
 
-async function assertTripEditor(tripId: string, userId: string) {
+async function assertTripEditor(tripId: string, userId: string, shareToken?: string | null) {
   const trip = await findTripById(tripId);
   if (!trip) throw new ItineraryError("TRIP_NOT_FOUND");
 
   try {
-    await assertCanEditTrip(tripId, userId);
+    await assertCanEditTrip(tripId, userId, shareToken);
   } catch (error) {
     if (error instanceof PermissionError) {
       if (error.code === "TRIP_NOT_FOUND") throw new ItineraryError("TRIP_NOT_FOUND");
@@ -314,8 +314,10 @@ async function assertTripEditor(tripId: string, userId: string) {
   return trip;
 }
 
-export async function addItineraryItem(tripId: string, userId: string, input: ItineraryItemInput) {
-  const trip = await assertTripEditor(tripId, userId);
+export async function addItineraryItem(
+  tripId: string, userId: string, input: ItineraryItemInput, shareToken?: string | null,
+) {
+  const trip = await assertTripEditor(tripId, userId, shareToken);
   const schedule = normalizeSchedule(input.day, input.startTime, input.endTime, trip.startDate, trip.endDate);
   const existingItems = await findItineraryItemsByTrip(tripId);
   const dayItems = existingItems.filter((item) => item.day === input.day);
@@ -337,11 +339,13 @@ export async function addItineraryItem(tripId: string, userId: string, input: It
   });
 }
 
-export async function editItineraryItem(itemId: string, userId: string, input: ItineraryItemInput) {
+export async function editItineraryItem(
+  itemId: string, userId: string, input: ItineraryItemInput, shareToken?: string | null,
+) {
   const item = await findItineraryItemById(itemId);
 
   if (!item) throw new ItineraryError("NOT_FOUND");
-  await assertTripEditor(item.trip.id, userId);
+  await assertTripEditor(item.trip.id, userId, shareToken);
 
   const schedule = normalizeSchedule(input.day, input.startTime, input.endTime, item.trip.startDate, item.trip.endDate);
 
@@ -356,11 +360,11 @@ export async function editItineraryItem(itemId: string, userId: string, input: I
   });
 }
 
-export async function removeItineraryItem(itemId: string, userId: string) {
+export async function removeItineraryItem(itemId: string, userId: string, shareToken?: string | null) {
   const item = await findItineraryItemById(itemId);
 
   if (!item) throw new ItineraryError("NOT_FOUND");
-  await assertTripEditor(item.trip.id, userId);
+  await assertTripEditor(item.trip.id, userId, shareToken);
 
   return deleteItineraryItem(itemId);
 }
@@ -369,8 +373,9 @@ export async function reorderItineraryItems(
   tripId: string,
   userId: string,
   items: { id: string; day: number; sortOrder: number }[],
+  shareToken?: string | null,
 ) {
-  const trip = await assertTripEditor(tripId, userId);
+  const trip = await assertTripEditor(tripId, userId, shareToken);
 
   if (
     !items.length ||

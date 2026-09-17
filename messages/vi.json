@@ -565,5 +565,39 @@
     "invalidStatus": "Trạng thái không hợp lệ.",
     "saveFailed": "Không thể cập nhật checklist. Vui lòng thử lại."
   }
+},
+"booking": {
+  "heading": "Booking Vault",
+  "empty": "Chưa có booking nào.",
+  "addHeading": "Thêm booking",
+  "editHeading": "Sửa booking",
+  "cancelEdit": "Huỷ sửa",
+  "editButtonNamed": "Sửa {name}",
+  "removeButtonNamed": "Xoá {name}",
+  "openDocument": "Mở tài liệu",
+  "form": {
+    "typeLabel": "Loại đặt chỗ",
+    "typePlaceholder": "Ví dụ: Vé máy bay, Khách sạn, Tour",
+    "providerLabel": "Nhà cung cấp",
+    "providerPlaceholder": "Ví dụ: Vietnam Airlines, Booking.com",
+    "confirmationCodeLabel": "Mã xác nhận",
+    "confirmationCodePlaceholder": "Nhập mã đặt chỗ hoặc mã xác nhận",
+    "dateTimeLabel": "Ngày giờ",
+    "fileUrlLabel": "Liên kết tài liệu",
+    "fileUrlPlaceholder": "https://...",
+    "fileUrlHint": "Tạm thời nhập liên kết PDF, ảnh hoặc tài liệu đặt chỗ. Chức năng upload file sẽ được bổ sung sau.",
+    "submit": "Thêm booking",
+    "submitPending": "Đang thêm...",
+    "updateSubmit": "Cập nhật booking",
+    "updatePending": "Đang cập nhật..."
+  },
+  "errors": {
+    "typeRequired": "Vui lòng nhập loại đặt chỗ.",
+    "invalidInput": "Thông tin booking không hợp lệ.",
+    "dateInvalid": "Ngày giờ không hợp lệ.",
+    "loginRequired": "Vui lòng đăng nhập để thực hiện thao tác này.",
+    "addFailed": "Không thể thêm booking.",
+    "updateFailed": "Không thể cập nhật booking."
+  }
 }
 }

@@ -32,6 +32,18 @@ const itemSchema = z.object({
   locationTagId: z.string().optional(),
 });
 
+function normalizeShareToken(shareToken: string | null) {
+  const token = shareToken?.trim();
+  return token || null;
+}
+
+function itineraryHref(tripId: string, shareToken: string | null) {
+  const token = normalizeShareToken(shareToken);
+  return token
+    ? `/trips/${tripId}?shareToken=${encodeURIComponent(token)}#itinerary`
+    : `/trips/${tripId}#itinerary`;
+}
+
 /**
  * Date 1970 ở đây chỉ là carrier tạm cho HH:mm.
  * itinerary.service.ts sẽ chuyển nó thành timestamp thật:
@@ -89,6 +101,7 @@ async function itineraryServiceError(error: unknown, fallback: "addFailed" | "up
 
 export async function addItineraryItemAction(
   tripId: string,
+  shareToken: string | null,
   _prevState: ItineraryFormState,
   formData: FormData,
 ): Promise<ItineraryFormState> {
@@ -114,18 +127,19 @@ export async function addItineraryItemAction(
       endTime,
       notes: parsed.data.notes?.trim() || null,
       locationTagId: normalizeLocationTagId(parsed.data.locationTagId),
-    });
+    }, normalizeShareToken(shareToken));
   } catch (error) {
     return { error: await itineraryServiceError(error, "addFailed") };
   }
 
   const locale = await getLocale();
-  return redirect({ href: `/trips/${tripId}#itinerary`, locale });
+  return redirect({ href: itineraryHref(tripId, shareToken), locale });
 }
 
 export async function updateItineraryItemAction(
   tripId: string,
   itemId: string,
+  shareToken: string | null,
   _prevState: ItineraryFormState,
   formData: FormData,
 ): Promise<ItineraryFormState> {
@@ -151,18 +165,19 @@ export async function updateItineraryItemAction(
       endTime,
       notes: parsed.data.notes?.trim() || null,
       locationTagId: normalizeLocationTagId(parsed.data.locationTagId),
-    });
+    }, normalizeShareToken(shareToken));
   } catch (error) {
     return { error: await itineraryServiceError(error, "updateFailed") };
   }
 
   const locale = await getLocale();
-  return redirect({ href: `/trips/${tripId}#itinerary`, locale });
+  return redirect({ href: itineraryHref(tripId, shareToken), locale });
 }
 
 export async function removeItineraryItemAction(
   tripId: string,
   itemId: string,
+  shareToken: string | null,
   _formData: FormData,
 ) {
   void _formData;
@@ -171,17 +186,18 @@ export async function removeItineraryItemAction(
 
   if (session) {
     try {
-      await removeItineraryItem(itemId, session.userId);
+      await removeItineraryItem(itemId, session.userId, normalizeShareToken(shareToken));
     } catch {
       // Giữ best-effort để nút xoá không làm vỡ trang.
     }
   }
 
-  return redirect({ href: `/trips/${tripId}#itinerary`, locale });
+  return redirect({ href: itineraryHref(tripId, shareToken), locale });
 }
 
 export async function reorderItineraryAction(
   tripId: string,
+  shareToken: string | null,
   items: { id: string; day: number; sortOrder: number }[],
 ): Promise<ReorderItineraryState> {
   const session = await getSession();
@@ -191,7 +207,7 @@ export async function reorderItineraryAction(
   if (!parsed.success) return { error: "INVALID_ORDER" };
 
   try {
-    await reorderItineraryItems(tripId, session.userId, parsed.data);
+    await reorderItineraryItems(tripId, session.userId, parsed.data, normalizeShareToken(shareToken));
     return { success: true };
   } catch (error) {
     if (error instanceof ItineraryError && (error.message === "INVALID_ORDER" || error.message === "DAY_OUT_OF_RANGE")) {

@@ -566,5 +566,39 @@
     "invalidStatus": "Invalid status.",
     "saveFailed": "Could not update the checklist. Please try again."
   }
+},
+"booking": {
+"heading": "Booking Vault",
+"empty": "No bookings yet.",
+"addHeading": "Add booking",
+"editHeading": "Edit booking",
+"cancelEdit": "Cancel editing",
+"editButtonNamed": "Edit {name}",
+"removeButtonNamed": "Delete {name}",
+"openDocument": "Open document",
+  "form": {
+    "typeLabel": "Booking type",
+    "typePlaceholder": "For example: Flight, Hotel, Tour",
+    "providerLabel": "Provider",
+    "providerPlaceholder": "For example: Vietnam Airlines, Booking.com",
+    "confirmationCodeLabel": "Confirmation code",
+    "confirmationCodePlaceholder": "Enter booking or confirmation code",
+    "dateTimeLabel": "Date and time",
+    "fileUrlLabel": "Document link",
+    "fileUrlPlaceholder": "https://...",
+    "fileUrlHint": "For now, enter a link to the PDF, image, or booking document. File upload will be added later.",
+    "submit": "Add booking",
+    "submitPending": "Adding...",
+    "updateSubmit": "Update booking",
+    "updatePending": "Updating..."
+  },
+  "errors": {
+    "typeRequired": "Please enter a booking type.",
+    "invalidInput": "The booking information is invalid.",
+    "dateInvalid": "The date and time are invalid.",
+    "loginRequired": "Please log in to perform this action.",
+    "addFailed": "Could not add the booking.",
+    "updateFailed": "Could not update the booking."
+  }
 }
 }
