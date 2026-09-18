@@ -45,9 +45,13 @@ async function assertOwner(tripId: string, userId: string) {
   return trip;
 }
 
-async function assertEditorOrOwner(tripId: string, userId: string) {
+async function assertEditorOrOwner(
+  tripId: string,
+  userId: string,
+  shareToken?: string | null,
+) {
   try {
-    const result = await assertCanEditTrip(tripId, userId);
+    const result = await assertCanEditTrip(tripId, userId, shareToken);
     return result.trip;
   } catch (error) {
     if (error instanceof PermissionError) {
@@ -126,9 +130,11 @@ export async function updateTrip(
     pace: TravelPace;
     travelStyle: string[];
   },
+  shareToken?: string | null,
 ) {
-  const currentTrip = await assertEditorOrOwner(tripId, userId);
-  const startDateChanged = tripDateKey(currentTrip.startDate) !== tripDateKey(input.startDate);
+  const currentTrip = await assertEditorOrOwner(tripId, userId, shareToken);
+  const startDateChanged =
+    tripDateKey(currentTrip.startDate) !== tripDateKey(input.startDate);
 
   return prisma.$transaction(async (tx) => {
     const updatedTrip = await tx.trip.update({
@@ -182,15 +188,20 @@ export async function addTraveler(
   tripId: string,
   userId: string,
   input: { name: string; ageGroup: string | null },
+  shareToken?: string | null,
 ) {
-  await assertEditorOrOwner(tripId, userId);
+  await assertEditorOrOwner(tripId, userId, shareToken);
   return createTraveler({ tripId, ...input });
 }
 
-export async function removeTraveler(travelerId: string, userId: string) {
+export async function removeTraveler(
+  travelerId: string,
+  userId: string,
+  shareToken?: string | null,
+) {
   const traveler = await findTravelerById(travelerId);
   if (!traveler) throw new TripError("NOT_FOUND");
 
-  await assertEditorOrOwner(traveler.tripId, userId);
+  await assertEditorOrOwner(traveler.tripId, userId, shareToken);
   return deleteTraveler(travelerId);
 }

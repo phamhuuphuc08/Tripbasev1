@@ -61,13 +61,14 @@ function getDayFromDropId(id: UniqueIdentifier) {
 }
 
 function SortableItem({
-  tripId, item, isOwner, currentUserId, pending,
+  tripId, item, isOwner, currentUserId, pending, shareToken,
 }: {
   tripId: string;
   item: SortableTimelineItem;
   isOwner: boolean;
   currentUserId: string | null;
   pending: boolean;
+  shareToken?: string | null;
 }) {
   const t = useTranslations("itinerary");
   const router = useRouter();
@@ -87,7 +88,11 @@ function SortableItem({
   };
 
   const itemName = item.title || item.locationTagTitle || t("dayHeading", { day: item.day });
-  const removeAction = removeItineraryItemAction.bind(null, tripId, item.id);
+  const token = shareToken ?? null;
+  const removeAction = removeItineraryItemAction.bind(null, tripId, item.id, token);
+  const editHref = token
+    ? `/trips/${tripId}?shareToken=${encodeURIComponent(token)}&editItem=${item.id}#itinerary`
+    : `/trips/${tripId}?editItem=${item.id}#itinerary`;
 
   function vote(voteType: "UP" | "DOWN") {
     setInteractionError(null);
@@ -365,7 +370,7 @@ function SortableItem({
       {isOwner && (
         <div className="flex shrink-0 items-center gap-1">
           <Link
-            href={`/trips/${tripId}?editItem=${item.id}#itinerary`}
+            href={editHref}
             aria-label={t("editButtonNamed", { name: itemName })}
             title={t("editHeading")}
             className="text-muted-foreground hover:bg-muted hover:text-foreground rounded-full p-1"
@@ -389,7 +394,7 @@ function SortableItem({
 }
 
 function DayDropZone({
-  day, items, tripId, isOwner, currentUserId, pending,
+  day, items, tripId, isOwner, currentUserId, pending, shareToken,
 }: {
   day: number;
   items: SortableTimelineItem[];
@@ -397,6 +402,7 @@ function DayDropZone({
   isOwner: boolean;
   currentUserId: string | null;
   pending: boolean;
+  shareToken?: string | null;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: dayDropId(day), disabled: !isOwner || pending,
@@ -417,6 +423,7 @@ function DayDropZone({
               isOwner={isOwner}
               currentUserId={currentUserId}
               pending={pending}
+              shareToken={shareToken}
             />
           ))}
         </ul>
@@ -433,19 +440,21 @@ function normalizeDay(items: SortableTimelineItem[], day: number) {
 }
 
 export function ItinerarySortableTimeline({
-  tripId, initialItems, isOwner, currentUserId, totalDays,
+  tripId, initialItems, isOwner, currentUserId, totalDays, shareToken,
 }: {
   tripId: string;
   initialItems: SortableTimelineItem[];
   isOwner: boolean;
   currentUserId: string | null;
   totalDays: number;
+  shareToken?: string | null;
 }) {
   const t = useTranslations("itinerary");
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [error, setError] = useState(false);
   const [pending, startTransition] = useTransition();
+  const token = shareToken ?? null;
 
   useEffect(() => { setItems(initialItems); }, [initialItems]);
 
@@ -546,6 +555,7 @@ export function ItinerarySortableTimeline({
       void (async () => {
         const result = await reorderItineraryAction(
           tripId,
+          token,
           changedItems.map((item) => ({
             id: item.id,
             day: item.day,
@@ -586,6 +596,7 @@ export function ItinerarySortableTimeline({
               isOwner={isOwner}
               currentUserId={currentUserId}
               pending={pending}
+              shareToken={token}
             />
           </div>
         ))}

@@ -90,6 +90,12 @@ export function ShareLinkManager({ tripId, links }: Props) {
   const t = useTranslations("share.links");
   const [state, action, pending] = useActionState(createShareLinkAction.bind(null, tripId), initialState);
 
+  const activeLinks = links.filter((link) => {
+    if (link.revokedAt) return false;
+    if (link.expiresAt && new Date(link.expiresAt).getTime() <= Date.now()) return false;
+    return true;
+  });
+
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -130,11 +136,11 @@ export function ShareLinkManager({ tripId, links }: Props) {
       <div className="border-t pt-4">
         <h4 className="mb-3 text-sm font-medium">{t("listHeading")}</h4>
 
-        {links.length === 0 ? (
+        {activeLinks.length === 0 ? (
           <p className="text-muted-foreground text-sm">{t("empty")}</p>
         ) : (
           <div className="flex flex-col gap-3">
-            {links.map((link) => <ShareLinkRow key={link.id} tripId={tripId} link={link} />)}
+            {activeLinks.map((link) => <ShareLinkRow key={link.id} tripId={tripId} link={link} />)}
           </div>
         )}
       </div>

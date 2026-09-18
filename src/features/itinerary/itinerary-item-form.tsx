@@ -41,19 +41,24 @@ function formatTimeInput(value: string | Date | null | undefined): string {
 }
 
 export function ItineraryItemForm({
-  tripId, dayCount, tagOptions, editingItem,
+  tripId, dayCount, tagOptions, editingItem, shareToken,
 }: {
   tripId: string;
   dayCount: number;
   tagOptions: TagOption[];
   editingItem?: EditableItineraryItem;
+  shareToken?: string | null;
 }) {
   const t = useTranslations("itinerary.form");
   const tCategory = useTranslations("tagCategory");
   const isEditing = Boolean(editingItem?.id);
+  const token = shareToken ?? null;
 
-  const addAction = addItineraryItemAction.bind(null, tripId);
-  const updateAction = editingItem ? updateItineraryItemAction.bind(null, tripId, editingItem.id) : null;
+  const addAction = addItineraryItemAction.bind(null, tripId, token);
+  const updateAction = editingItem
+    ? updateItineraryItemAction.bind(null, tripId, editingItem.id, token)
+    : null;
+
   const [state, formAction, pending] = useActionState(updateAction ?? addAction, initialState);
 
   const maxDay = Math.max(dayCount, editingItem?.day ?? 1, 1);

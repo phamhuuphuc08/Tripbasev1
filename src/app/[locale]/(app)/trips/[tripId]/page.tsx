@@ -28,6 +28,8 @@ import { Link } from "@/i18n/navigation";
 import { removeExpenseAction } from "@/features/budget/actions";
 import { toExpenseCategory } from "@/features/budget/categories";
 import { ExpenseForm } from "@/features/budget/expense-form";
+import { removeBookingAction } from "@/features/booking/actions";
+import { BookingForm } from "@/features/booking/booking-form";
 import { CollaboratorManager } from "@/features/share/collaborator-manager";
 import { InviteForm } from "@/features/share/invite-form";
 import { ItineraryItemForm } from "@/features/itinerary/itinerary-item-form";
@@ -48,6 +50,7 @@ import {
   computeBudgetSummary,
   listExpenses,
 } from "@/server/services/budget.service";
+import { listBookings } from "@/server/services/booking.service";
 import {
   detectItineraryOpeningHours,
   detectItineraryOverlaps,
@@ -90,11 +93,12 @@ export default async function TripDetailPage({
   searchParams: Promise<{
     editItem?: string;
     editExpense?: string;
+    editBooking?: string;
     shareToken?: string;
   }>;
 }) {
   const { tripId } = await params;
-  const { editItem, editExpense, shareToken } = await searchParams;
+  const { editItem, editExpense, editBooking, shareToken } = await searchParams;
 
   const session = await getSession();
   const result = await getTripDetail(tripId, session?.userId, shareToken);
@@ -112,6 +116,7 @@ const [
   tCategory,
   tMap,
   tBudget,
+  tBooking,
   tExpenseCategory,
   tShare,
   tChecklist,
@@ -126,6 +131,7 @@ const [
   getTranslations("tagCategory"),
   getTranslations("map"),
   getTranslations("budget"),
+  getTranslations("booking"),
   getTranslations("expenseCategory"),
   getTranslations("share.invite"),
   getTranslations("checklist"),
@@ -167,6 +173,7 @@ const [
   tagOptions,
   expenses,
   budgetSummary,
+  bookings,
   storySlides,
   collaborators,
   shareLinks,
@@ -177,6 +184,7 @@ const [
   canEdit ? listTagsForPicker() : Promise.resolve([]),
   listExpenses(tripId),
   computeBudgetSummary(tripId),
+  listBookings(tripId, session?.userId, shareToken),
   listStorySlides(tripId),
   isOwner && session
     ? listTripCollaborators(tripId, session.userId)
@@ -184,11 +192,12 @@ const [
   isOwner && session
     ? listTripShareLinks(tripId, session.userId)
     : Promise.resolve([]),
-listChecklistItems(tripId, session?.userId, shareToken),
-canEdit && session
-  ? listChecklistAssignees(tripId, session.userId, shareToken)
-  : Promise.resolve([]),
+  listChecklistItems(tripId, session?.userId, shareToken),
+  canEdit && session
+    ? listChecklistAssignees(tripId, session.userId, shareToken)
+    : Promise.resolve([]),
 ]);
+
 
 const shareLinkItems = shareLinks.map((link) => ({
   id: link.id,
@@ -231,6 +240,13 @@ const checklistManagerItems = checklistItems.map((item) => ({
     canEdit && editExpense
       ? expenses.find(
           (expense) => expense.id === editExpense,
+        )
+      : undefined;
+
+  const editingBooking =
+    canEdit && editBooking
+      ? bookings.find(
+          (booking) => booking.id === editBooking,
         )
       : undefined;
 
@@ -602,6 +618,7 @@ const checklistManagerItems = checklistItems.map((item) => ({
                             null,
                             tripId,
                             traveler.id,
+                            shareToken ?? null,
                           )}
                         >
                           <button
@@ -629,6 +646,7 @@ const checklistManagerItems = checklistItems.map((item) => ({
           {canEdit && (
             <TravelerForm
               tripId={tripId}
+              shareToken={shareToken}
             />
           )}
         </CardContent>
@@ -673,6 +691,7 @@ const checklistManagerItems = checklistItems.map((item) => ({
       items={checklistManagerItems}
       assignees={checklistAssignees}
       canEdit={canEdit}
+      shareToken={shareToken}
     />
   </CardContent>
 </Card>
@@ -702,6 +721,7 @@ const checklistManagerItems = checklistItems.map((item) => ({
               totalDays={
                 tripDayCount
               }
+              shareToken={shareToken}
             />
           )}
 
@@ -720,7 +740,11 @@ const checklistManagerItems = checklistItems.map((item) => ({
 
                 {editingItem && (
                   <Link
-                    href={`/trips/${tripId}#itinerary`}
+                    href={
+                      shareToken
+                        ? `/trips/${tripId}?shareToken=${encodeURIComponent(shareToken)}#itinerary`
+                        : `/trips/${tripId}#itinerary`
+                    }
                     className="text-muted-foreground hover:text-foreground text-sm underline"
                   >
                     {tItinerary(
@@ -768,6 +792,7 @@ const checklistManagerItems = checklistItems.map((item) => ({
                       }
                     : undefined
                 }
+                shareToken={shareToken}
               />
             </div>
           )}
@@ -1058,7 +1083,11 @@ const checklistManagerItems = checklistItems.map((item) => ({
                     {canEdit && (
                       <div className="flex shrink-0 items-center gap-1">
                         <Link
-                          href={`/trips/${tripId}?editExpense=${expense.id}#budget`}
+                            href={
+                                shareToken
+                                  ? `/trips/${tripId}?shareToken=${encodeURIComponent(shareToken)}&editExpense=${expense.id}#budget`
+                                  : `/trips/${tripId}?editExpense=${expense.id}#budget`
+                              }
                           aria-label={tBudget(
                             "editButtonNamed",
                             {
@@ -1079,6 +1108,7 @@ const checklistManagerItems = checklistItems.map((item) => ({
                             null,
                             tripId,
                             expense.id,
+                            shareToken ?? null,
                           )}
                         >
                           <button
@@ -1121,7 +1151,11 @@ const checklistManagerItems = checklistItems.map((item) => ({
 
                 {editingExpense && (
                   <Link
-                    href={`/trips/${tripId}#budget`}
+                    href={
+                      shareToken
+                        ? `/trips/${tripId}?shareToken=${encodeURIComponent(shareToken)}#budget`
+                        : `/trips/${tripId}#budget`
+                    }
                     className="text-muted-foreground hover:text-foreground text-sm underline"
                   >
                     {tBudget(
@@ -1157,6 +1191,184 @@ const checklistManagerItems = checklistItems.map((item) => ({
                       }
                     : undefined
                 }
+                shareToken={shareToken}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card id="booking">
+        <CardHeader>
+          <CardTitle className="text-base">
+            {tBooking("heading")}
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="flex flex-col gap-4">
+          {bookings.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              {tBooking("empty")}
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {bookings.map(
+                (booking) => (
+                  <li
+                    key={booking.id}
+                    className="border-border flex items-start justify-between gap-3 rounded-lg border px-3 py-2 text-sm"
+                  >
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <span className="font-medium">
+                        {booking.type}
+                      </span>
+
+                      {booking.provider && (
+                        <span className="text-muted-foreground text-xs">
+                          {tBooking("form.providerLabel")}:{" "}
+                          {booking.provider}
+                        </span>
+                      )}
+
+                      {booking.confirmationCode && (
+                        <span className="text-muted-foreground text-xs">
+                          {tBooking("form.confirmationCodeLabel")}:{" "}
+                          {booking.confirmationCode}
+                        </span>
+                      )}
+
+                      {booking.dateTime && (
+                        <span className="text-muted-foreground text-xs">
+                          {tBooking("form.dateTimeLabel")}:{" "}
+                          {format.dateTime(
+                            booking.dateTime,
+                            {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}
+                        </span>
+                      )}
+
+                      {booking.fileUrl && (
+                        <a
+                          href={booking.fileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-primary text-xs underline"
+                        >
+                          {tBooking("openDocument")}
+                        </a>
+                      )}
+                    </div>
+
+                    {canEdit && (
+                      <div className="flex shrink-0 items-center gap-1">
+                        <Link
+                          href={
+                            shareToken
+                              ? `/trips/${tripId}?shareToken=${encodeURIComponent(shareToken)}&editBooking=${booking.id}#booking`
+                              : `/trips/${tripId}?editBooking=${booking.id}#booking`
+                          }
+                          aria-label={tBooking(
+                            "editButtonNamed",
+                            {
+                              name:
+                                booking.type,
+                            },
+                          )}
+                          className="text-muted-foreground hover:bg-muted hover:text-foreground rounded-full p-1"
+                        >
+                          <Pencil className="size-3.5" />
+                        </Link>
+
+                        <form
+                          action={removeBookingAction.bind(
+                            null,
+                            tripId,
+                            booking.id,
+                            shareToken ?? null,
+                          )}
+                        >
+                          <button
+                            type="submit"
+                            aria-label={tBooking(
+                              "removeButtonNamed",
+                              {
+                                name:
+                                  booking.type,
+                              },
+                            )}
+                            className="hover:bg-destructive/20 hover:text-destructive rounded-full p-1"
+                          >
+                            <X className="size-3.5" />
+                          </button>
+                        </form>
+                      </div>
+                    )}
+                  </li>
+                ),
+              )}
+            </ul>
+          )}
+
+          {canEdit && (
+            <div className="border-t pt-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="text-sm font-medium">
+                  {editingBooking
+                    ? tBooking(
+                        "editHeading",
+                      )
+                    : tBooking(
+                        "addHeading",
+                      )}
+                </h3>
+
+                {editingBooking && (
+                  <Link
+                    href={
+                      shareToken
+                        ? `/trips/${tripId}?shareToken=${encodeURIComponent(shareToken)}#booking`
+                        : `/trips/${tripId}#booking`
+                    }
+                    className="text-muted-foreground hover:text-foreground text-sm underline"
+                  >
+                    {tBooking(
+                      "cancelEdit",
+                    )}
+                  </Link>
+                )}
+              </div>
+
+              <BookingForm
+                key={
+                  editingBooking?.id ??
+                  "new"
+                }
+                tripId={tripId}
+                editingBooking={
+                  editingBooking
+                    ? {
+                        id:
+                          editingBooking.id,
+                        type:
+                          editingBooking.type,
+                        provider:
+                          editingBooking.provider,
+                        confirmationCode:
+                          editingBooking.confirmationCode,
+                        fileUrl:
+                          editingBooking.fileUrl,
+                        dateTime:
+                          editingBooking.dateTime,
+                      }
+                    : undefined
+                }
+                shareToken={shareToken}
               />
             </div>
           )}
@@ -1285,7 +1497,9 @@ const checklistManagerItems = checklistItems.map((item) => ({
       {canEdit && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">{tForm("editTitle")}</CardTitle>
+            <CardTitle className="text-base">
+              {tForm("editTitle")}
+            </CardTitle>
           </CardHeader>
 
           <CardContent className="flex flex-col gap-4">
@@ -1295,19 +1509,33 @@ const checklistManagerItems = checklistItems.map((item) => ({
                 id: trip.id,
                 name: trip.name,
                 destination: trip.destination,
-                startDate: toDateInputValue(trip.startDate),
-                endDate: toDateInputValue(trip.endDate),
-                travelerCount: trip.travelerCount,
-                budgetTarget: trip.budgetTarget?.toString() ?? "",
+                startDate: toDateInputValue(
+                  trip.startDate,
+                ),
+                endDate: toDateInputValue(
+                  trip.endDate,
+                ),
+                travelerCount:
+                  trip.travelerCount,
+                budgetTarget:
+                  trip.budgetTarget?.toString() ??
+                  "",
                 pace: trip.pace,
-                travelStyle: toTripStyles(trip.travelStyle),
-                visibility: trip.visibility,
+                travelStyle: toTripStyles(
+                  trip.travelStyle,
+                ),
+                visibility:
+                  trip.visibility,
                 status: trip.status,
               }}
+              shareToken={shareToken}
             />
 
             {isOwner && (
-              <Link href={`/trips/${trip.id}/delete`} className="text-destructive self-start text-sm underline">
+              <Link
+                href={`/trips/${trip.id}/delete`}
+                className="text-destructive self-start text-sm underline"
+              >
                 {tForm("deleteLink")}
               </Link>
             )}

@@ -41,23 +41,28 @@ export interface TripFormDefaults {
 export function TripForm({
   mode,
   defaultValues,
+  shareToken,
 }: {
   mode: "create" | "edit";
   defaultValues?: TripFormDefaults;
+  shareToken?: string | null;
 }) {
   const t = useTranslations("trip.form");
   const tVisibility = useTranslations("tripVisibility");
   const tStatus = useTranslations("tripStatus");
+  const token = shareToken ?? null;
 
   const action =
     mode === "edit" && defaultValues
-      ? updateTripAction.bind(null, defaultValues.id)
+      ? updateTripAction.bind(null, defaultValues.id, token)
       : createTripAction;
+
   const [state, formAction, pending] = useActionState(action, initialState);
 
   const pendingLabel =
     mode === "create" ? t("createSubmitPending") : t("editSubmitPending");
-  const submitLabel = mode === "create" ? t("createSubmit") : t("editSubmit");
+  const submitLabel =
+    mode === "create" ? t("createSubmit") : t("editSubmit");
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -93,6 +98,7 @@ export function TripForm({
             defaultValue={defaultValues?.startDate}
           />
         </div>
+
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="endDate">{t("endDateLabel")}</Label>
           <Input
@@ -117,6 +123,7 @@ export function TripForm({
             defaultValue={defaultValues?.travelerCount ?? 1}
           />
         </div>
+
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="budgetTarget">{t("budgetTargetLabel")}</Label>
           <div className="relative">
@@ -148,6 +155,7 @@ export function TripForm({
               CULTURE: t("styleCulture"),
               NATURE: t("styleNature"),
             };
+
             return (
               <label
                 key={style}
@@ -177,6 +185,7 @@ export function TripForm({
               }}
             </SelectValue>
           </SelectTrigger>
+
           <SelectContent>
             <SelectItem value="RELAXED">{t("paceRelaxed")}</SelectItem>
             <SelectItem value="NORMAL">{t("paceNormal")}</SelectItem>
@@ -198,6 +207,7 @@ export function TripForm({
               }
             </SelectValue>
           </SelectTrigger>
+
           <SelectContent>
             <SelectItem value="PRIVATE">{tVisibility("PRIVATE")}</SelectItem>
             <SelectItem value="FRIENDS">{tVisibility("FRIENDS")}</SelectItem>
@@ -217,6 +227,7 @@ export function TripForm({
                 }
               </SelectValue>
             </SelectTrigger>
+
             <SelectContent>
               <SelectItem value="IDEA">{tStatus("IDEA")}</SelectItem>
               <SelectItem value="SCHEDULED">{tStatus("SCHEDULED")}</SelectItem>

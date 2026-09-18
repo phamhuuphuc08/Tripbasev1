@@ -41,12 +41,12 @@ export interface BudgetSummary {
   settlements: BudgetSettlement[];
 }
 
-async function assertTripEditor(tripId: string, userId: string) {
+async function assertTripEditor(tripId: string, userId: string, shareToken?: string | null) {
   const trip = await findTripById(tripId);
   if (!trip) throw new BudgetError("TRIP_NOT_FOUND");
 
   try {
-    await assertCanEditTrip(tripId, userId);
+    await assertCanEditTrip(tripId, userId, shareToken);
   } catch (error) {
     if (error instanceof PermissionError) {
       if (error.code === "TRIP_NOT_FOUND") throw new BudgetError("TRIP_NOT_FOUND");
@@ -77,8 +77,13 @@ export async function listExpenses(tripId: string) {
   }));
 }
 
-export async function addExpense(tripId: string, userId: string, input: ExpenseInput) {
-  await assertTripEditor(tripId, userId);
+export async function addExpense(
+  tripId: string,
+  userId: string,
+  input: ExpenseInput,
+  shareToken?: string | null,
+) {
+  await assertTripEditor(tripId, userId, shareToken);
 
   return createExpense({
     tripId,
@@ -90,11 +95,16 @@ export async function addExpense(tripId: string, userId: string, input: ExpenseI
   });
 }
 
-export async function editExpense(expenseId: string, userId: string, input: ExpenseInput) {
+export async function editExpense(
+  expenseId: string,
+  userId: string,
+  input: ExpenseInput,
+  shareToken?: string | null,
+) {
   const expense = await findExpenseById(expenseId);
   if (!expense) throw new BudgetError("NOT_FOUND");
 
-  await assertTripEditor(expense.tripId, userId);
+  await assertTripEditor(expense.tripId, userId, shareToken);
 
   return updateExpenseRepo(expenseId, {
     category: input.category,
@@ -104,11 +114,15 @@ export async function editExpense(expenseId: string, userId: string, input: Expe
   });
 }
 
-export async function removeExpense(expenseId: string, userId: string) {
+export async function removeExpense(
+  expenseId: string,
+  userId: string,
+  shareToken?: string | null,
+) {
   const expense = await findExpenseById(expenseId);
   if (!expense) throw new BudgetError("NOT_FOUND");
 
-  await assertTripEditor(expense.tripId, userId);
+  await assertTripEditor(expense.tripId, userId, shareToken);
   return deleteExpense(expenseId);
 }
 
