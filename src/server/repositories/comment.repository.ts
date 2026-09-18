@@ -1,8 +1,8 @@
 import { prisma } from "@/server/db/client";
 
-// Comment itself has no create/read UI yet (that's M06/M07 — checklist and
-// collaboration aren't built) — this only backs the profile card's
-// contribution count, which is honestly 0 for everyone until those ship.
+// Backs the Creator Profile card's contribution count (src/server/services/
+// creator-profile.service.ts) across every comment a user has made,
+// regardless of target type.
 export function countCommentsByUser(userId: string) {
   return prisma.comment.count({ where: { userId } });
 }
