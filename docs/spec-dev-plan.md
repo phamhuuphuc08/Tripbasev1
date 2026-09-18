@@ -12,6 +12,30 @@ Tổng quan kiến trúc: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ---
 
+## Quy trình Git
+
+Repo chỉ có 2 nhánh lâu dài: `dev` (làm việc hằng ngày) và `main` (bản đã
+test xong, sẵn sàng release). Quy tắc bắt buộc cho mọi thay đổi:
+
+1. **Không mở branch riêng (feature branch).** Code thẳng trên `dev`.
+   Branch riêng từng gây ra việc 2 người viết trùng 1 tính năng (itinerary
+   reorder + vote/comment) mà không ai biết, tới lúc merge mới phát hiện và
+   phải bỏ hẳn một bên — xem mục [2026-09-18](#2026-09-18) trong Changelog.
+2. **`git pull` (hoặc `git pull --ff-only`) trước khi bắt đầu code mỗi
+   phiên làm việc**, để luôn build trên code mới nhất của người khác.
+3. **Commit nhỏ, mỗi commit một thay đổi logic riêng biệt** (1 fix, 1
+   feature nhỏ, 1 refactor) — không gộp nhiều việc không liên quan vào một
+   commit to. Dễ review, dễ revert từng phần nếu có lỗi.
+4. **Trước khi commit:** chạy `npm run typecheck` và `npm run lint`, sửa hết
+   lỗi (warning có thể để lại nếu không liên quan tới thay đổi của mình).
+5. Khi một module đã test xong và sẵn sàng đưa lên production: mở **Pull
+   Request từ `dev` → `main`**. Không merge vào `main` khi chưa được xác
+   nhận đã test kỹ.
+6. Cập nhật checklist + [Changelog](#changelog) trong tài liệu này khi có
+   thay đổi đáng kể, như đã nêu ở đầu file.
+
+---
+
 ## Tổng quan tiến độ
 
 | Mã  | Module                                                        | Ưu tiên | Data model | Service | UI | Trạng thái |
@@ -1247,4 +1271,34 @@ origin/main` để đưa `main` về đúng trạng thái đã push trước đ�
   - **Còn lại trước khi đóng M07:** nối `shareToken` vào Server Actions mutate
     của Trip/Itinerary/Budget/Checklist + giữ token qua redirect/internal link,
     rồi test revoke/expiry end-to-end cho Edit Link.
+
+### 2026-09-18
+
+- **Reconcile `origin/dev` + `feature/m07-checklist-edit-link` + local WIP:**
+  - `dev` local đã bị lùi 6 commit so với `origin/dev` (teammate push thẳng,
+    không qua PR) và có 1 branch `feature/m07-checklist-edit-link` chưa mở
+    PR (booking vault + checklist edit-link). Fast-forward `dev` rồi merge
+    branch đó vào — không conflict.
+  - Code WIP local (`itinerary-list.tsx`, `vote.repository.ts`,
+    `discussion.service.ts`) trùng đúng tính năng itinerary
+    reorder/vote/comment mà `origin/dev` đã có sẵn
+    (`itinerary-sortable-timeline.tsx`), do 2 bên làm song song không biết
+    nhau. Bản local cũ hơn: chỉ owner mới reorder được (không hỗ trợ
+    EDITOR của hệ phân quyền mới), chỉ reorder trong 1 ngày, không có
+    travel warning/opening-hours check. Quyết định (user xác nhận): giữ
+    bản `origin/dev`, xoá 3 file trùng của local.
+  - Giữ lại từ local WIP vì đúng/có giá trị: migration
+    `20260907224632_add_vote_unique_constraint` (`@@unique([itemId,
+    userId])` trên `Vote`, khớp với logic `voteItineraryItem` đã giả định
+    sẵn), component `BudgetChart` (donut chart CSS thuần, gắn vào mục
+    Budget thay bảng badge cũ).
+  - Dọn `countItineraryItemsInDay` (dead code chỉ được gọi bởi nhánh local
+    đã bỏ) và doc-comment lỗi thời trong `comment.repository.ts` (nói M06/
+    M07 chưa build — cả hai đã xong).
+  - Verify: `npm run typecheck` sạch, `npm run build` thành công, `npm run
+    lint` còn 5 lỗi nhưng đều thuộc code `origin/dev` không nằm trong phạm
+    vi lần reconcile này (`itinerary-sortable-timeline.tsx`,
+    `trip-map.tsx`, `share-link-manager.tsx`, `create-tag-form.tsx`).
+  - Thêm mục [Quy trình Git](#quy-trình-git) ở đầu tài liệu để tránh lặp
+    lại tình huống 2 người viết trùng tính năng trên 2 branch tách biệt.
 
