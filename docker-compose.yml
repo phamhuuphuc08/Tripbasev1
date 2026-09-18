@@ -46,7 +46,9 @@ services:
       # covers the whole uploads/ tree, so a new upload folder never needs
       # a new volume entry.
       - avatar_uploads:/app/public/uploads
+      - booking_documents:/app/storage/bookings
 
 volumes:
   tripbase_db_data:
   avatar_uploads:
+  booking_documents:

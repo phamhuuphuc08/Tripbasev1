@@ -577,6 +577,11 @@
 "removeButtonNamed": "Delete {name}",
 "openDocument": "Open document",
   "form": {
+    "documentLabel": "Booking document",
+    "documentHint": "Choose a PDF, JPG, PNG, or WebP file up to 8 MB.",
+    "currentDocument": "This booking currently has a document.",
+    "replaceDocumentHint": "Choose a new file above to replace the current document.",
+    "removeDocument": "Remove current document",
     "typeLabel": "Booking type",
     "typePlaceholder": "For example: Flight, Hotel, Tour",
     "providerLabel": "Provider",
@@ -598,7 +603,11 @@
     "dateInvalid": "The date and time are invalid.",
     "loginRequired": "Please log in to perform this action.",
     "addFailed": "Could not add the booking.",
-    "updateFailed": "Could not update the booking."
+    "updateFailed": "Could not update the booking.",
+    "documentTooLarge": "The document must not exceed 8 MB.",
+    "documentTypeUnsupported": "Only PDF, JPG, PNG, or WebP files are supported.",
+    "forbidden": "You do not have permission to modify this booking.",
+    "notFound": "Booking not found."
   }
 }
 }

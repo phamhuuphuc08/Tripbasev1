@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
       // (src/features/profile/actions.ts). Kept a bit above the 4MB
       // application-level check in src/server/storage/avatar.ts to leave
       // room for multipart/form-data overhead.
-      bodySizeLimit: "5mb",
+      bodySizeLimit: "10mb",
     },
   },
 };

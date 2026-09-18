@@ -1237,7 +1237,13 @@ const checklistManagerItems = checklistItems.map((item) => ({
 
                       {booking.fileUrl && (
                         <a
-                          href={booking.fileUrl}
+                          href={
+                            booking.fileUrl.startsWith("booking-document:")
+                              ? shareToken
+                                ? `/api/bookings/${booking.id}/document?shareToken=${encodeURIComponent(shareToken)}`
+                                : `/api/bookings/${booking.id}/document`
+                              : booking.fileUrl
+                          }
                           target="_blank"
                           rel="noreferrer"
                           className="text-primary text-xs underline"

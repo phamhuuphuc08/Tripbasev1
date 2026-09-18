@@ -576,6 +576,11 @@
   "removeButtonNamed": "Xoá {name}",
   "openDocument": "Mở tài liệu",
   "form": {
+    "documentLabel": "Tài liệu booking",
+    "documentHint": "Chọn PDF, JPG, PNG hoặc WebP, tối đa 8 MB.",
+    "currentDocument": "Booking này hiện đã có tài liệu.",
+    "replaceDocumentHint": "Chọn file mới ở trên để thay thế tài liệu hiện tại.",
+    "removeDocument": "Xóa tài liệu hiện tại",
     "typeLabel": "Loại đặt chỗ",
     "typePlaceholder": "Ví dụ: Vé máy bay, Khách sạn, Tour",
     "providerLabel": "Nhà cung cấp",
@@ -597,7 +602,12 @@
     "dateInvalid": "Ngày giờ không hợp lệ.",
     "loginRequired": "Vui lòng đăng nhập để thực hiện thao tác này.",
     "addFailed": "Không thể thêm booking.",
-    "updateFailed": "Không thể cập nhật booking."
+    "updateFailed": "Không thể cập nhật booking.",
+    "documentTooLarge": "Tài liệu không được lớn hơn 8 MB.",
+    "documentTypeUnsupported": "Chỉ hỗ trợ PDF, JPG, PNG hoặc WebP.",
+    "forbidden": "Bạn không có quyền thay đổi booking này.",
+    "notFound": "Không tìm thấy booking."
+
   }
 }
 }
