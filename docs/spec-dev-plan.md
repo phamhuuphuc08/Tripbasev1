@@ -47,7 +47,7 @@ test xong, sẵn sàng release). Quy tắc bắt buộc cho mọi thay đổi:
 | M02 | [Itinerary / Smart Timeline](#m02--itinerary--smart-timeline) | P0      | ✅          | ✅       | ✅  | ✅          |
 | M03 | [Map Planner](#m03--map-planner)                              | P0      | ✅          | ✅       | ✅  | ✅          |
 | M04 | [Budget Board](#m04--budget-board)                            | P0      | ✅          | ✅       | 🟨 | 🟨         |
-| M05 | [Booking Vault](#m05--booking-vault)                          | P1      | ✅          | ⬜       | ⬜  | ⬜          |
+| M05 | [Booking Vault](#m05--booking-vault)                          | P1      | ✅          | ✅       | ✅  | 🟨         |
 | M06 | [Checklist](#m06--checklist)                                  | P0      | ✅          | ✅       | ✅  | ✅          |
 | M07 | [Share & Permission](#m07--share--permission)                 | P0      | ✅          | 🟨      | 🟨 | 🟨         |
 | M08 | [CopyPlan Engine](#m08--copyplan-engine)                      | P0      | ✅          | ⬜       | ⬜  | ⬜          |
@@ -417,14 +417,42 @@ Chưa làm:
 ## M05 — Booking Vault
 
 - **Ưu tiên:** P1 · **Spec:** mục 4, 5
-- **Code:** `src/features/booking/`, model `Booking`
-- **Trạng thái:** ⬜ Chưa bắt đầu
+- **Code:** `src/features/booking/`, `src/server/repositories/booking.repository.ts`,
+  `src/server/services/booking.service.ts`, `src/server/storage/booking-document.ts`,
+  route `src/app/api/bookings/[bookingId]/document/route.ts`, model `Booking`
+- **Trạng thái:** 🟨 Gần hoàn thiện MVP — CRUD + private document upload +
+  permission đã chạy và test; chưa có email forwarding/S3-compatible storage
+
+Đã làm:
+
+- [x] Danh sách booking theo trip trên Trip Detail.
+- [x] CRUD booking: thêm, sửa, xoá; OWNER/EDITOR có quyền thao tác, VIEWER chỉ xem.
+- [x] Upload tài liệu booking dạng PDF/JPG/PNG/WebP.
+- [x] Giới hạn tài liệu 8 MB; file quá lớn hoặc sai định dạng bị chặn ở client
+      và vẫn được validate lại ở server.
+- [x] Lưu file private tại `storage/bookings`, không expose trực tiếp qua
+      `public/`; `.gitignore` loại thư mục runtime này khỏi Git.
+- [x] Route bảo vệ `/api/bookings/[bookingId]/document` kiểm tra quyền xem trip
+      trước khi đọc/trả file; không có quyền không thể mở tài liệu trực tiếp.
+- [x] Khi thay tài liệu, file private cũ được dọn; khi xoá tài liệu hoặc xoá
+      booking, file local tương ứng được dọn best-effort.
+- [x] Docker có volume riêng `booking_documents:/app/storage/bookings` để file
+      không mất khi rebuild/restart container.
+- [x] Tương thích booking cũ có `fileUrl` bên ngoài; private key mới dùng route
+      bảo vệ để mở tài liệu.
+- [x] VIEW Link có thể xem booking/mở tài liệu nhưng không thêm/sửa/xoá.
+- [x] EDIT Link khi đã đăng nhập có thể thêm/sửa/xoá booking và upload/mở/xoá
+      tài liệu; `shareToken` được giữ trong luồng Booking.
+- [x] Đã test thực tế: upload/open/replace/delete tài liệu; PDF/JPG/PNG/WebP;
+      file >8 MB; file `.txt`; VIEW Link; EDIT Link; truy cập không có quyền.
+- [x] Sau đợt sửa lint liên quan ngày 2026-09-18: `npm run typecheck` pass và
+      `npm run lint` không còn error (warning cũ không liên quan vẫn có thể tồn tại).
 
 Chưa làm:
 
-- [ ] Chọn file storage (S3-compatible — mục 15)
-- [ ] Upload/forward email/PDF/screenshot
-- [ ] Danh sách booking theo trip
+- [ ] Email forwarding để tự động import/tạo booking từ email.
+- [ ] Chuyển private storage sang S3-compatible/object storage cho production
+      scale; local private storage hiện phù hợp cho MVP/local deploy.
 
 ---
 
@@ -1302,3 +1330,22 @@ origin/main` để đưa `main` về đúng trạng thái đã push trước đ�
   - Thêm mục [Quy trình Git](#quy-trình-git) ở đầu tài liệu để tránh lặp
     lại tình huống 2 người viết trùng tính năng trên 2 branch tách biệt.
 
+- **Fix React lint errors trước khi chốt Booking Vault** (commit `1231b80`):
+  - Sửa đồng bộ state của itinerary drag/drop không còn `setState` trực tiếp
+    trong `useEffect`.
+  - Sửa Map Planner khởi tạo viewport mà không gọi `setState` đồng bộ từ effect.
+  - Sửa Share Link không gọi `Date.now()` trực tiếp trong render.
+  - Sửa form tạo Tag/Tip đồng bộ toạ độ bằng remount theo `state.attempt`.
+  - Verify lại: `npm run typecheck` pass; `npm run lint` không còn error,
+    chỉ còn warning `_prevState`/`_formData` không liên quan.
+- **M05 — Booking Vault private document upload** (commit `cc611f5`):
+  - Hoàn thiện danh sách + CRUD booking trên Trip Detail.
+  - Thêm private document upload cho PDF/JPG/PNG/WebP, giới hạn 8 MB.
+  - File lưu tại `storage/bookings`; Docker dùng volume `booking_documents`.
+  - Thêm protected API route kiểm tra permission trước khi mở tài liệu.
+  - Dọn file cũ khi replace/remove/delete; giữ tương thích với `fileUrl`
+    bên ngoài của booking cũ.
+  - Tích hợp quyền VIEW/EDIT Share Link cho Booking Vault; user/token không có
+    quyền bị chặn khi gọi route tài liệu.
+  - Test thành công upload/open/replace/delete, định dạng hợp lệ/không hợp lệ,
+    file >8 MB, VIEW/EDIT Link và unauthorized access.
