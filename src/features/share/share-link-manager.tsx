@@ -1,10 +1,14 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Copy, Link2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { createShareLinkAction, revokeShareLinkAction, type ShareLinkActionState } from "@/features/share/actions";
+import {
+  createShareLinkAction,
+  revokeShareLinkAction,
+  type ShareLinkActionState,
+} from "@/features/share/actions";
 
 type ShareLinkItem = {
   id: string;
@@ -21,14 +25,48 @@ type Props = {
 
 const initialState: ShareLinkActionState = {};
 
-function ShareLinkRow({ tripId, link }: { tripId: string; link: ShareLinkItem }) {
+function useCurrentTime() {
+  const [now, setNow] = useState<number | null>(null);
+
+  useEffect(() => {
+    const updateTime = () => setNow(Date.now());
+
+    const timeoutId = window.setTimeout(updateTime, 0);
+    const intervalId = window.setInterval(updateTime, 60_000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  return now;
+}
+
+function isExpired(expiresAt: string | null, now: number | null) {
+  if (!expiresAt || now === null) return false;
+  return new Date(expiresAt).getTime() <= now;
+}
+
+function ShareLinkRow({
+  tripId,
+  link,
+  now,
+}: {
+  tripId: string;
+  link: ShareLinkItem;
+  now: number | null;
+}) {
   const t = useTranslations("share.links");
   const locale = useLocale();
   const [copied, setCopied] = useState(false);
-  const [state, action, pending] = useActionState(revokeShareLinkAction.bind(null, tripId, link.id), initialState);
+  const [state, action, pending] = useActionState(
+    revokeShareLinkAction.bind(null, tripId, link.id),
+    initialState,
+  );
 
   const revoked = Boolean(link.revokedAt);
-  const expired = Boolean(link.expiresAt && new Date(link.expiresAt).getTime() <= Date.now());
+  const expired = isExpired(link.expiresAt, now);
 
   async function copyLink() {
     const url = `${window.location.origin}/${locale}/share/${link.token}`;
@@ -46,23 +84,39 @@ function ShareLinkRow({ tripId, link }: { tripId: string; link: ShareLinkItem })
           </span>
 
           {revoked ? (
-            <span className="text-muted-foreground text-xs">{t("revoked")}</span>
+            <span className="text-muted-foreground text-xs">
+              {t("revoked")}
+            </span>
           ) : expired ? (
-            <span className="text-destructive text-xs">{t("expired")}</span>
+            <span className="text-destructive text-xs">
+              {t("expired")}
+            </span>
           ) : (
-            <span className="text-xs text-green-600">{t("active")}</span>
+            <span className="text-xs text-green-600">
+              {t("active")}
+            </span>
           )}
         </div>
 
         {!revoked && !expired && (
           <div className="flex gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={copyLink}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={copyLink}
+            >
               <Copy className="size-3.5" />
               {copied ? t("copied") : t("copy")}
             </Button>
 
             <form action={action}>
-              <Button type="submit" variant="ghost" size="sm" disabled={pending}>
+              <Button
+                type="submit"
+                variant="ghost"
+                size="sm"
+                disabled={pending}
+              >
                 <X className="size-3.5" />
                 {pending ? t("revoking") : t("revoke")}
               </Button>
@@ -77,22 +131,33 @@ function ShareLinkRow({ tripId, link }: { tripId: string; link: ShareLinkItem })
 
       {link.expiresAt && (
         <div className="text-muted-foreground text-xs">
-          {t("expiresAt", { date: new Date(link.expiresAt).toLocaleString(locale) })}
+          {t("expiresAt", {
+            date: new Date(link.expiresAt).toLocaleString(locale),
+          })}
         </div>
       )}
 
-      {state.error && <p className="text-destructive text-sm">{t(`errors.${state.error}`)}</p>}
+      {state.error && (
+        <p className="text-destructive text-sm">
+          {t(`errors.${state.error}`)}
+        </p>
+      )}
     </div>
   );
 }
 
 export function ShareLinkManager({ tripId, links }: Props) {
   const t = useTranslations("share.links");
-  const [state, action, pending] = useActionState(createShareLinkAction.bind(null, tripId), initialState);
+  const now = useCurrentTime();
+
+  const [state, action, pending] = useActionState(
+    createShareLinkAction.bind(null, tripId),
+    initialState,
+  );
 
   const activeLinks = links.filter((link) => {
     if (link.revokedAt) return false;
-    if (link.expiresAt && new Date(link.expiresAt).getTime() <= Date.now()) return false;
+    if (isExpired(link.expiresAt, now)) return false;
     return true;
   });
 
@@ -103,21 +168,46 @@ export function ShareLinkManager({ tripId, links }: Props) {
           <Link2 className="size-4" />
           {t("heading")}
         </h3>
-        <p className="text-muted-foreground mt-1 text-sm">{t("description")}</p>
+
+        <p className="text-muted-foreground mt-1 text-sm">
+          {t("description")}
+        </p>
       </div>
 
       <form action={action} className="flex flex-wrap items-end gap-3">
         <div className="flex min-w-40 flex-col gap-1.5">
-          <label htmlFor="share-link-type" className="text-sm font-medium">{t("typeLabel")}</label>
-          <select id="share-link-type" name="type" defaultValue="VIEW" className="border-input bg-background h-9 rounded-md border px-3 text-sm">
+          <label
+            htmlFor="share-link-type"
+            className="text-sm font-medium"
+          >
+            {t("typeLabel")}
+          </label>
+
+          <select
+            id="share-link-type"
+            name="type"
+            defaultValue="VIEW"
+            className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+          >
             <option value="VIEW">{t("view")}</option>
             <option value="EDIT">{t("edit")}</option>
           </select>
         </div>
 
         <div className="flex min-w-40 flex-col gap-1.5">
-          <label htmlFor="share-link-expiry" className="text-sm font-medium">{t("expiryLabel")}</label>
-          <select id="share-link-expiry" name="expiry" defaultValue="7_DAYS" className="border-input bg-background h-9 rounded-md border px-3 text-sm">
+          <label
+            htmlFor="share-link-expiry"
+            className="text-sm font-medium"
+          >
+            {t("expiryLabel")}
+          </label>
+
+          <select
+            id="share-link-expiry"
+            name="expiry"
+            defaultValue="7_DAYS"
+            className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+          >
             <option value="NEVER">{t("never")}</option>
             <option value="1_DAY">{t("oneDay")}</option>
             <option value="7_DAYS">{t("sevenDays")}</option>
@@ -131,16 +221,31 @@ export function ShareLinkManager({ tripId, links }: Props) {
         </Button>
       </form>
 
-      {state.error && <p className="text-destructive text-sm">{t(`errors.${state.error}`)}</p>}
+      {state.error && (
+        <p className="text-destructive text-sm">
+          {t(`errors.${state.error}`)}
+        </p>
+      )}
 
       <div className="border-t pt-4">
-        <h4 className="mb-3 text-sm font-medium">{t("listHeading")}</h4>
+        <h4 className="mb-3 text-sm font-medium">
+          {t("listHeading")}
+        </h4>
 
         {activeLinks.length === 0 ? (
-          <p className="text-muted-foreground text-sm">{t("empty")}</p>
+          <p className="text-muted-foreground text-sm">
+            {t("empty")}
+          </p>
         ) : (
           <div className="flex flex-col gap-3">
-            {activeLinks.map((link) => <ShareLinkRow key={link.id} tripId={tripId} link={link} />)}
+            {activeLinks.map((link) => (
+              <ShareLinkRow
+                key={link.id}
+                tripId={tripId}
+                link={link}
+                now={now}
+              />
+            ))}
           </div>
         )}
       </div>

@@ -3,7 +3,7 @@
 import "leaflet/dist/leaflet.css";
 import { DivIcon } from "leaflet";
 import Supercluster from "supercluster";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import type { TagCategory } from "@/features/tag-tip/categories";
@@ -100,6 +100,11 @@ function openingStatus(
     : "CLOSED";
 }
 
+interface MapViewport {
+  bbox: [number, number, number, number];
+  zoom: number;
+}
+
 function ClusterLayer({ markers }: { markers: MapMarkerData[] }) {
   const map = useMap();
   const t = useTranslations("itinerary");
@@ -127,12 +132,21 @@ function ClusterLayer({ markers }: { markers: MapMarkerData[] }) {
     return cluster;
   }, [markers]);
 
-  const [viewport, setViewport] = useState<{
-    bbox: [number, number, number, number];
-    zoom: number;
-  } | null>(null);
+  const [viewport, setViewport] = useState<MapViewport>(() => {
+    const bounds = map.getBounds();
 
-  const updateViewport = useCallback(() => {
+    return {
+      bbox: [
+        bounds.getWest(),
+        bounds.getSouth(),
+        bounds.getEast(),
+        bounds.getNorth(),
+      ],
+      zoom: Math.round(map.getZoom()),
+    };
+  });
+
+  function updateViewport() {
     const bounds = map.getBounds();
 
     setViewport({
@@ -144,11 +158,7 @@ function ClusterLayer({ markers }: { markers: MapMarkerData[] }) {
       ],
       zoom: Math.round(map.getZoom()),
     });
-  }, [map]);
-
-  useEffect(() => {
-    updateViewport();
-  }, [updateViewport]);
+  }
 
   useMapEvents({
     moveend: updateViewport,
@@ -156,7 +166,7 @@ function ClusterLayer({ markers }: { markers: MapMarkerData[] }) {
   });
 
   const clusters = useMemo(
-    () => viewport ? index.getClusters(viewport.bbox, viewport.zoom) : [],
+    () => index.getClusters(viewport.bbox, viewport.zoom),
     [index, viewport],
   );
 

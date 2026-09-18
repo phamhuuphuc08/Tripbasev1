@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import {
   closestCenter, DndContext, KeyboardSensor, PointerSensor, useDroppable,
   useSensor, useSensors, type DragEndEvent, type UniqueIdentifier,
@@ -363,7 +363,9 @@ function SortableItem({
         </div>
 
         {interactionError && (
-          <p role="alert" className="text-destructive mt-1 text-xs">{interactionError}</p>
+          <p role="alert" className="text-destructive mt-1 text-xs">
+            {interactionError}
+          </p>
         )}
       </div>
 
@@ -439,24 +441,24 @@ function normalizeDay(items: SortableTimelineItem[], day: number) {
     .map((item, index) => ({ ...item, sortOrder: index }));
 }
 
-export function ItinerarySortableTimeline({
-  tripId, initialItems, isOwner, currentUserId, totalDays, shareToken,
-}: {
+interface ItinerarySortableTimelineProps {
   tripId: string;
   initialItems: SortableTimelineItem[];
   isOwner: boolean;
   currentUserId: string | null;
   totalDays: number;
   shareToken?: string | null;
-}) {
+}
+
+function ItinerarySortableTimelineStateful({
+  tripId, initialItems, isOwner, currentUserId, totalDays, shareToken,
+}: ItinerarySortableTimelineProps) {
   const t = useTranslations("itinerary");
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [error, setError] = useState(false);
   const [pending, startTransition] = useTransition();
   const token = shareToken ?? null;
-
-  useEffect(() => { setItems(initialItems); }, [initialItems]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -530,8 +532,13 @@ export function ItinerarySortableTimeline({
 
       targetItems.splice(insertIndex, 0, { ...activeItem, day: targetDay });
 
-      const reorderedSource = sourceItems.map((item, index) => ({ ...item, sortOrder: index }));
-      const reorderedTarget = targetItems.map((item, index) => ({ ...item, day: targetDay, sortOrder: index }));
+      const reorderedSource = sourceItems.map((item, index) => ({
+        ...item, sortOrder: index,
+      }));
+
+      const reorderedTarget = targetItems.map((item, index) => ({
+        ...item, day: targetDay, sortOrder: index,
+      }));
 
       const changedMap = new Map(
         [...reorderedSource, ...reorderedTarget].map((item) => [item.id, item]),
@@ -576,8 +583,17 @@ export function ItinerarySortableTimeline({
 
   return (
     <div className="space-y-5">
-      {error && <p className="text-destructive text-sm">{t("reorderFailed")}</p>}
-      {pending && <p className="text-muted-foreground text-xs">{t("savingOrder")}</p>}
+      {error && (
+        <p className="text-destructive text-sm">
+          {t("reorderFailed")}
+        </p>
+      )}
+
+      {pending && (
+        <p className="text-muted-foreground text-xs">
+          {t("savingOrder")}
+        </p>
+      )}
 
       <DndContext
         id={`itinerary-dnd-${tripId}`}
@@ -587,7 +603,9 @@ export function ItinerarySortableTimeline({
       >
         {days.map((day) => (
           <div key={day} className="flex flex-col gap-2">
-            <h3 className="text-sm font-medium">{t("dayHeading", { day })}</h3>
+            <h3 className="text-sm font-medium">
+              {t("dayHeading", { day })}
+            </h3>
 
             <DayDropZone
               day={day}
@@ -602,5 +620,16 @@ export function ItinerarySortableTimeline({
         ))}
       </DndContext>
     </div>
+  );
+}
+
+export function ItinerarySortableTimeline(
+  props: ItinerarySortableTimelineProps,
+) {
+  return (
+    <ItinerarySortableTimelineStateful
+      key={JSON.stringify(props.initialItems)}
+      {...props}
+    />
   );
 }
