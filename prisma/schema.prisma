@@ -315,6 +315,10 @@ model Vote {
   createdAt  DateTime       @default(now()) @map("created_at")
 
   @@index([targetType, itemId, userId])
+  // One vote per person per item — casting again either changes or
+  // retracts it (src/server/services/itinerary.service.ts#voteItineraryItem),
+  // never stacks.
+  @@unique([itemId, userId])
   @@map("votes")
 }
 
