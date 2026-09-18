@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { removeExpenseAction } from "@/features/budget/actions";
+import { BudgetChart } from "@/features/budget/budget-chart";
 import { toExpenseCategory } from "@/features/budget/categories";
 import { ExpenseForm } from "@/features/budget/expense-form";
 import { removeBookingAction } from "@/features/booking/actions";
@@ -901,40 +902,21 @@ const checklistManagerItems = checklistItems.map((item) => ({
             )}
           </div>
 
-          {budgetSummary.byCategory
-            .length > 0 && (
+          {budgetSummary.byCategory.length > 0 && (
             <div className="flex flex-col gap-1.5">
               <h3 className="text-muted-foreground text-xs font-medium">
-                {tBudget(
-                  "byCategoryHeading",
-                )}
+                {tBudget("byCategoryHeading")}
               </h3>
 
-              <ul className="flex flex-wrap gap-2">
-                {budgetSummary.byCategory.map(
-                  ({
-                    category,
-                    total,
-                  }) => (
-                    <li
-                      key={category}
-                    >
-                      <Badge variant="outline">
-                        {tExpenseCategory(
-                          toExpenseCategory(
-                            category,
-                          ),
-                        )}
-                        :{" "}
-                        {format.number(
-                          total,
-                        )}{" "}
-                        VND
-                      </Badge>
-                    </li>
-                  ),
-                )}
-              </ul>
+              <BudgetChart
+                slices={budgetSummary.byCategory.map(({ category, total }) => ({
+                  category: toExpenseCategory(category),
+                  total,
+                }))}
+                totalLabel={tBudget("totalSpentLabel")}
+                categoryLabel={tExpenseCategory}
+                formatAmount={(value) => `${format.number(value)} VND`}
+              />
             </div>
           )}
 
