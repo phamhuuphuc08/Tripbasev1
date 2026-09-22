@@ -417,71 +417,158 @@ export async function reorderItineraryItems(
   return reorderItineraryItemsRepo(normalizedItems);
 }
 
-async function assertCanInteractWithTrip(tripId: string, userId: string) {
+async function assertCanInteractWithTrip(
+  tripId: string,
+  userId: string,
+  shareToken?: string | null,
+) {
   const trip = await findTripById(tripId);
   if (!trip) throw new ItineraryError("TRIP_NOT_FOUND");
 
-  if (trip.ownerId === userId || trip.visibility === "PUBLIC") return trip;
+  if (trip.ownerId === userId || trip.visibility === "PUBLIC") {
+    return trip;
+  }
 
   const collaborator = await prisma.collaborator.findFirst({
     where: { planId: tripId, userId },
     select: { id: true, role: true },
   });
 
-  if (!collaborator) throw new ItineraryError("FORBIDDEN");
-  return trip;
+  if (collaborator) return trip;
+
+  if (shareToken) {
+    try {
+      await assertCanEditTrip(tripId, userId, shareToken);
+      return trip;
+    } catch (error) {
+      if (error instanceof PermissionError) {
+        if (error.code === "TRIP_NOT_FOUND") {
+          throw new ItineraryError("TRIP_NOT_FOUND");
+        }
+
+        throw new ItineraryError("FORBIDDEN");
+      }
+
+      throw error;
+    }
+  }
+
+  throw new ItineraryError("FORBIDDEN");
 }
 
-async function assertCanInteractWithItem(itemId: string, userId: string) {
+async function assertCanInteractWithItem(
+  itemId: string,
+  userId: string,
+  shareToken?: string | null,
+) {
   const item = await findItineraryItemById(itemId);
   if (!item) throw new ItineraryError("NOT_FOUND");
 
-  await assertCanInteractWithTrip(item.trip.id, userId);
+  await assertCanInteractWithTrip(
+    item.trip.id,
+    userId,
+    shareToken,
+  );
+
   return item;
 }
 
-export async function voteItineraryItem(itemId: string, userId: string, voteType: "UP" | "DOWN") {
-  await assertCanInteractWithItem(itemId, userId);
+export async function voteItineraryItem(
+  itemId: string,
+  userId: string,
+  voteType: "UP" | "DOWN",
+  shareToken?: string | null,
+) {
+  await assertCanInteractWithItem(
+    itemId,
+    userId,
+    shareToken,
+  );
 
-  const existing = await findItineraryVoteByUser(itemId, userId);
+  const existing =
+    await findItineraryVoteByUser(itemId, userId);
 
   if (existing && existing.voteType === voteType) {
     await deleteItineraryVotesByUser(itemId, userId);
-    return { action: "REMOVED" as const, voteType: null };
+
+    return {
+      action: "REMOVED" as const,
+      voteType: null,
+    };
   }
 
   await deleteItineraryVotesByUser(itemId, userId);
   await createItineraryVote(itemId, userId, voteType);
 
   return {
-    action: existing ? ("CHANGED" as const) : ("CREATED" as const),
+    action: existing
+      ? ("CHANGED" as const)
+      : ("CREATED" as const),
     voteType,
   };
 }
 
-export async function addItineraryComment(itemId: string, userId: string, content: string) {
-  await assertCanInteractWithItem(itemId, userId);
+export async function addItineraryComment(
+  itemId: string,
+  userId: string,
+  content: string,
+  shareToken?: string | null,
+) {
+  await assertCanInteractWithItem(
+    itemId,
+    userId,
+    shareToken,
+  );
 
   const normalized = content.trim();
 
-  if (!normalized) throw new ItineraryError("COMMENT_REQUIRED");
-  if (normalized.length > MAX_ITINERARY_COMMENT_LENGTH) throw new ItineraryError("COMMENT_TOO_LONG");
+  if (!normalized) {
+    throw new ItineraryError("COMMENT_REQUIRED");
+  }
 
-  return createItineraryCommentRepo(itemId, userId, normalized);
+  if (normalized.length > MAX_ITINERARY_COMMENT_LENGTH) {
+    throw new ItineraryError("COMMENT_TOO_LONG");
+  }
+
+  return createItineraryCommentRepo(
+    itemId,
+    userId,
+    normalized,
+  );
 }
 
-export async function removeItineraryComment(commentId: string, userId: string) {
-  const comment = await findItineraryCommentById(commentId);
+export async function removeItineraryComment(
+  commentId: string,
+  userId: string,
+  shareToken?: string | null,
+) {
+  const comment =
+    await findItineraryCommentById(commentId);
 
-  if (!comment) throw new ItineraryError("COMMENT_NOT_FOUND");
-  if (comment.targetType !== "ITINERARY_ITEM" || !comment.item) throw new ItineraryError("COMMENT_NOT_FOUND");
+  if (!comment) {
+    throw new ItineraryError("COMMENT_NOT_FOUND");
+  }
 
-  await assertCanInteractWithTrip(comment.item.tripId, userId);
+  if (
+    comment.targetType !== "ITINERARY_ITEM" ||
+    !comment.item
+  ) {
+    throw new ItineraryError("COMMENT_NOT_FOUND");
+  }
+
+  await assertCanInteractWithTrip(
+    comment.item.tripId,
+    userId,
+    shareToken,
+  );
 
   const isAuthor = comment.userId === userId;
-  const isTripOwner = comment.item.trip.ownerId === userId;
+  const isTripOwner =
+    comment.item.trip.ownerId === userId;
 
-  if (!isAuthor && !isTripOwner) throw new ItineraryError("FORBIDDEN");
+  if (!isAuthor && !isTripOwner) {
+    throw new ItineraryError("FORBIDDEN");
+  }
 
   return deleteItineraryCommentRepo(commentId);
 }

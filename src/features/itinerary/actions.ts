@@ -221,6 +221,7 @@ export async function reorderItineraryAction(
 export async function voteItineraryItemAction(
   itemId: string,
   voteType: "UP" | "DOWN",
+  shareToken: string | null,
 ): Promise<ItineraryVoteActionState> {
   const session = await getSession();
   if (!session) return { error: "LOGIN_REQUIRED" };
@@ -229,7 +230,13 @@ export async function voteItineraryItemAction(
   if (!parsed.success || !itemId) return { error: "INVALID_VOTE" };
 
   try {
-    await voteItineraryItem(itemId, session.userId, parsed.data);
+    await voteItineraryItem(
+      itemId,
+      session.userId,
+      parsed.data,
+      normalizeShareToken(shareToken),
+    );
+
     return { success: true };
   } catch {
     return { error: "VOTE_FAILED" };
@@ -239,6 +246,7 @@ export async function voteItineraryItemAction(
 export async function addItineraryCommentAction(
   itemId: string,
   content: string,
+  shareToken: string | null,
 ): Promise<ItineraryCommentActionState> {
   const session = await getSession();
   if (!session) return { error: "LOGIN_REQUIRED" };
@@ -246,17 +254,35 @@ export async function addItineraryCommentAction(
   const parsed = z.string().trim().min(1).max(1000).safeParse(content);
 
   if (!parsed.success) {
-    const tooLong = typeof content === "string" && content.trim().length > 1000;
-    return { error: tooLong ? "COMMENT_TOO_LONG" : "COMMENT_REQUIRED" };
+    const tooLong =
+      typeof content === "string" &&
+      content.trim().length > 1000;
+
+    return {
+      error: tooLong
+        ? "COMMENT_TOO_LONG"
+        : "COMMENT_REQUIRED",
+    };
   }
 
   try {
-    await addItineraryComment(itemId, session.userId, parsed.data);
+    await addItineraryComment(
+      itemId,
+      session.userId,
+      parsed.data,
+      normalizeShareToken(shareToken),
+    );
+
     return { success: true };
   } catch (error) {
     if (error instanceof ItineraryError) {
-      if (error.message === "COMMENT_REQUIRED") return { error: "COMMENT_REQUIRED" };
-      if (error.message === "COMMENT_TOO_LONG") return { error: "COMMENT_TOO_LONG" };
+      if (error.message === "COMMENT_REQUIRED") {
+        return { error: "COMMENT_REQUIRED" };
+      }
+
+      if (error.message === "COMMENT_TOO_LONG") {
+        return { error: "COMMENT_TOO_LONG" };
+      }
     }
 
     return { error: "COMMENT_FAILED" };
@@ -265,13 +291,20 @@ export async function addItineraryCommentAction(
 
 export async function removeItineraryCommentAction(
   commentId: string,
+  shareToken: string | null,
 ): Promise<ItineraryCommentActionState> {
   const session = await getSession();
+
   if (!session) return { error: "LOGIN_REQUIRED" };
   if (!commentId) return { error: "DELETE_FAILED" };
 
   try {
-    await removeItineraryComment(commentId, session.userId);
+    await removeItineraryComment(
+      commentId,
+      session.userId,
+      normalizeShareToken(shareToken),
+    );
+
     return { success: true };
   } catch {
     return { error: "DELETE_FAILED" };

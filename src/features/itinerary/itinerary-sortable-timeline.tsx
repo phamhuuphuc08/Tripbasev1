@@ -104,7 +104,7 @@ function SortableItem({
 
     startInteraction(() => {
       void (async () => {
-        const result = await voteItineraryItemAction(item.id, voteType);
+        const result = await voteItineraryItemAction(item.id,voteType,token);  
 
         if (!result.success) {
           setInteractionError(
@@ -143,7 +143,11 @@ function SortableItem({
 
     startInteraction(() => {
       void (async () => {
-        const result = await addItineraryCommentAction(item.id, content);
+        const result = await addItineraryCommentAction(
+  item.id,
+  content,
+  token,
+);
 
         if (!result.success) {
           if (result.error === "LOGIN_REQUIRED") setInteractionError(t("interactionLoginRequired"));
@@ -164,7 +168,7 @@ function SortableItem({
 
     startInteraction(() => {
       void (async () => {
-        const result = await removeItineraryCommentAction(commentId);
+        const result = await removeItineraryCommentAction( commentId, token);
 
         if (!result.success) {
           setInteractionError(
