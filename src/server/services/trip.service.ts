@@ -82,7 +82,8 @@ export async function getTripDetail(
 
   if (!canView) return null;
 
-  const requiresLogin = viewerId == null && shareLinkType == null;
+  const requiresLogin =
+  viewerId == null && shareLinkType === "EDIT";
 
   return {
     trip,

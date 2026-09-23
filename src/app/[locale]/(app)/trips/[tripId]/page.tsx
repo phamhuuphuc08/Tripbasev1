@@ -140,6 +140,10 @@ const [
   getFormatter(),
 ]);
 
+const loginCallbackHref = shareToken
+  ? `/trips/${trip.id}?shareToken=${encodeURIComponent(shareToken)}`
+  : `/trips/${trip.id}`;
+
   if (requiresLogin) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-6 py-24 text-center">
@@ -158,7 +162,7 @@ const [
         <Button
           render={
             <Link
-              href={`/login?callbackUrl=/trips/${trip.id}`}
+              href={`/login?callbackUrl=${encodeURIComponent(loginCallbackHref)}`}
             />
           }
           nativeButton={false}
