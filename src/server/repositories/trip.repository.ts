@@ -5,49 +5,125 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/server/db/client";
 
-const ownerSelect = { id: true, name: true } as const;
+const ownerSelect = {
+  id: true,
+  name: true,
+} as const;
 
-export function findPublicTripsByDestination(query: string, take = 20) {
+export function findPublicTripsByDestination(
+  query: string,
+  take = 20,
+) {
   return prisma.trip.findMany({
     where: {
       visibility: PlanVisibility.PUBLIC,
-      destination: { contains: query, mode: "insensitive" },
+      destination: {
+        contains: query,
+        mode: "insensitive",
+      },
     },
-    include: { owner: { select: ownerSelect } },
-    orderBy: { createdAt: "desc" },
+    include: {
+      owner: {
+        select: ownerSelect,
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
     take,
   });
 }
 
-export function findRecentPublicTrips(take = 6) {
+export function findRecentPublicTrips(
+  take = 6,
+) {
   return prisma.trip.findMany({
-    where: { visibility: PlanVisibility.PUBLIC },
-    include: { owner: { select: ownerSelect } },
-    orderBy: { createdAt: "desc" },
+    where: {
+      visibility: PlanVisibility.PUBLIC,
+    },
+    include: {
+      owner: {
+        select: ownerSelect,
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
     take,
   });
 }
 
 export function findTripById(id: string) {
   return prisma.trip.findUnique({
-    where: { id },
+    where: {
+      id,
+    },
+
     include: {
-      owner: { select: ownerSelect },
+      owner: {
+        select: ownerSelect,
+      },
+
       travelers: true,
-      _count: { select: { itineraryItems: true } },
+
+      /*
+       * Nguồn của Trip được tạo bằng CopyPlan.
+       */
+      forkedFrom: {
+        select: {
+          id: true,
+          name: true,
+
+          owner: {
+            select: ownerSelect,
+          },
+        },
+      },
+
+      /*
+       * Thông tin CopyPlan của Trip hiện tại.
+       *
+       * Dùng để hiển thị:
+       * - Retention Rate
+       * - số activity ban đầu được copy
+       */
+      copyRecord: {
+        select: {
+          retentionRate: true,
+          initialItemCount: true,
+        },
+      },
+
+      _count: {
+        select: {
+          itineraryItems: true,
+        },
+      },
     },
   });
 }
 
-export function findTripsByOwner(ownerId: string) {
+export function findTripsByOwner(
+  ownerId: string,
+) {
   return prisma.trip.findMany({
-    where: { ownerId },
-    orderBy: { updatedAt: "desc" },
+    where: {
+      ownerId,
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
   });
 }
 
-export function countTripsByOwner(ownerId: string) {
-  return prisma.trip.count({ where: { ownerId } });
+export function countTripsByOwner(
+  ownerId: string,
+) {
+  return prisma.trip.count({
+    where: {
+      ownerId,
+    },
+  });
 }
 
 export function createTrip(data: {
@@ -62,7 +138,9 @@ export function createTrip(data: {
   pace: TravelPace;
   travelStyle: string[];
 }) {
-  return prisma.trip.create({ data });
+  return prisma.trip.create({
+    data,
+  });
 }
 
 export function updateTrip(
@@ -80,9 +158,18 @@ export function updateTrip(
     travelStyle: string[];
   },
 ) {
-  return prisma.trip.update({ where: { id }, data });
+  return prisma.trip.update({
+    where: {
+      id,
+    },
+    data,
+  });
 }
 
 export function deleteTrip(id: string) {
-  return prisma.trip.delete({ where: { id } });
+  return prisma.trip.delete({
+    where: {
+      id,
+    },
+  });
 }

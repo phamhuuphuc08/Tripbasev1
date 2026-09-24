@@ -227,6 +227,8 @@ model ItineraryItem {
   notes         String?
   sortOrder     Int          @default(0) @map("sort_order")
 
+  copiedFromItemId String? @map("copied_from_item_id")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -314,11 +316,11 @@ model Vote {
   voteType   VoteType       @map("vote_type")
   createdAt  DateTime       @default(now()) @map("created_at")
 
-  @@index([targetType, itemId, userId])
   // One vote per person per item — casting again either changes or
   // retracts it (src/server/services/itinerary.service.ts#voteItineraryItem),
   // never stacks.
   @@unique([itemId, userId])
+  @@index([targetType, itemId, userId])
   @@map("votes")
 }
 
@@ -417,17 +419,18 @@ model Interaction {
 // ---------------------------------------------------------------------------
 
 model PlanCopy {
-  id             String   @id @default(cuid())
-  planId         String   @unique @map("plan_id")
-  plan           Trip     @relation("CopyPlan", fields: [planId], references: [id], onDelete: Cascade)
-  originalPlanId String   @map("original_plan_id")
-  originalPlan   Trip     @relation("OriginalPlan", fields: [originalPlanId], references: [id])
-  copierUserId   String   @map("copier_user_id")
-  copierUser     User     @relation(fields: [copierUserId], references: [id])
-  copiedAt       DateTime @default(now()) @map("copied_at")
-  retentionRate  Float?   @map("retention_rate")
-  completed      Boolean  @default(false)
-  postTripRating Float?   @map("post_trip_rating")
+  id               String   @id @default(cuid())
+  planId           String   @unique @map("plan_id")
+  plan             Trip     @relation("CopyPlan", fields: [planId], references: [id], onDelete: Cascade)
+  originalPlanId   String   @map("original_plan_id")
+  originalPlan     Trip     @relation("OriginalPlan", fields: [originalPlanId], references: [id])
+  copierUserId     String   @map("copier_user_id")
+  copierUser       User     @relation(fields: [copierUserId], references: [id])
+  copiedAt         DateTime @default(now()) @map("copied_at")
+  initialItemCount Int      @default(0) @map("initial_item_count")
+  retentionRate    Float?   @map("retention_rate")
+  completed        Boolean  @default(false)
+  postTripRating   Float?   @map("post_trip_rating")
 
   @@index([originalPlanId])
   @@map("plan_copies")

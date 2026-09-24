@@ -8,6 +8,7 @@ import {
 } from "@/server/repositories/itinerary.repository";
 import { findTripById } from "@/server/repositories/trip.repository";
 import { assertCanEditTrip, PermissionError } from "@/server/services/permission.service";
+import { recalculateCopyPlanRetentionRate } from "@/server/services/copy-plan.service";
 
 export class ItineraryError extends Error {}
 
@@ -366,7 +367,12 @@ export async function removeItineraryItem(itemId: string, userId: string, shareT
   if (!item) throw new ItineraryError("NOT_FOUND");
   await assertTripEditor(item.trip.id, userId, shareToken);
 
-  return deleteItineraryItem(itemId);
+  const tripId = item.trip.id;
+  const deletedItem = await deleteItineraryItem(itemId);
+
+  await recalculateCopyPlanRetentionRate(tripId);
+
+  return deletedItem;
 }
 
 export async function reorderItineraryItems(

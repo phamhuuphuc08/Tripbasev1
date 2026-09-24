@@ -2,6 +2,7 @@ import {
   CalendarRange,
   Clapperboard,
   Gauge,
+  GitFork,
   Lock,
   MapPin,
   Pencil,
@@ -33,6 +34,7 @@ import { removeBookingAction } from "@/features/booking/actions";
 import { BookingForm } from "@/features/booking/booking-form";
 import { CollaboratorManager } from "@/features/share/collaborator-manager";
 import { InviteForm } from "@/features/share/invite-form";
+import { CopyPlanDayButton } from "@/features/copy-plan/copy-plan-button";
 import { ItineraryItemForm } from "@/features/itinerary/itinerary-item-form";
 import { ItinerarySortableTimeline } from "@/features/itinerary/itinerary-sortable-timeline";
 import { detectBacktrack } from "@/features/map/geo";
@@ -582,6 +584,46 @@ const checklistManagerItems = checklistItems.map((item) => ({
             ),
           })}
         </p>
+{trip.forkedFrom && (
+  <div className="bg-muted/50 flex flex-col gap-2 rounded-lg px-3 py-2 text-xs">
+    <div className="text-muted-foreground flex flex-wrap items-center gap-1.5">
+      <GitFork className="text-primary size-3.5" />
+
+      <span>Sao chép từ</span>
+
+      <Link
+        href={`/trips/${trip.forkedFrom.id}`}
+        className="text-foreground font-medium hover:underline"
+      >
+        {trip.forkedFrom.name}
+      </Link>
+
+      <span>· Chủ sở hữu:</span>
+
+      <Link
+        href={`/creators/${trip.forkedFrom.owner.id}`}
+        className="text-foreground font-medium hover:underline"
+      >
+        {trip.forkedFrom.owner.name}
+      </Link>
+    </div>
+
+    {trip.copyRecord?.retentionRate != null && (
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-muted-foreground">
+          Giữ lại từ kế hoạch gốc
+        </span>
+
+        <span className="text-foreground font-semibold">
+          {Math.round(
+            trip.copyRecord.retentionRate * 100,
+          )}
+          %
+        </span>
+      </div>
+    )}
+  </div>
+)}
       </div>
 
       <Card>
@@ -701,15 +743,35 @@ const checklistManagerItems = checklistItems.map((item) => ({
   </CardContent>
 </Card>
 
-      <Card id="itinerary">
-        <CardHeader>
-          <CardTitle className="text-base">
-            {tItinerary("heading")}
-          </CardTitle>
-        </CardHeader>
+<Card id="itinerary">
+  <CardHeader>
+    <CardTitle className="text-base">
+      {tItinerary("heading")}
+    </CardTitle>
+  </CardHeader>
 
-        <CardContent className="flex flex-col gap-5">
-          {items.length === 0 ? (
+  <CardContent className="flex flex-col gap-5">
+    {trip.visibility === "PUBLIC" &&
+      !isOwner &&
+      sortedDays.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <p className="text-muted-foreground text-sm">
+            Sao chép riêng một ngày vào kế hoạch của bạn:
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            {sortedDays.map((day) => (
+              <CopyPlanDayButton
+                key={day}
+                tripId={tripId}
+                day={day}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+    {items.length === 0 ? (
             <p className="text-muted-foreground text-sm">
               {tItinerary("empty")}
             </p>
