@@ -35,6 +35,8 @@ import { BookingForm } from "@/features/booking/booking-form";
 import { CollaboratorManager } from "@/features/share/collaborator-manager";
 import { InviteForm } from "@/features/share/invite-form";
 import { CopyPlanDayButton } from "@/features/copy-plan/copy-plan-button";
+import { CopyPlanProgress } from "@/features/copy-plan/copy-plan-progress";
+import { CopyPlanDaysSelector } from "@/features/copy-plan/copy-plan-days-selector";
 import { ItineraryItemForm } from "@/features/itinerary/itinerary-item-form";
 import { ItinerarySortableTimeline } from "@/features/itinerary/itinerary-sortable-timeline";
 import { detectBacktrack } from "@/features/map/geo";
@@ -585,8 +587,8 @@ const checklistManagerItems = checklistItems.map((item) => ({
           })}
         </p>
 {trip.forkedFrom && (
-  <div className="bg-muted/50 flex flex-col gap-2 rounded-lg px-3 py-2 text-xs">
-    <div className="text-muted-foreground flex flex-wrap items-center gap-1.5">
+  <div className="bg-muted/50 flex flex-col gap-4 rounded-lg px-3 py-3">
+    <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs">
       <GitFork className="text-primary size-3.5" />
 
       <span>Sao chép từ</span>
@@ -608,19 +610,20 @@ const checklistManagerItems = checklistItems.map((item) => ({
       </Link>
     </div>
 
-    {trip.copyRecord?.retentionRate != null && (
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-muted-foreground">
-          Giữ lại từ kế hoạch gốc
-        </span>
-
-        <span className="text-foreground font-semibold">
-          {Math.round(
-            trip.copyRecord.retentionRate * 100,
-          )}
-          %
-        </span>
-      </div>
+    {trip.copyRecord && (
+      <CopyPlanProgress
+        tripId={trip.id}
+        retentionRate={
+          trip.copyRecord.retentionRate
+        }
+        completed={
+          trip.copyRecord.completed
+        }
+        postTripRating={
+          trip.copyRecord.postTripRating
+        }
+        canManage={isOwner}
+      />
     )}
   </div>
 )}
@@ -751,25 +754,38 @@ const checklistManagerItems = checklistItems.map((item) => ({
   </CardHeader>
 
   <CardContent className="flex flex-col gap-5">
-    {trip.visibility === "PUBLIC" &&
-      !isOwner &&
-      sortedDays.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <p className="text-muted-foreground text-sm">
-            Sao chép riêng một ngày vào kế hoạch của bạn:
-          </p>
+{trip.visibility === "PUBLIC" &&
+  !isOwner &&
+  sortedDays.length > 0 && (
+    <div className="flex flex-col gap-5">
+      {/* Copy nhanh một ngày */}
+      <div className="flex flex-col gap-2">
+        <p className="text-muted-foreground text-sm">
+          Sao chép riêng một ngày vào kế hoạch của bạn:
+        </p>
 
-          <div className="flex flex-wrap gap-2">
-            {sortedDays.map((day) => (
-              <CopyPlanDayButton
-                key={day}
-                tripId={tripId}
-                day={day}
-              />
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-2">
+          {sortedDays.map((day) => (
+            <CopyPlanDayButton
+              key={day}
+              tripId={tripId}
+              day={day}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Copy nhiều ngày */}
+      {sortedDays.length > 1 && (
+        <div className="border-t pt-4">
+          <CopyPlanDaysSelector
+            tripId={tripId}
+            days={sortedDays}
+          />
         </div>
       )}
+    </div>
+  )}
 
     {items.length === 0 ? (
             <p className="text-muted-foreground text-sm">

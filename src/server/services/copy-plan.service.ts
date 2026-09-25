@@ -10,6 +10,10 @@ export class CopyPlanError extends Error {
       | "PLAN_NOT_FOUND"
       | "PLAN_NOT_PUBLIC"
       | "DAY_NOT_FOUND"
+      | "NOT_COPY_PLAN"
+      | "FORBIDDEN"
+      | "NOT_COMPLETED"
+      | "INVALID_RATING"
       | "COPY_FAILED",
   ) {
     super(code);
@@ -83,8 +87,10 @@ export async function copyPlan(
              */
             visibility:
               PlanVisibility.PRIVATE,
+
             status:
               PlanStatus.IDEA,
+
             verifiedByAuthor:
               false,
 
@@ -101,7 +107,8 @@ export async function copyPlan(
               source.travelStyle,
 
             /*
-             * Giữ nguồn gốc của plan.
+             * Giữ nguồn gốc
+             * của plan.
              */
             forkedFromPlanId:
               source.id,
@@ -111,62 +118,52 @@ export async function copyPlan(
       /*
        * Sao chép toàn bộ itinerary.
        *
-       * copiedFromItemId lưu ID
-       * của item trong plan gốc.
+       * copiedFromItemId dùng
+       * để tính Retention Rate.
        */
       if (
-        source.itineraryItems
-          .length > 0
+        source.itineraryItems.length > 0
       ) {
-        await tx.itineraryItem.createMany(
-          {
-            data:
-              source.itineraryItems.map(
-                (item) => ({
-                  tripId:
-                    copiedTrip.id,
+        await tx.itineraryItem.createMany({
+          data:
+            source.itineraryItems.map(
+              (item) => ({
+                tripId:
+                  copiedTrip.id,
 
-                  /*
-                   * Quan trọng cho
-                   * Retention Rate.
-                   */
-                  copiedFromItemId:
-                    item.id,
+                copiedFromItemId:
+                  item.id,
 
-                  day:
-                    item.day,
+                day:
+                  item.day,
 
-                  title:
-                    item.title,
+                title:
+                  item.title,
 
-                  startTime:
-                    item.startTime,
+                startTime:
+                  item.startTime,
 
-                  endTime:
-                    item.endTime,
+                endTime:
+                  item.endTime,
 
-                  placeId:
-                    item.placeId,
+                placeId:
+                  item.placeId,
 
-                  locationTagId:
-                    item.locationTagId,
+                locationTagId:
+                  item.locationTagId,
 
-                  notes:
-                    item.notes,
+                notes:
+                  item.notes,
 
-                  sortOrder:
-                    item.sortOrder,
-                }),
-              ),
-          },
-        );
+                sortOrder:
+                  item.sortOrder,
+              }),
+            ),
+        });
       }
 
       /*
        * Ghi nhận CopyPlan.
-       *
-       * initialItemCount là số
-       * hoạt động được copy ban đầu.
        */
       await tx.planCopy.create({
         data: {
@@ -179,21 +176,15 @@ export async function copyPlan(
           copierUserId,
 
           initialItemCount:
-            source.itineraryItems
-              .length,
+            source.itineraryItems.length,
 
-          /*
-           * Nếu có itinerary thì
-           * ban đầu retention = 100%.
-           *
-           * Nếu plan không có item
-           * thì chưa có tỷ lệ để tính.
-           */
           retentionRate:
-            source.itineraryItems
-              .length > 0
+            source.itineraryItems.length > 0
               ? 1
               : null,
+
+          completed: false,
+          postTripRating: null,
         },
       });
 
@@ -215,16 +206,6 @@ export async function copyPlan(
 /**
  * Sao chép riêng một ngày
  * của Public Plan.
- *
- * Ví dụ:
- *
- * Trip gốc:
- * Ngày 1
- * Ngày 2 ← copy
- * Ngày 3
- *
- * Trip mới:
- * Ngày 1 ← nội dung Ngày 2 cũ
  */
 export async function copyPlanDay(
   sourceTripId: string,
@@ -278,8 +259,7 @@ export async function copyPlanDay(
         }
 
         if (
-          source.itineraryItems
-            .length === 0
+          source.itineraryItems.length === 0
         ) {
           throw new CopyPlanError(
             "DAY_NOT_FOUND",
@@ -287,13 +267,8 @@ export async function copyPlanDay(
         }
 
         /*
-         * Xác định ngày thực của
-         * sourceDay.
-         *
-         * Ví dụ:
-         * startDate = 06/09
-         * sourceDay = 2
-         * selectedDate = 07/09
+         * Xác định ngày thực
+         * của ngày được chọn.
          */
         let selectedDate:
           | Date
@@ -346,7 +321,7 @@ export async function copyPlanDay(
 
               /*
                * Không lấy ngân sách
-               * toàn trip cho bản
+               * toàn Trip cho bản
                * copy một ngày.
                */
               budgetTarget:
@@ -358,73 +333,51 @@ export async function copyPlanDay(
               travelStyle:
                 source.travelStyle,
 
-              /*
-               * Giữ nguồn plan gốc.
-               */
               forkedFromPlanId:
                 source.id,
             },
           });
 
-        /*
-         * Copy các activity
-         * của ngày được chọn.
-         */
-        await tx.itineraryItem.createMany(
-          {
-            data:
-              source.itineraryItems.map(
-                (item) => ({
-                  tripId:
-                    copiedTrip.id,
+        await tx.itineraryItem.createMany({
+          data:
+            source.itineraryItems.map(
+              (item) => ({
+                tripId:
+                  copiedTrip.id,
 
-                  /*
-                   * Lưu nguồn item
-                   * để tính retention.
-                   */
-                  copiedFromItemId:
-                    item.id,
+                copiedFromItemId:
+                  item.id,
 
-                  /*
-                   * Ngày được chọn
-                   * trở thành Ngày 1
-                   * của Trip mới.
-                   */
-                  day: 1,
+                /*
+                 * Ngày được chọn
+                 * trở thành Ngày 1.
+                 */
+                day: 1,
 
-                  title:
-                    item.title,
+                title:
+                  item.title,
 
-                  startTime:
-                    item.startTime,
+                startTime:
+                  item.startTime,
 
-                  endTime:
-                    item.endTime,
+                endTime:
+                  item.endTime,
 
-                  placeId:
-                    item.placeId,
+                placeId:
+                  item.placeId,
 
-                  locationTagId:
-                    item.locationTagId,
+                locationTagId:
+                  item.locationTagId,
 
-                  notes:
-                    item.notes,
+                notes:
+                  item.notes,
 
-                  sortOrder:
-                    item.sortOrder,
-                }),
-              ),
-          },
-        );
+                sortOrder:
+                  item.sortOrder,
+              }),
+            ),
+        });
 
-        /*
-         * Đối với copy từng ngày:
-         *
-         * Ví dụ ngày 2 có 4 activity:
-         *
-         * initialItemCount = 4
-         * retentionRate = 4 / 4 = 100%
-         */
         await tx.planCopy.create({
           data: {
             planId:
@@ -436,10 +389,12 @@ export async function copyPlanDay(
             copierUserId,
 
             initialItemCount:
-              source.itineraryItems
-                .length,
+              source.itineraryItems.length,
 
             retentionRate: 1,
+
+            completed: false,
+            postTripRating: null,
           },
         });
 
@@ -463,11 +418,9 @@ export async function copyPlanDay(
  * Tính lại Retention Rate
  * của một Trip được tạo từ CopyPlan.
  *
- * Công thức MVP:
- *
- * số item gốc còn lại
- * --------------------
- * số item được copy ban đầu
+ * retained original items
+ * -----------------------
+ * initial copied items
  */
 export async function recalculateCopyPlanRetentionRate(
   copiedTripId: string,
@@ -496,8 +449,7 @@ export async function recalculateCopyPlanRetentionRate(
 
   /*
    * Không có item ban đầu
-   * thì Retention Rate
-   * không xác định.
+   * thì chưa có Retention Rate.
    */
   if (
     planCopy.initialItemCount <= 0
@@ -517,26 +469,21 @@ export async function recalculateCopyPlanRetentionRate(
   }
 
   /*
-   * Chỉ đếm item còn giữ
-   * dấu vết từ plan gốc.
-   *
-   * Activity do user thêm mới
-   * có copiedFromItemId = null
+   * Activity do user tự thêm có
+   * copiedFromItemId = null
    * nên không làm tăng retention.
    */
   const retainedItemCount =
-    await prisma.itineraryItem.count(
-      {
-        where: {
-          tripId:
-            copiedTripId,
+    await prisma.itineraryItem.count({
+      where: {
+        tripId:
+          copiedTripId,
 
-          copiedFromItemId: {
-            not: null,
-          },
+        copiedFromItemId: {
+          not: null,
         },
       },
-    );
+    });
 
   const retentionRate =
     Math.max(
@@ -559,4 +506,500 @@ export async function recalculateCopyPlanRetentionRate(
   });
 
   return retentionRate;
+}
+
+/**
+ * Đánh dấu một CopyPlan
+ * đã được hoàn thành.
+ *
+ * Chỉ người đã copy / chủ sở hữu
+ * Trip copy mới được thao tác.
+ */
+export async function completeCopyPlan(
+  copiedTripId: string,
+  userId: string,
+) {
+  const planCopy =
+    await prisma.planCopy.findUnique({
+      where: {
+        planId:
+          copiedTripId,
+      },
+
+      select: {
+        id: true,
+        copierUserId:
+          true,
+        completed:
+          true,
+
+        plan: {
+          select: {
+            id: true,
+            ownerId: true,
+          },
+        },
+      },
+    });
+
+  if (!planCopy) {
+    throw new CopyPlanError(
+      "NOT_COPY_PLAN",
+    );
+  }
+
+  if (
+    planCopy.copierUserId !== userId ||
+    planCopy.plan.ownerId !== userId
+  ) {
+    throw new CopyPlanError(
+      "FORBIDDEN",
+    );
+  }
+
+  /*
+   * Đã complete rồi thì trả lại
+   * trạng thái hiện tại.
+   * Không cần tạo lỗi.
+   */
+  if (planCopy.completed) {
+    return prisma.planCopy.findUnique({
+      where: {
+        id: planCopy.id,
+      },
+    });
+  }
+
+  /*
+   * Khi user đánh dấu CopyPlan
+   * hoàn thành:
+   *
+   * - PlanCopy.completed = true
+   * - Trip.status = COMPLETED
+   */
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.trip.update({
+        where: {
+          id: copiedTripId,
+        },
+
+        data: {
+          status:
+            PlanStatus.COMPLETED,
+        },
+      });
+
+      return tx.planCopy.update({
+        where: {
+          id: planCopy.id,
+        },
+
+        data: {
+          completed: true,
+        },
+      });
+    },
+  );
+}
+
+/**
+ * Đánh giá kế hoạch gốc
+ * sau khi Trip copy đã hoàn thành.
+ *
+ * Rating: 1 → 5.
+ */
+export async function rateCopyPlan(
+  copiedTripId: string,
+  userId: string,
+  rating: number,
+) {
+  /*
+   * Chỉ cho phép:
+   * 1, 2, 3, 4 hoặc 5.
+   */
+  if (
+    !Number.isInteger(rating) ||
+    rating < 1 ||
+    rating > 5
+  ) {
+    throw new CopyPlanError(
+      "INVALID_RATING",
+    );
+  }
+
+  const planCopy =
+    await prisma.planCopy.findUnique({
+      where: {
+        planId:
+          copiedTripId,
+      },
+
+      select: {
+        id: true,
+        copierUserId:
+          true,
+        completed:
+          true,
+
+        plan: {
+          select: {
+            ownerId:
+              true,
+          },
+        },
+      },
+    });
+
+  if (!planCopy) {
+    throw new CopyPlanError(
+      "NOT_COPY_PLAN",
+    );
+  }
+
+  if (
+    planCopy.copierUserId !== userId ||
+    planCopy.plan.ownerId !== userId
+  ) {
+    throw new CopyPlanError(
+      "FORBIDDEN",
+    );
+  }
+
+  /*
+   * Chỉ được đánh giá
+   * sau khi chuyến đi hoàn thành.
+   */
+  if (!planCopy.completed) {
+    throw new CopyPlanError(
+      "NOT_COMPLETED",
+    );
+  }
+
+  /*
+   * Cho phép cập nhật lại rating
+   * nếu user đổi đánh giá.
+   */
+  return prisma.planCopy.update({
+    where: {
+      id: planCopy.id,
+    },
+
+    data: {
+      postTripRating:
+        rating,
+    },
+  });
+}
+/**
+ * Sao chép nhiều ngày được chọn
+ * từ một Public Plan.
+ *
+ * Ví dụ:
+ * sourceDays = [1, 3, 4]
+ *
+ * Trip mới:
+ * Ngày 1 <- Ngày 1 gốc
+ * Ngày 2 <- Ngày 3 gốc
+ * Ngày 3 <- Ngày 4 gốc
+ */
+export async function copyPlanDays(
+  sourceTripId: string,
+  copierUserId: string,
+  sourceDays: number[],
+) {
+  /*
+   * Chuẩn hóa:
+   * - chỉ nhận số nguyên >= 1
+   * - loại ngày trùng
+   * - sắp xếp tăng dần
+   */
+  const normalizedDays = [
+    ...new Set(
+      sourceDays.filter(
+        (day) =>
+          Number.isInteger(day) &&
+          day >= 1,
+      ),
+    ),
+  ].sort((a, b) => a - b);
+
+  if (normalizedDays.length === 0) {
+    throw new CopyPlanError(
+      "DAY_NOT_FOUND",
+    );
+  }
+
+  try {
+    return await prisma.$transaction(
+      async (tx) => {
+        const source =
+          await tx.trip.findUnique({
+            where: {
+              id: sourceTripId,
+            },
+
+            include: {
+              itineraryItems: {
+                where: {
+                  day: {
+                    in: normalizedDays,
+                  },
+                },
+
+                orderBy: [
+                  {
+                    day: "asc",
+                  },
+                  {
+                    sortOrder: "asc",
+                  },
+                ],
+              },
+            },
+          });
+
+        if (!source) {
+          throw new CopyPlanError(
+            "PLAN_NOT_FOUND",
+          );
+        }
+
+        if (
+          source.visibility !==
+          PlanVisibility.PUBLIC
+        ) {
+          throw new CopyPlanError(
+            "PLAN_NOT_PUBLIC",
+          );
+        }
+
+        /*
+         * Kiểm tra từng ngày được chọn
+         * có itinerary hay không.
+         */
+        const foundDays = new Set(
+          source.itineraryItems.map(
+            (item) => item.day,
+          ),
+        );
+
+        const hasMissingDay =
+          normalizedDays.some(
+            (day) =>
+              !foundDays.has(day),
+          );
+
+        if (
+          source.itineraryItems.length ===
+            0 ||
+          hasMissingDay
+        ) {
+          throw new CopyPlanError(
+            "DAY_NOT_FOUND",
+          );
+        }
+
+        /*
+         * Map ngày nguồn sang ngày mới.
+         *
+         * [1, 3, 4]
+         *
+         * 1 -> 1
+         * 3 -> 2
+         * 4 -> 3
+         */
+        const dayMap = new Map(
+          normalizedDays.map(
+            (sourceDay, index) => [
+              sourceDay,
+              index + 1,
+            ],
+          ),
+        );
+
+        /*
+         * Ngày bắt đầu của Trip mới
+         * = ngày đầu tiên được chọn
+         * trong Trip gốc.
+         *
+         * Các ngày trong Trip mới được
+         * nén lại thành liên tiếp.
+         */
+        let selectedStartDate:
+          | Date
+          | null = null;
+
+        let selectedEndDate:
+          | Date
+          | null = null;
+
+        if (source.startDate) {
+          const firstSourceDay =
+            normalizedDays[0];
+
+          selectedStartDate =
+            new Date(
+              Date.UTC(
+                source.startDate.getUTCFullYear(),
+                source.startDate.getUTCMonth(),
+                source.startDate.getUTCDate() +
+                  firstSourceDay -
+                  1,
+              ),
+            );
+
+          selectedEndDate =
+            new Date(
+              Date.UTC(
+                selectedStartDate.getUTCFullYear(),
+                selectedStartDate.getUTCMonth(),
+                selectedStartDate.getUTCDate() +
+                  normalizedDays.length -
+                  1,
+              ),
+            );
+        }
+
+        const dayLabel =
+          normalizedDays.join(", ");
+
+        const copiedTrip =
+          await tx.trip.create({
+            data: {
+              name:
+                `${source.name} · Ngày ${dayLabel}`,
+
+              destination:
+                source.destination,
+
+              startDate:
+                selectedStartDate,
+
+              endDate:
+                selectedEndDate,
+
+              currency:
+                source.currency,
+
+              ownerId:
+                copierUserId,
+
+              visibility:
+                PlanVisibility.PRIVATE,
+
+              status:
+                PlanStatus.IDEA,
+
+              verifiedByAuthor:
+                false,
+
+              travelerCount:
+                source.travelerCount,
+
+              /*
+               * Không lấy ngân sách
+               * toàn bộ Trip gốc.
+               */
+              budgetTarget:
+                null,
+
+              pace:
+                source.pace,
+
+              travelStyle:
+                source.travelStyle,
+
+              forkedFromPlanId:
+                source.id,
+            },
+          });
+
+        /*
+         * Copy activity của tất cả
+         * ngày đã chọn.
+         */
+        await tx.itineraryItem.createMany({
+          data:
+            source.itineraryItems.map(
+              (item) => ({
+                tripId:
+                  copiedTrip.id,
+
+                copiedFromItemId:
+                  item.id,
+
+                /*
+                 * Remap ngày nguồn
+                 * thành ngày liên tiếp.
+                 */
+                day:
+                  dayMap.get(
+                    item.day,
+                  )!,
+
+                title:
+                  item.title,
+
+                startTime:
+                  item.startTime,
+
+                endTime:
+                  item.endTime,
+
+                placeId:
+                  item.placeId,
+
+                locationTagId:
+                  item.locationTagId,
+
+                notes:
+                  item.notes,
+
+                sortOrder:
+                  item.sortOrder,
+              }),
+            ),
+        });
+
+        /*
+         * Retention của selected-days
+         * cũng bắt đầu ở 100%.
+         */
+        await tx.planCopy.create({
+          data: {
+            planId:
+              copiedTrip.id,
+
+            originalPlanId:
+              source.id,
+
+            copierUserId,
+
+            initialItemCount:
+              source.itineraryItems
+                .length,
+
+            retentionRate: 1,
+
+            completed: false,
+
+            postTripRating: null,
+          },
+        });
+
+        return copiedTrip;
+      },
+    );
+  } catch (error) {
+    if (
+      error instanceof CopyPlanError
+    ) {
+      throw error;
+    }
+
+    throw new CopyPlanError(
+      "COPY_FAILED",
+    );
+  }
 }

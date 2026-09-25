@@ -91,6 +91,11 @@ export function findTripById(id: string) {
         select: {
           retentionRate: true,
           initialItemCount: true,
+
+          // Completion + Post-trip Rating
+          completed: true,
+          postTripRating: true,
+          copiedAt: true,
         },
       },
 
