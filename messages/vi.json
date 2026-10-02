@@ -279,47 +279,60 @@
       "description": "Danh sách plan đã Bookmark, riêng tư cho từng user."
     }
   },
-  "creatorProfile": {
-    "cardLabel": "Thành viên TripBase",
-    "memberSince": "Tham gia từ {date}",
-    "editButton": "Chỉnh sửa hồ sơ",
-    "backToProfile": "Quay lại hồ sơ",
-    "contributionsHeading": "Đóng góp",
-    "stats": {
-      "trips": "Trip đã tạo",
-      "tags": "Địa điểm & tip đã thêm",
-      "comments": "Bình luận",
-      "trustPoints": "Điểm tin cậy tag"
-    },
-    "preferencesHeading": "Sở thích du lịch",
-    "preferencesEmpty": "Chưa cập nhật sở thích du lịch.",
-    "notFound": "Không tìm thấy thành viên này.",
-    "edit": {
-      "title": "Chỉnh sửa hồ sơ",
-      "avatarLabel": "Ảnh đại diện",
-      "avatarHint": "JPG, PNG, WebP hoặc GIF, tối đa 4MB.",
-      "nameLabel": "Tên",
-      "bioLabel": "Giới thiệu (tuỳ chọn)",
-      "bioPlaceholder": "Vài dòng về bạn...",
-      "travelStyleLabel": "Phong cách du lịch (tuỳ chọn)",
-      "travelStyleNone": "— Chưa chọn —",
-      "budgetLevelLabel": "Mức ngân sách (tuỳ chọn)",
-      "budgetLevelNone": "— Chưa chọn —",
-      "interestsLabel": "Sở thích du lịch",
-      "interestsHint": "Dùng làm cơ sở gợi ý/matching plan phù hợp sau này.",
-      "submit": "Lưu thay đổi",
-      "submitPending": "Đang lưu…",
-      "cancel": "Huỷ"
-    },
-    "errors": {
-      "nameRequired": "Vui lòng nhập tên.",
-      "bioTooLong": "Giới thiệu tối đa 280 ký tự.",
-      "updateFailed": "Không thể cập nhật hồ sơ.",
-      "avatarEmptyFile": "Tệp ảnh trống.",
-      "avatarTooLarge": "Ảnh vượt quá 4MB.",
-      "avatarUnsupportedType": "Định dạng ảnh không hỗ trợ (chỉ JPG/PNG/WebP/GIF)."
-    }
+"creatorProfile": {
+  "cardLabel": "Thành viên TripBase",
+  "memberSince": "Tham gia từ {date}",
+  "editButton": "Chỉnh sửa hồ sơ",
+  "backToProfile": "Quay lại hồ sơ",
+
+  "reputationHeading": "Uy tín CopyPlan",
+  "reputation": {
+    "score": "CopyPlan Score",
+    "publicPlans": "Plan công khai",
+    "copies": "Copy hợp lệ",
+    "updated": "Cập nhật",
+    "description": "Điểm uy tín được tổng hợp từ các kế hoạch công khai và dữ liệu CopyPlan đã được hệ thống chấm điểm."
   },
+
+  "contributionsHeading": "Đóng góp",
+  "stats": {
+    "trips": "Trip đã tạo",
+    "tags": "Địa điểm & tip đã thêm",
+    "comments": "Bình luận",
+    "trustPoints": "Điểm tin cậy tag"
+  },
+
+  "preferencesHeading": "Sở thích du lịch",
+  "preferencesEmpty": "Chưa cập nhật sở thích du lịch.",
+  "notFound": "Không tìm thấy thành viên này.",
+
+  "edit": {
+    "title": "Chỉnh sửa hồ sơ",
+    "avatarLabel": "Ảnh đại diện",
+    "avatarHint": "JPG, PNG, WebP hoặc GIF, tối đa 4MB.",
+    "nameLabel": "Tên",
+    "bioLabel": "Giới thiệu (tuỳ chọn)",
+    "bioPlaceholder": "Vài dòng về bạn...",
+    "travelStyleLabel": "Phong cách du lịch (tuỳ chọn)",
+    "travelStyleNone": "— Chưa chọn —",
+    "budgetLevelLabel": "Mức ngân sách (tuỳ chọn)",
+    "budgetLevelNone": "— Chưa chọn —",
+    "interestsLabel": "Sở thích du lịch",
+    "interestsHint": "Dùng làm cơ sở gợi ý/matching plan phù hợp sau này.",
+    "submit": "Lưu thay đổi",
+    "submitPending": "Đang lưu…",
+    "cancel": "Huỷ"
+  },
+
+  "errors": {
+    "nameRequired": "Vui lòng nhập tên.",
+    "bioTooLong": "Giới thiệu tối đa 280 ký tự.",
+    "updateFailed": "Không thể cập nhật hồ sơ.",
+    "avatarEmptyFile": "Tệp ảnh trống.",
+    "avatarTooLarge": "Ảnh vượt quá 4MB.",
+    "avatarUnsupportedType": "Định dạng ảnh không hỗ trợ (chỉ JPG/PNG/WebP/GIF)."
+  }
+},
   "travelStyle": {
     "SOLO": "Đi một mình",
     "COUPLE": "Đi cùng người yêu/vợ chồng",

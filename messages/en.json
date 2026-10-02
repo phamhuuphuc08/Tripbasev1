@@ -279,47 +279,60 @@
       "description": "Your bookmarked plans, private per user."
     }
   },
-  "creatorProfile": {
-    "cardLabel": "TripBase member",
-    "memberSince": "Member since {date}",
-    "editButton": "Edit profile",
-    "backToProfile": "Back to profile",
-    "contributionsHeading": "Contributions",
-    "stats": {
-      "trips": "Trips created",
-      "tags": "Places & tips added",
-      "comments": "Comments",
-      "trustPoints": "Tag trust points"
-    },
-    "preferencesHeading": "Travel preferences",
-    "preferencesEmpty": "No travel preferences yet.",
-    "notFound": "This member couldn't be found.",
-    "edit": {
-      "title": "Edit profile",
-      "avatarLabel": "Avatar",
-      "avatarHint": "JPG, PNG, WebP or GIF, up to 4MB.",
-      "nameLabel": "Name",
-      "bioLabel": "Bio (optional)",
-      "bioPlaceholder": "A few words about you...",
-      "travelStyleLabel": "Travel style (optional)",
-      "travelStyleNone": "— Not set —",
-      "budgetLevelLabel": "Budget level (optional)",
-      "budgetLevelNone": "— Not set —",
-      "interestsLabel": "Travel interests",
-      "interestsHint": "Used later as the basis for matching and suggestions.",
-      "submit": "Save changes",
-      "submitPending": "Saving…",
-      "cancel": "Cancel"
-    },
-    "errors": {
-      "nameRequired": "Please enter your name.",
-      "bioTooLong": "Bio must be at most 280 characters.",
-      "updateFailed": "Couldn't update this profile.",
-      "avatarEmptyFile": "The image file is empty.",
-      "avatarTooLarge": "Image is larger than 4MB.",
-      "avatarUnsupportedType": "Unsupported image format (JPG/PNG/WebP/GIF only)."
-    }
+ "creatorProfile": {
+  "cardLabel": "TripBase member",
+  "memberSince": "Member since {date}",
+  "editButton": "Edit profile",
+  "backToProfile": "Back to profile",
+
+  "reputationHeading": "CopyPlan reputation",
+  "reputation": {
+    "score": "CopyPlan Score",
+    "publicPlans": "Public plans",
+    "copies": "Eligible copies",
+    "updated": "Updated",
+    "description": "Reputation is aggregated from public plans and scored CopyPlan activity."
   },
+
+  "contributionsHeading": "Contributions",
+  "stats": {
+    "trips": "Trips created",
+    "tags": "Places & tips added",
+    "comments": "Comments",
+    "trustPoints": "Tag trust points"
+  },
+
+  "preferencesHeading": "Travel preferences",
+  "preferencesEmpty": "No travel preferences yet.",
+  "notFound": "This member couldn't be found.",
+
+  "edit": {
+    "title": "Edit profile",
+    "avatarLabel": "Avatar",
+    "avatarHint": "JPG, PNG, WebP or GIF, up to 4MB.",
+    "nameLabel": "Name",
+    "bioLabel": "Bio (optional)",
+    "bioPlaceholder": "A few words about you...",
+    "travelStyleLabel": "Travel style (optional)",
+    "travelStyleNone": "— Not set —",
+    "budgetLevelLabel": "Budget level (optional)",
+    "budgetLevelNone": "— Not set —",
+    "interestsLabel": "Travel interests",
+    "interestsHint": "Used later as the basis for matching and suggestions.",
+    "submit": "Save changes",
+    "submitPending": "Saving…",
+    "cancel": "Cancel"
+  },
+
+  "errors": {
+    "nameRequired": "Please enter your name.",
+    "bioTooLong": "Bio must be at most 280 characters.",
+    "updateFailed": "Couldn't update this profile.",
+    "avatarEmptyFile": "The image file is empty.",
+    "avatarTooLarge": "Image is larger than 4MB.",
+    "avatarUnsupportedType": "Unsupported image format (JPG/PNG/WebP/GIF only)."
+  }
+},
   "travelStyle": {
     "SOLO": "Solo",
     "COUPLE": "Couple",

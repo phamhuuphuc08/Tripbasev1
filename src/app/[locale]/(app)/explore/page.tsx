@@ -1,11 +1,17 @@
 import {
   BadgeCheck,
   CalendarRange,
+  CircleCheck,
   Compass,
+  Copy,
+  Gauge,
   MapPin,
+  RefreshCw,
   Search,
+  Star,
   User,
 } from "lucide-react";
+
 import {
   getFormatter,
   getTranslations,
@@ -13,15 +19,18 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import { Input } from "@/components/ui/input";
 
 import { CopyPlanButton } from "@/features/copy-plan/copy-plan-button";
+
 import { Link } from "@/i18n/navigation";
 
 import {
@@ -34,20 +43,63 @@ async function ExploreTripCard({
 }: {
   trip: TripSearchResult;
 }) {
-  const [t, tStatus, format] = await Promise.all([
+  const [
+    t,
+    tStatus,
+    format,
+  ] = await Promise.all([
     getTranslations("tripCard"),
     getTranslations("tripStatus"),
     getFormatter(),
   ]);
 
   const dateRange =
-    trip.startDate && trip.endDate
+    trip.startDate &&
+    trip.endDate
       ? format.dateTimeRange(
           trip.startDate,
           trip.endDate,
           {
             day: "2-digit",
             month: "2-digit",
+          },
+        )
+      : null;
+
+  const copyplanScore =
+    format.number(
+      trip.copyplanScore,
+      {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      },
+    );
+
+  const completionRate =
+    format.number(
+      trip.completionRate,
+      {
+        style: "percent",
+        maximumFractionDigits: 0,
+      },
+    );
+
+  const retentionRate =
+    format.number(
+      trip.averageRetentionRate,
+      {
+        style: "percent",
+        maximumFractionDigits: 0,
+      },
+    );
+
+  const rating =
+    trip.averagePostTripRating > 0
+      ? format.number(
+          trip.averagePostTripRating,
+          {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
           },
         )
       : null;
@@ -66,27 +118,32 @@ async function ExploreTripCard({
               className="bg-accent text-accent-foreground shrink-0 gap-1"
             >
               <BadgeCheck className="size-3" />
+
               {t("verified")}
             </Badge>
           )}
         </div>
       </CardHeader>
 
-      <CardContent className="flex flex-1 flex-col gap-3">
+      <CardContent className="flex flex-1 flex-col gap-4">
+        {/* Destination + date */}
         <div className="flex flex-col gap-1.5 text-sm">
           <span className="text-foreground/90 flex items-center gap-1.5">
             <MapPin className="text-primary size-3.5 shrink-0" />
+
             {trip.destination}
           </span>
 
           {dateRange && (
             <span className="text-muted-foreground flex items-center gap-1.5">
               <CalendarRange className="size-3.5 shrink-0" />
+
               {dateRange}
             </span>
           )}
         </div>
 
+        {/* Trip status + creator */}
         <div className="flex items-center justify-between gap-3">
           <Badge variant="outline">
             {tStatus(
@@ -101,7 +158,8 @@ async function ExploreTripCard({
             <User className="size-3" />
 
             {t.rich("by", {
-              name: trip.ownerName,
+              name:
+                trip.ownerName,
 
               link: (chunks) => (
                 <Link
@@ -115,11 +173,81 @@ async function ExploreTripCard({
           </span>
         </div>
 
+        {/* Reputation */}
+        <div className="rounded-lg border bg-muted/30 p-3">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <span className="text-muted-foreground flex items-center gap-1.5 text-xs font-medium">
+              <Gauge className="size-3.5" />
+
+              CopyPlan Score
+            </span>
+
+            <span className="text-primary text-lg font-bold tabular-nums">
+              {copyplanScore}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            <div className="flex items-center gap-1.5 text-xs">
+              <Copy className="text-muted-foreground size-3.5 shrink-0" />
+
+              <span className="text-muted-foreground">
+                Copy hợp lệ
+              </span>
+
+              <span className="ml-auto font-medium tabular-nums">
+                {trip.eligibleCopyCount}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs">
+              <CircleCheck className="text-muted-foreground size-3.5 shrink-0" />
+
+              <span className="text-muted-foreground">
+                Hoàn thành
+              </span>
+
+              <span className="ml-auto font-medium tabular-nums">
+                {completionRate}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs">
+              <Star className="text-muted-foreground size-3.5 shrink-0" />
+
+              <span className="text-muted-foreground">
+                Rating
+              </span>
+
+              <span className="ml-auto font-medium tabular-nums">
+                {rating
+                  ? `${rating}/5`
+                  : "—"}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs">
+              <RefreshCw className="text-muted-foreground size-3.5 shrink-0" />
+
+              <span className="text-muted-foreground">
+                Giữ lại
+              </span>
+
+              <span className="ml-auto font-medium tabular-nums">
+                {retentionRate}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
         <div className="mt-auto grid gap-2 border-t pt-4">
           <Button
             variant="outline"
             render={
-              <Link href={`/trips/${trip.id}`} />
+              <Link
+                href={`/trips/${trip.id}`}
+              />
             }
             nativeButton={false}
             className="w-full"
@@ -127,7 +255,9 @@ async function ExploreTripCard({
             Xem kế hoạch
           </Button>
 
-          <CopyPlanButton tripId={trip.id} />
+          <CopyPlanButton
+            tripId={trip.id}
+          />
         </div>
       </CardContent>
     </Card>
@@ -141,17 +271,28 @@ export default async function ExplorePage({
     q?: string;
   }>;
 }) {
-  const { q } = await searchParams;
+  const { q } =
+    await searchParams;
 
-  const query = q?.trim() ?? "";
+  const query =
+    q?.trim() ?? "";
 
-  const [results, t] = await Promise.all([
-    searchPublicTrips(query),
-    getTranslations("home"),
+  const [
+    results,
+    t,
+  ] = await Promise.all([
+    searchPublicTrips(
+      query,
+    ),
+
+    getTranslations(
+      "home",
+    ),
   ]);
 
   return (
     <main className="flex-1">
+      {/* Hero */}
       <section className="from-primary/10 via-background to-background border-b bg-gradient-to-b">
         <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 px-6 py-12">
           <div className="flex items-center gap-3">
@@ -161,7 +302,9 @@ export default async function ExplorePage({
 
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">
-                {t("exploreWord")}
+                {t(
+                  "exploreWord",
+                )}
               </h1>
 
               <p className="text-muted-foreground text-sm">
@@ -179,9 +322,15 @@ export default async function ExplorePage({
 
               <Input
                 name="q"
-                defaultValue={query}
-                placeholder={t("searchPlaceholder")}
-                aria-label={t("searchAriaLabel")}
+                defaultValue={
+                  query
+                }
+                placeholder={t(
+                  "searchPlaceholder",
+                )}
+                aria-label={t(
+                  "searchAriaLabel",
+                )}
                 className="h-11 rounded-full pl-9"
               />
             </div>
@@ -191,25 +340,35 @@ export default async function ExplorePage({
               size="lg"
               className="h-11 rounded-full px-5"
             >
-              {t("searchButton")}
+              {t(
+                "searchButton",
+              )}
             </Button>
           </form>
         </div>
       </section>
 
+      {/* Results */}
       <section className="mx-auto flex w-full max-w-4xl flex-col gap-5 px-6 py-10">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div className="flex items-baseline gap-3">
             <span className="text-primary text-2xl font-extrabold tracking-tight">
-              {t("exploreWord")}
+              {t(
+                "exploreWord",
+              )}
             </span>
 
             <span className="text-muted-foreground text-sm font-medium">
               {query
-                ? t("matchHeading", {
-                    query,
-                  })
-                : t("recentHeading")}
+                ? t(
+                    "matchHeading",
+                    {
+                      query,
+                    },
+                  )
+                : t(
+                    "recentHeading",
+                  )}
             </span>
           </div>
 
@@ -218,35 +377,49 @@ export default async function ExplorePage({
           </span>
         </div>
 
-        {results.length === 0 ? (
+        {results.length ===
+        0 ? (
           <Card>
             <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
               <Compass className="text-muted-foreground size-8" />
 
               <p className="text-muted-foreground text-sm">
-                {t.rich("empty", {
-                  query,
+                {t.rich(
+                  "empty",
+                  {
+                    query,
 
-                  link: (chunks) => (
-                    <Link
-                      href="/register"
-                      className="text-foreground underline"
-                    >
-                      {chunks}
-                    </Link>
-                  ),
-                })}
+                    link: (
+                      chunks,
+                    ) => (
+                      <Link
+                        href="/register"
+                        className="text-foreground underline"
+                      >
+                        {
+                          chunks
+                        }
+                      </Link>
+                    ),
+                  },
+                )}
               </p>
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            {results.map((trip) => (
-              <ExploreTripCard
-                key={trip.id}
-                trip={trip}
-              />
-            ))}
+            {results.map(
+              (trip) => (
+                <ExploreTripCard
+                  key={
+                    trip.id
+                  }
+                  trip={
+                    trip
+                  }
+                />
+              ),
+            )}
           </div>
         )}
       </section>

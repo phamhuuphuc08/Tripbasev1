@@ -3,6 +3,7 @@ import {
   type PlanStatus,
   type TravelPace,
 } from "@prisma/client";
+
 import { prisma } from "@/server/db/client";
 
 const ownerSelect = {
@@ -10,50 +11,133 @@ const ownerSelect = {
   name: true,
 } as const;
 
+/**
+ * Snapshot Reputation đã được
+ * background scoring tính sẵn.
+ *
+ * Explore chỉ đọc dữ liệu này,
+ * không tính score real-time.
+ */
+const planReputationSelect = {
+  copyplanScore: true,
+  eligibleCopyCount: true,
+  adjustedCopyVolume: true,
+  averageRetentionRate: true,
+  completionRate: true,
+  averagePostTripRating: true,
+  diversityBonus: true,
+  decay: true,
+  lastCopyAt: true,
+  lastUpdated: true,
+} as const;
+
+/**
+ * Tìm Public Plan theo destination.
+ *
+ * DB ưu tiên CopyPlan Score cao trước.
+ * Marketplace service sẽ tiếp tục
+ * xếp exact / prefix / substring.
+ */
 export function findPublicTripsByDestination(
   query: string,
   take = 20,
 ) {
   return prisma.trip.findMany({
     where: {
-      visibility: PlanVisibility.PUBLIC,
+      visibility:
+        PlanVisibility.PUBLIC,
+
       destination: {
-        contains: query,
-        mode: "insensitive",
+        contains:
+          query,
+
+        mode:
+          "insensitive",
       },
     },
+
     include: {
       owner: {
-        select: ownerSelect,
+        select:
+          ownerSelect,
+      },
+
+      planReputation: {
+        select:
+          planReputationSelect,
       },
     },
-    orderBy: {
-      createdAt: "desc",
-    },
+
+    orderBy: [
+      {
+        planReputation: {
+          copyplanScore:
+            "desc",
+        },
+      },
+      {
+        createdAt:
+          "desc",
+      },
+    ],
+
     take,
   });
 }
 
+/**
+ * Public Plan cho Explore mặc định.
+ *
+ * Trước đây:
+ * createdAt DESC
+ *
+ * M09:
+ * CopyPlan Score DESC
+ *
+ * Nếu score bằng nhau thì
+ * plan mới hơn đứng trước.
+ */
 export function findRecentPublicTrips(
   take = 6,
 ) {
   return prisma.trip.findMany({
     where: {
-      visibility: PlanVisibility.PUBLIC,
+      visibility:
+        PlanVisibility.PUBLIC,
     },
+
     include: {
       owner: {
-        select: ownerSelect,
+        select:
+          ownerSelect,
+      },
+
+      planReputation: {
+        select:
+          planReputationSelect,
       },
     },
-    orderBy: {
-      createdAt: "desc",
-    },
+
+    orderBy: [
+      {
+        planReputation: {
+          copyplanScore:
+            "desc",
+        },
+      },
+      {
+        createdAt:
+          "desc",
+      },
+    ],
+
     take,
   });
 }
 
-export function findTripById(id: string) {
+export function findTripById(
+  id: string,
+) {
   return prisma.trip.findUnique({
     where: {
       id,
@@ -61,47 +145,59 @@ export function findTripById(id: string) {
 
     include: {
       owner: {
-        select: ownerSelect,
+        select:
+          ownerSelect,
       },
 
-      travelers: true,
+      travelers:
+        true,
 
       /*
-       * Nguồn của Trip được tạo bằng CopyPlan.
+       * Nguồn của Trip được tạo
+       * bằng CopyPlan.
        */
       forkedFrom: {
         select: {
-          id: true,
-          name: true,
+          id:
+            true,
+
+          name:
+            true,
 
           owner: {
-            select: ownerSelect,
+            select:
+              ownerSelect,
           },
         },
       },
 
       /*
-       * Thông tin CopyPlan của Trip hiện tại.
-       *
-       * Dùng để hiển thị:
-       * - Retention Rate
-       * - số activity ban đầu được copy
+       * Thông tin CopyPlan
+       * của Trip hiện tại.
        */
       copyRecord: {
         select: {
-          retentionRate: true,
-          initialItemCount: true,
+          retentionRate:
+            true,
 
-          // Completion + Post-trip Rating
-          completed: true,
-          postTripRating: true,
-          copiedAt: true,
+          initialItemCount:
+            true,
+
+          completed:
+            true,
+
+          postTripRating:
+            true,
+
+          copiedAt:
+            true,
         },
       },
 
       _count: {
         select: {
-          itineraryItems: true,
+          itineraryItems:
+            true,
         },
       },
     },
@@ -115,8 +211,10 @@ export function findTripsByOwner(
     where: {
       ownerId,
     },
+
     orderBy: {
-      updatedAt: "desc",
+      updatedAt:
+        "desc",
     },
   });
 }
@@ -131,18 +229,20 @@ export function countTripsByOwner(
   });
 }
 
-export function createTrip(data: {
-  ownerId: string;
-  name: string;
-  destination: string;
-  startDate: Date | null;
-  endDate: Date | null;
-  visibility: PlanVisibility;
-  travelerCount: number;
-  budgetTarget: number | null;
-  pace: TravelPace;
-  travelStyle: string[];
-}) {
+export function createTrip(
+  data: {
+    ownerId: string;
+    name: string;
+    destination: string;
+    startDate: Date | null;
+    endDate: Date | null;
+    visibility: PlanVisibility;
+    travelerCount: number;
+    budgetTarget: number | null;
+    pace: TravelPace;
+    travelStyle: string[];
+  },
+) {
   return prisma.trip.create({
     data,
   });
@@ -167,11 +267,14 @@ export function updateTrip(
     where: {
       id,
     },
+
     data,
   });
 }
 
-export function deleteTrip(id: string) {
+export function deleteTrip(
+  id: string,
+) {
   return prisma.trip.delete({
     where: {
       id,

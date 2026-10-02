@@ -1,0 +1,241 @@
+Folder PATH listing for volume New Volume
+Volume serial number is 2E49-F508
+D:\DESKTOP\CODE_O\TRIPBASE\TRIPBASE\SRC
+|   proxy.ts
+|   
++---app
+|   |   favicon.ico
+|   |   globals.css
+|   |   
+|   +---api
+|   |   |   README.md
+|   |   |   
+|   |   \---bookings
+|   |       \---[bookingId]
+|   |           \---document
+|   |                   route.ts
+|   |                   
+|   \---[locale]
+|       |   layout.tsx
+|       |   page.tsx
+|       |   
+|       +---(app)
+|       |   +---creators
+|       |   |   \---[creatorId]
+|       |   |       |   page.tsx
+|       |   |       |   
+|       |   |       \---edit
+|       |   |               page.tsx
+|       |   |               
+|       |   +---explore
+|       |   |       page.tsx
+|       |   |       
+|       |   +---invitations
+|       |   |       page.tsx
+|       |   |       
+|       |   +---saved
+|       |   |       page.tsx
+|       |   |       
+|       |   +---share
+|       |   |   \---[token]
+|       |   |           page.tsx
+|       |   |           
+|       |   +---tags
+|       |   |   |   page.tsx
+|       |   |   |   
+|       |   |   \---new
+|       |   |           page.tsx
+|       |   |           
+|       |   \---trips
+|       |       |   page.tsx
+|       |       |   
+|       |       +---new
+|       |       |       page.tsx
+|       |       |       
+|       |       \---[tripId]
+|       |           |   page.tsx
+|       |           |   
+|       |           +---delete
+|       |           |       page.tsx
+|       |           |       
+|       |           \---story
+|       |                   page.tsx
+|       |                   
+|       \---(auth)
+|           |   layout.tsx
+|           |   
+|           +---login
+|           |       page.tsx
+|           |       
+|           \---register
+|                   page.tsx
+|                   
++---components
+|   +---shared
+|   |       language-switcher.tsx
+|   |       placeholder-screen.tsx
+|   |       site-header.tsx
+|   |       theme-provider.tsx
+|   |       theme-toggle.tsx
+|   |       
+|   \---ui
+|           badge.tsx
+|           button.tsx
+|           card.tsx
+|           checkbox.tsx
+|           input.tsx
+|           label.tsx
+|           select.tsx
+|           textarea.tsx
+|           
++---config
+|       env.ts
+|       
++---features
+|   +---auth
+|   |       actions.ts
+|   |       login-form.tsx
+|   |       README.md
+|   |       register-form.tsx
+|   |       
+|   +---booking
+|   |       actions.ts
+|   |       booking-form.tsx
+|   |       README.md
+|   |       
+|   +---budget
+|   |       actions.ts
+|   |       budget-chart.tsx
+|   |       categories.ts
+|   |       expense-form.tsx
+|   |       README.md
+|   |       
+|   +---checklist
+|   |       actions.ts
+|   |       checklist-manager.tsx
+|   |       README.md
+|   |       
+|   +---copy-plan
+|   |       README.md
+|   |       
+|   +---itinerary
+|   |       actions.ts
+|   |       itinerary-item-form.tsx
+|   |       itinerary-sortable-timeline.tsx
+|   |       README.md
+|   |       
+|   +---map
+|   |       geo.ts
+|   |       location-picker-map.tsx
+|   |       README.md
+|   |       trip-map-loader.tsx
+|   |       trip-map.tsx
+|   |       
+|   +---marketplace
+|   |       README.md
+|   |       
+|   +---profile
+|   |       actions.ts
+|   |       edit-profile-form.tsx
+|   |       preferences.ts
+|   |       
+|   +---reputation
+|   |       README.md
+|   |       
+|   +---share
+|   |       actions.ts
+|   |       collaborator-manager.tsx
+|   |       invitation-response-buttons.tsx
+|   |       invite-form.tsx
+|   |       README.md
+|   |       share-link-manager.tsx
+|   |       
+|   +---story
+|   |       actions.ts
+|   |       story-slide-form.tsx
+|   |       story-viewer.tsx
+|   |       themes.ts
+|   |       
+|   +---tag-tip
+|   |       actions.ts
+|   |       categories.ts
+|   |       create-tag-form.tsx
+|   |       README.md
+|   |       trust-tier.ts
+|   |       
+|   +---travel-memory
+|   |       README.md
+|   |       
+|   \---trip
+|           actions.ts
+|           README.md
+|           styles.ts
+|           traveler-form.tsx
+|           trip-form.tsx
+|           
++---hooks
+|       README.md
+|       
++---i18n
+|       navigation.ts
+|       request.ts
+|       routing.ts
+|       
++---lib
+|       utils.ts
+|       
++---server
+|   |   README.md
+|   |   
+|   +---auth
+|   |       password.ts
+|   |       README.md
+|   |       session.ts
+|   |       
+|   +---db
+|   |       client.ts
+|   |       
+|   +---repositories
+|   |       booking.repository.ts
+|   |       checklist.repository.ts
+|   |       collaborator.repository.ts
+|   |       comment.repository.ts
+|   |       expense.repository.ts
+|   |       itinerary.repository.ts
+|   |       location-tag.repository.ts
+|   |       place.repository.ts
+|   |       README.md
+|   |       share-link.repository.ts
+|   |       story.repository.ts
+|   |       traveler.repository.ts
+|   |       trip-invitation.repository.ts
+|   |       trip.repository.ts
+|   |       user.repository.ts
+|   |       
+|   +---services
+|   |       auth.service.ts
+|   |       booking.service.ts
+|   |       budget.service.ts
+|   |       checklist.service.ts
+|   |       collaborator.service.ts
+|   |       creator-profile.service.ts
+|   |       invitation.service.ts
+|   |       itinerary.service.ts
+|   |       location-tag.service.ts
+|   |       marketplace.service.ts
+|   |       permission.service.ts
+|   |       place.service.ts
+|   |       README.md
+|   |       share-link.service.ts
+|   |       story.service.ts
+|   |       tag-dedup.service.ts
+|   |       trip.service.ts
+|   |       
+|   \---storage
+|           avatar.ts
+|           booking-document.ts
+|           story-photo.ts
+|           
+\---types
+        README.md
+        

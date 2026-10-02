@@ -2,6 +2,7 @@ import {
   PlanStatus,
   PlanVisibility,
 } from "@prisma/client";
+
 import { prisma } from "@/server/db/client";
 
 export class CopyPlanError extends Error {
@@ -27,169 +28,194 @@ export class CopyPlanError extends Error {
 export async function copyPlan(
   sourceTripId: string,
   copierUserId: string,
+  deviceHash: string,
 ) {
   try {
-    return await prisma.$transaction(async (tx) => {
-      const source = await tx.trip.findUnique({
-        where: {
-          id: sourceTripId,
-        },
-        include: {
-          itineraryItems: {
-            orderBy: [
-              {
-                day: "asc",
+    return await prisma.$transaction(
+      async (tx) => {
+        const source =
+          await tx.trip.findUnique({
+            where: {
+              id: sourceTripId,
+            },
+
+            include: {
+              itineraryItems: {
+                orderBy: [
+                  {
+                    day: "asc",
+                  },
+                  {
+                    sortOrder: "asc",
+                  },
+                ],
               },
-              {
-                sortOrder: "asc",
-              },
-            ],
-          },
-        },
-      });
+            },
+          });
 
-      if (!source) {
-        throw new CopyPlanError(
-          "PLAN_NOT_FOUND",
-        );
-      }
+        if (!source) {
+          throw new CopyPlanError(
+            "PLAN_NOT_FOUND",
+          );
+        }
 
-      if (
-        source.visibility !==
-        PlanVisibility.PUBLIC
-      ) {
-        throw new CopyPlanError(
-          "PLAN_NOT_PUBLIC",
-        );
-      }
+        if (
+          source.visibility !==
+          PlanVisibility.PUBLIC
+        ) {
+          throw new CopyPlanError(
+            "PLAN_NOT_PUBLIC",
+          );
+        }
 
-      const copiedTrip =
-        await tx.trip.create({
+        const copiedTrip =
+          await tx.trip.create({
+            data: {
+              name:
+                source.name,
+
+              destination:
+                source.destination,
+
+              startDate:
+                source.startDate,
+
+              endDate:
+                source.endDate,
+
+              currency:
+                source.currency,
+
+              ownerId:
+                copierUserId,
+
+              /*
+               * Bản copy trở thành
+               * workspace riêng.
+               */
+              visibility:
+                PlanVisibility.PRIVATE,
+
+              status:
+                PlanStatus.IDEA,
+
+              verifiedByAuthor:
+                false,
+
+              travelerCount:
+                source.travelerCount,
+
+              budgetTarget:
+                source.budgetTarget,
+
+              pace:
+                source.pace,
+
+              travelStyle:
+                source.travelStyle,
+
+              /*
+               * Giữ nguồn gốc
+               * của plan.
+               */
+              forkedFromPlanId:
+                source.id,
+            },
+          });
+
+        /*
+         * Sao chép toàn bộ itinerary.
+         *
+         * copiedFromItemId dùng
+         * để tính Retention Rate.
+         */
+        if (
+          source.itineraryItems
+            .length > 0
+        ) {
+          await tx.itineraryItem.createMany(
+            {
+              data:
+                source.itineraryItems.map(
+                  (item) => ({
+                    tripId:
+                      copiedTrip.id,
+
+                    copiedFromItemId:
+                      item.id,
+
+                    day:
+                      item.day,
+
+                    title:
+                      item.title,
+
+                    startTime:
+                      item.startTime,
+
+                    endTime:
+                      item.endTime,
+
+                    placeId:
+                      item.placeId,
+
+                    locationTagId:
+                      item.locationTagId,
+
+                    notes:
+                      item.notes,
+
+                    sortOrder:
+                      item.sortOrder,
+                  }),
+                ),
+            },
+          );
+        }
+
+        /*
+         * Ghi nhận CopyPlan.
+         */
+        await tx.planCopy.create({
           data: {
-            name: source.name,
-            destination:
-              source.destination,
+            planId:
+              copiedTrip.id,
 
-            startDate:
-              source.startDate,
-            endDate:
-              source.endDate,
+            originalPlanId:
+              source.id,
 
-            currency:
-              source.currency,
-
-            ownerId:
-              copierUserId,
+            copierUserId,
 
             /*
-             * Bản copy trở thành
-             * workspace riêng.
+             * Device guardrail.
+             *
+             * Chỉ lưu SHA-256 hash,
+             * không lưu device ID gốc.
              */
-            visibility:
-              PlanVisibility.PRIVATE,
+            copierDeviceHash:
+              deviceHash,
 
-            status:
-              PlanStatus.IDEA,
+            initialItemCount:
+              source.itineraryItems
+                .length,
 
-            verifiedByAuthor:
+            retentionRate:
+              source.itineraryItems
+                .length > 0
+                ? 1
+                : null,
+
+            completed:
               false,
 
-            travelerCount:
-              source.travelerCount,
-
-            budgetTarget:
-              source.budgetTarget,
-
-            pace:
-              source.pace,
-
-            travelStyle:
-              source.travelStyle,
-
-            /*
-             * Giữ nguồn gốc
-             * của plan.
-             */
-            forkedFromPlanId:
-              source.id,
+            postTripRating:
+              null,
           },
         });
 
-      /*
-       * Sao chép toàn bộ itinerary.
-       *
-       * copiedFromItemId dùng
-       * để tính Retention Rate.
-       */
-      if (
-        source.itineraryItems.length > 0
-      ) {
-        await tx.itineraryItem.createMany({
-          data:
-            source.itineraryItems.map(
-              (item) => ({
-                tripId:
-                  copiedTrip.id,
-
-                copiedFromItemId:
-                  item.id,
-
-                day:
-                  item.day,
-
-                title:
-                  item.title,
-
-                startTime:
-                  item.startTime,
-
-                endTime:
-                  item.endTime,
-
-                placeId:
-                  item.placeId,
-
-                locationTagId:
-                  item.locationTagId,
-
-                notes:
-                  item.notes,
-
-                sortOrder:
-                  item.sortOrder,
-              }),
-            ),
-        });
-      }
-
-      /*
-       * Ghi nhận CopyPlan.
-       */
-      await tx.planCopy.create({
-        data: {
-          planId:
-            copiedTrip.id,
-
-          originalPlanId:
-            source.id,
-
-          copierUserId,
-
-          initialItemCount:
-            source.itineraryItems.length,
-
-          retentionRate:
-            source.itineraryItems.length > 0
-              ? 1
-              : null,
-
-          completed: false,
-          postTripRating: null,
-        },
-      });
-
-      return copiedTrip;
-    });
+        return copiedTrip;
+      },
+    );
   } catch (error) {
     if (
       error instanceof CopyPlanError
@@ -211,6 +237,7 @@ export async function copyPlanDay(
   sourceTripId: string,
   copierUserId: string,
   sourceDay: number,
+  deviceHash: string,
 ) {
   if (
     !Number.isInteger(sourceDay) ||
@@ -233,11 +260,13 @@ export async function copyPlanDay(
             include: {
               itineraryItems: {
                 where: {
-                  day: sourceDay,
+                  day:
+                    sourceDay,
                 },
 
                 orderBy: {
-                  sortOrder: "asc",
+                  sortOrder:
+                    "asc",
                 },
               },
             },
@@ -259,7 +288,8 @@ export async function copyPlanDay(
         }
 
         if (
-          source.itineraryItems.length === 0
+          source.itineraryItems
+            .length === 0
         ) {
           throw new CopyPlanError(
             "DAY_NOT_FOUND",
@@ -275,15 +305,16 @@ export async function copyPlanDay(
           | null = null;
 
         if (source.startDate) {
-          selectedDate = new Date(
-            Date.UTC(
-              source.startDate.getUTCFullYear(),
-              source.startDate.getUTCMonth(),
-              source.startDate.getUTCDate() +
-                sourceDay -
-                1,
-            ),
-          );
+          selectedDate =
+            new Date(
+              Date.UTC(
+                source.startDate.getUTCFullYear(),
+                source.startDate.getUTCMonth(),
+                source.startDate.getUTCDate() +
+                  sourceDay -
+                  1,
+              ),
+            );
         }
 
         const copiedTrip =
@@ -338,45 +369,48 @@ export async function copyPlanDay(
             },
           });
 
-        await tx.itineraryItem.createMany({
-          data:
-            source.itineraryItems.map(
-              (item) => ({
-                tripId:
-                  copiedTrip.id,
+        await tx.itineraryItem.createMany(
+          {
+            data:
+              source.itineraryItems.map(
+                (item) => ({
+                  tripId:
+                    copiedTrip.id,
 
-                copiedFromItemId:
-                  item.id,
+                  copiedFromItemId:
+                    item.id,
 
-                /*
-                 * Ngày được chọn
-                 * trở thành Ngày 1.
-                 */
-                day: 1,
+                  /*
+                   * Ngày được chọn
+                   * trở thành Ngày 1.
+                   */
+                  day:
+                    1,
 
-                title:
-                  item.title,
+                  title:
+                    item.title,
 
-                startTime:
-                  item.startTime,
+                  startTime:
+                    item.startTime,
 
-                endTime:
-                  item.endTime,
+                  endTime:
+                    item.endTime,
 
-                placeId:
-                  item.placeId,
+                  placeId:
+                    item.placeId,
 
-                locationTagId:
-                  item.locationTagId,
+                  locationTagId:
+                    item.locationTagId,
 
-                notes:
-                  item.notes,
+                  notes:
+                    item.notes,
 
-                sortOrder:
-                  item.sortOrder,
-              }),
-            ),
-        });
+                  sortOrder:
+                    item.sortOrder,
+                }),
+              ),
+          },
+        );
 
         await tx.planCopy.create({
           data: {
@@ -388,13 +422,24 @@ export async function copyPlanDay(
 
             copierUserId,
 
+            /*
+             * Device guardrail.
+             */
+            copierDeviceHash:
+              deviceHash,
+
             initialItemCount:
-              source.itineraryItems.length,
+              source.itineraryItems
+                .length,
 
-            retentionRate: 1,
+            retentionRate:
+              1,
 
-            completed: false,
-            postTripRating: null,
+            completed:
+              false,
+
+            postTripRating:
+              null,
           },
         });
 
@@ -433,7 +478,9 @@ export async function recalculateCopyPlanRetentionRate(
       },
 
       select: {
-        id: true,
+        id:
+          true,
+
         initialItemCount:
           true,
       },
@@ -456,7 +503,8 @@ export async function recalculateCopyPlanRetentionRate(
   ) {
     await prisma.planCopy.update({
       where: {
-        id: planCopy.id,
+        id:
+          planCopy.id,
       },
 
       data: {
@@ -474,16 +522,19 @@ export async function recalculateCopyPlanRetentionRate(
    * nên không làm tăng retention.
    */
   const retainedItemCount =
-    await prisma.itineraryItem.count({
-      where: {
-        tripId:
-          copiedTripId,
+    await prisma.itineraryItem.count(
+      {
+        where: {
+          tripId:
+            copiedTripId,
 
-        copiedFromItemId: {
-          not: null,
+          copiedFromItemId: {
+            not:
+              null,
+          },
         },
       },
-    });
+    );
 
   const retentionRate =
     Math.max(
@@ -497,7 +548,8 @@ export async function recalculateCopyPlanRetentionRate(
 
   await prisma.planCopy.update({
     where: {
-      id: planCopy.id,
+      id:
+        planCopy.id,
     },
 
     data: {
@@ -527,16 +579,22 @@ export async function completeCopyPlan(
       },
 
       select: {
-        id: true,
+        id:
+          true,
+
         copierUserId:
           true,
+
         completed:
           true,
 
         plan: {
           select: {
-            id: true,
-            ownerId: true,
+            id:
+              true,
+
+            ownerId:
+              true,
           },
         },
       },
@@ -549,8 +607,10 @@ export async function completeCopyPlan(
   }
 
   if (
-    planCopy.copierUserId !== userId ||
-    planCopy.plan.ownerId !== userId
+    planCopy.copierUserId !==
+      userId ||
+    planCopy.plan.ownerId !==
+      userId
   ) {
     throw new CopyPlanError(
       "FORBIDDEN",
@@ -563,11 +623,14 @@ export async function completeCopyPlan(
    * Không cần tạo lỗi.
    */
   if (planCopy.completed) {
-    return prisma.planCopy.findUnique({
-      where: {
-        id: planCopy.id,
+    return prisma.planCopy.findUnique(
+      {
+        where: {
+          id:
+            planCopy.id,
+        },
       },
-    });
+    );
   }
 
   /*
@@ -581,7 +644,8 @@ export async function completeCopyPlan(
     async (tx) => {
       await tx.trip.update({
         where: {
-          id: copiedTripId,
+          id:
+            copiedTripId,
         },
 
         data: {
@@ -592,11 +656,13 @@ export async function completeCopyPlan(
 
       return tx.planCopy.update({
         where: {
-          id: planCopy.id,
+          id:
+            planCopy.id,
         },
 
         data: {
-          completed: true,
+          completed:
+            true,
         },
       });
     },
@@ -636,9 +702,12 @@ export async function rateCopyPlan(
       },
 
       select: {
-        id: true,
+        id:
+          true,
+
         copierUserId:
           true,
+
         completed:
           true,
 
@@ -658,8 +727,10 @@ export async function rateCopyPlan(
   }
 
   if (
-    planCopy.copierUserId !== userId ||
-    planCopy.plan.ownerId !== userId
+    planCopy.copierUserId !==
+      userId ||
+    planCopy.plan.ownerId !==
+      userId
   ) {
     throw new CopyPlanError(
       "FORBIDDEN",
@@ -682,7 +753,8 @@ export async function rateCopyPlan(
    */
   return prisma.planCopy.update({
     where: {
-      id: planCopy.id,
+      id:
+        planCopy.id,
     },
 
     data: {
@@ -691,6 +763,7 @@ export async function rateCopyPlan(
     },
   });
 }
+
 /**
  * Sao chép nhiều ngày được chọn
  * từ một Public Plan.
@@ -707,6 +780,7 @@ export async function copyPlanDays(
   sourceTripId: string,
   copierUserId: string,
   sourceDays: number[],
+  deviceHash: string,
 ) {
   /*
    * Chuẩn hóa:
@@ -722,9 +796,14 @@ export async function copyPlanDays(
           day >= 1,
       ),
     ),
-  ].sort((a, b) => a - b);
+  ].sort(
+    (a, b) =>
+      a - b,
+  );
 
-  if (normalizedDays.length === 0) {
+  if (
+    normalizedDays.length === 0
+  ) {
     throw new CopyPlanError(
       "DAY_NOT_FOUND",
     );
@@ -736,23 +815,27 @@ export async function copyPlanDays(
         const source =
           await tx.trip.findUnique({
             where: {
-              id: sourceTripId,
+              id:
+                sourceTripId,
             },
 
             include: {
               itineraryItems: {
                 where: {
                   day: {
-                    in: normalizedDays,
+                    in:
+                      normalizedDays,
                   },
                 },
 
                 orderBy: [
                   {
-                    day: "asc",
+                    day:
+                      "asc",
                   },
                   {
-                    sortOrder: "asc",
+                    sortOrder:
+                      "asc",
                   },
                 ],
               },
@@ -778,11 +861,13 @@ export async function copyPlanDays(
          * Kiểm tra từng ngày được chọn
          * có itinerary hay không.
          */
-        const foundDays = new Set(
-          source.itineraryItems.map(
-            (item) => item.day,
-          ),
-        );
+        const foundDays =
+          new Set(
+            source.itineraryItems.map(
+              (item) =>
+                item.day,
+            ),
+          );
 
         const hasMissingDay =
           normalizedDays.some(
@@ -791,8 +876,8 @@ export async function copyPlanDays(
           );
 
         if (
-          source.itineraryItems.length ===
-            0 ||
+          source.itineraryItems
+            .length === 0 ||
           hasMissingDay
         ) {
           throw new CopyPlanError(
@@ -809,14 +894,18 @@ export async function copyPlanDays(
          * 3 -> 2
          * 4 -> 3
          */
-        const dayMap = new Map(
-          normalizedDays.map(
-            (sourceDay, index) => [
-              sourceDay,
-              index + 1,
-            ],
-          ),
-        );
+        const dayMap =
+          new Map(
+            normalizedDays.map(
+              (
+                sourceDay,
+                index,
+              ) => [
+                sourceDay,
+                index + 1,
+              ],
+            ),
+          );
 
         /*
          * Ngày bắt đầu của Trip mới
@@ -862,7 +951,9 @@ export async function copyPlanDays(
         }
 
         const dayLabel =
-          normalizedDays.join(", ");
+          normalizedDays.join(
+            ", ",
+          );
 
         const copiedTrip =
           await tx.trip.create({
@@ -919,48 +1010,50 @@ export async function copyPlanDays(
          * Copy activity của tất cả
          * ngày đã chọn.
          */
-        await tx.itineraryItem.createMany({
-          data:
-            source.itineraryItems.map(
-              (item) => ({
-                tripId:
-                  copiedTrip.id,
+        await tx.itineraryItem.createMany(
+          {
+            data:
+              source.itineraryItems.map(
+                (item) => ({
+                  tripId:
+                    copiedTrip.id,
 
-                copiedFromItemId:
-                  item.id,
+                  copiedFromItemId:
+                    item.id,
 
-                /*
-                 * Remap ngày nguồn
-                 * thành ngày liên tiếp.
-                 */
-                day:
-                  dayMap.get(
-                    item.day,
-                  )!,
+                  /*
+                   * Remap ngày nguồn
+                   * thành ngày liên tiếp.
+                   */
+                  day:
+                    dayMap.get(
+                      item.day,
+                    )!,
 
-                title:
-                  item.title,
+                  title:
+                    item.title,
 
-                startTime:
-                  item.startTime,
+                  startTime:
+                    item.startTime,
 
-                endTime:
-                  item.endTime,
+                  endTime:
+                    item.endTime,
 
-                placeId:
-                  item.placeId,
+                  placeId:
+                    item.placeId,
 
-                locationTagId:
-                  item.locationTagId,
+                  locationTagId:
+                    item.locationTagId,
 
-                notes:
-                  item.notes,
+                  notes:
+                    item.notes,
 
-                sortOrder:
-                  item.sortOrder,
-              }),
-            ),
-        });
+                  sortOrder:
+                    item.sortOrder,
+                }),
+              ),
+          },
+        );
 
         /*
          * Retention của selected-days
@@ -976,15 +1069,24 @@ export async function copyPlanDays(
 
             copierUserId,
 
+            /*
+             * Device guardrail.
+             */
+            copierDeviceHash:
+              deviceHash,
+
             initialItemCount:
               source.itineraryItems
                 .length,
 
-            retentionRate: 1,
+            retentionRate:
+              1,
 
-            completed: false,
+            completed:
+              false,
 
-            postTripRating: null,
+            postTripRating:
+              null,
           },
         });
 

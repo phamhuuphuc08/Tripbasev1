@@ -3,6 +3,7 @@
 import { getLocale } from "next-intl/server";
 
 import { redirect } from "@/i18n/navigation";
+import { getOrCreateDeviceHash } from "@/server/auth/device";
 import { getSession } from "@/server/auth/session";
 
 import {
@@ -42,10 +43,6 @@ export async function copyPlanAction(
     getLocale(),
   ]);
 
-  /*
-   * CopyPlan cần đăng nhập vì Trip mới
-   * phải thuộc về một user cụ thể.
-   */
   if (!session) {
     const callbackUrl = `/trips/${sourceTripId}`;
 
@@ -55,12 +52,20 @@ export async function copyPlanAction(
     });
   }
 
+  /*
+   * Device ID thật không được lưu DB.
+   * Chỉ lấy SHA-256 hash.
+   */
+  const deviceHash =
+    await getOrCreateDeviceHash();
+
   let copiedTrip;
 
   try {
     copiedTrip = await copyPlan(
       sourceTripId,
       session.userId,
+      deviceHash,
     );
   } catch (error) {
     if (error instanceof CopyPlanError) {
@@ -74,9 +79,6 @@ export async function copyPlanAction(
     };
   }
 
-  /*
-   * Copy thành công → mở workspace mới.
-   */
   return redirect({
     href: `/trips/${copiedTrip.id}`,
     locale,
@@ -84,13 +86,7 @@ export async function copyPlanAction(
 }
 
 /**
- * Sao chép riêng một ngày của kế hoạch.
- *
- * Ví dụ:
- * sourceDay = 2
- *
- * Nội dung ngày 2 của Trip gốc
- * sẽ trở thành ngày 1 của Trip mới.
+ * Sao chép riêng một ngày.
  */
 export async function copyPlanDayAction(
   sourceTripId: string,
@@ -115,6 +111,9 @@ export async function copyPlanDayAction(
     });
   }
 
+  const deviceHash =
+    await getOrCreateDeviceHash();
+
   let copiedTrip;
 
   try {
@@ -122,6 +121,7 @@ export async function copyPlanDayAction(
       sourceTripId,
       session.userId,
       sourceDay,
+      deviceHash,
     );
   } catch (error) {
     if (error instanceof CopyPlanError) {
@@ -142,27 +142,7 @@ export async function copyPlanDayAction(
 }
 
 /**
- * Sao chép nhiều ngày được chọn
- * trong một lần.
- *
- * Ví dụ:
- *
- * Chọn:
- * - Ngày 1
- * - Ngày 3
- * - Ngày 4
- *
- * Form gửi:
- *
- * days=1
- * days=3
- * days=4
- *
- * Trip mới:
- *
- * Ngày 1 <- Ngày 1 gốc
- * Ngày 2 <- Ngày 3 gốc
- * Ngày 3 <- Ngày 4 gốc
+ * Sao chép nhiều ngày được chọn.
  */
 export async function copyPlanDaysAction(
   sourceTripId: string,
@@ -176,10 +156,6 @@ export async function copyPlanDaysAction(
     getLocale(),
   ]);
 
-  /*
-   * Cần đăng nhập vì Trip copy
-   * sẽ thuộc về user hiện tại.
-   */
   if (!session) {
     const callbackUrl = `/trips/${sourceTripId}`;
 
@@ -189,16 +165,6 @@ export async function copyPlanDaysAction(
     });
   }
 
-  /*
-   * Checkbox nhiều ngày gửi nhiều
-   * giá trị cùng tên "days".
-   *
-   * Ví dụ:
-   *
-   * days=1
-   * days=3
-   * days=4
-   */
   const sourceDays = formData
     .getAll("days")
     .map((value) =>
@@ -212,14 +178,14 @@ export async function copyPlanDaysAction(
         day >= 1,
     );
 
-  /*
-   * Không chọn ngày nào.
-   */
   if (sourceDays.length === 0) {
     return {
       error: "DAY_NOT_FOUND",
     };
   }
+
+  const deviceHash =
+    await getOrCreateDeviceHash();
 
   let copiedTrip;
 
@@ -228,6 +194,7 @@ export async function copyPlanDaysAction(
       sourceTripId,
       session.userId,
       sourceDays,
+      deviceHash,
     );
   } catch (error) {
     if (error instanceof CopyPlanError) {
@@ -241,10 +208,6 @@ export async function copyPlanDaysAction(
     };
   }
 
-  /*
-   * Copy thành công →
-   * mở Trip mới.
-   */
   return redirect({
     href: `/trips/${copiedTrip.id}`,
     locale,
@@ -267,10 +230,6 @@ export async function completeCopyPlanAction(
     getLocale(),
   ]);
 
-  /*
-   * Cần đăng nhập để xác định
-   * chủ sở hữu của bản copy.
-   */
   if (!session) {
     const callbackUrl = `/trips/${copiedTripId}`;
 
@@ -297,12 +256,6 @@ export async function completeCopyPlanAction(
     };
   }
 
-  /*
-   * Reload Trip Detail để UI đọc:
-   *
-   * completed = true
-   * status = COMPLETED
-   */
   return redirect({
     href: `/trips/${copiedTripId}`,
     locale,
@@ -311,10 +264,6 @@ export async function completeCopyPlanAction(
 
 /**
  * Đánh giá CopyPlan sau chuyến đi.
- *
- * Form gửi:
- *
- * rating = 1 | 2 | 3 | 4 | 5
  */
 export async function rateCopyPlanAction(
   copiedTripId: string,
@@ -363,10 +312,6 @@ export async function rateCopyPlanAction(
     };
   }
 
-  /*
-   * Reload lại Trip Detail
-   * để hiển thị rating vừa lưu.
-   */
   return redirect({
     href: `/trips/${copiedTripId}`,
     locale,
