@@ -69,6 +69,12 @@ enum TargetType {
   ITINERARY_ITEM
 }
 
+enum NegativeSignalType {
+  CLOSED
+  PRICE_MISMATCH
+  OTHER
+}
+
 // ---------------------------------------------------------------------------
 // Identity
 // ---------------------------------------------------------------------------
@@ -420,27 +426,27 @@ model Interaction {
 // ---------------------------------------------------------------------------
 
 model PlanCopy {
-  id                 String   @id @default(cuid())
-  planId             String   @unique @map("plan_id")
-  plan               Trip     @relation("CopyPlan", fields: [planId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  planId String @unique @map("plan_id")
+  plan   Trip   @relation("CopyPlan", fields: [planId], references: [id], onDelete: Cascade)
 
-  originalPlanId     String   @map("original_plan_id")
-  originalPlan       Trip     @relation("OriginalPlan", fields: [originalPlanId], references: [id])
+  originalPlanId String @map("original_plan_id")
+  originalPlan   Trip   @relation("OriginalPlan", fields: [originalPlanId], references: [id])
 
-  copierUserId       String   @map("copier_user_id")
-  copierUser         User     @relation(fields: [copierUserId], references: [id])
+  copierUserId String @map("copier_user_id")
+  copierUser   User   @relation(fields: [copierUserId], references: [id])
 
   // Device guardrail:
   // chỉ lưu SHA-256 hash, không lưu device ID gốc
-  copierDeviceHash   String?  @map("copier_device_hash")
+  copierDeviceHash String? @map("copier_device_hash")
 
-  copiedAt           DateTime @default(now()) @map("copied_at")
+  copiedAt DateTime @default(now()) @map("copied_at")
 
-  initialItemCount   Int      @default(0) @map("initial_item_count")
-  retentionRate      Float?   @map("retention_rate")
+  initialItemCount Int    @default(0) @map("initial_item_count")
+  retentionRate    Float? @map("retention_rate")
 
-  completed          Boolean  @default(false)
-  postTripRating     Float?   @map("post_trip_rating")
+  completed      Boolean @default(false)
+  postTripRating Float?  @map("post_trip_rating")
 
   @@index([originalPlanId])
   @@index([originalPlanId, copierDeviceHash])
@@ -472,30 +478,35 @@ model Citation {
   ownerIdOfTag  String       @map("owner_id_of_tag")
   isSelfCite    Boolean      @default(false) @map("is_self_cite")
   verifiedVisit Boolean      @default(false) @map("verified_visit")
-  createdAt     DateTime     @default(now()) @map("created_at")
+
+  negativeSignalType NegativeSignalType? @map("negative_signal_type")
+  negativeSignalNote String?             @map("negative_signal_note")
+  negativeSignalAt   DateTime?           @map("negative_signal_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([planId])
   @@map("citations")
 }
 
 model PlanReputation {
-  id                      String   @id @default(cuid())
-  planId                  String   @unique @map("plan_id")
-  plan                    Trip     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  planId String @unique @map("plan_id")
+  plan   Trip   @relation(fields: [planId], references: [id], onDelete: Cascade)
 
-  copyplanScore           Float    @default(0) @map("copyplan_score")
+  copyplanScore Float @default(0) @map("copyplan_score")
 
-  eligibleCopyCount       Int      @default(0) @map("eligible_copy_count")
-  adjustedCopyVolume      Float    @default(0) @map("adjusted_copy_volume")
-  averageRetentionRate    Float    @default(0) @map("average_retention_rate")
-  completionRate          Float    @default(0) @map("completion_rate")
-  averagePostTripRating   Float    @default(0) @map("average_post_trip_rating")
+  eligibleCopyCount     Int   @default(0) @map("eligible_copy_count")
+  adjustedCopyVolume    Float @default(0) @map("adjusted_copy_volume")
+  averageRetentionRate  Float @default(0) @map("average_retention_rate")
+  completionRate        Float @default(0) @map("completion_rate")
+  averagePostTripRating Float @default(0) @map("average_post_trip_rating")
 
-  diversityBonus          Float    @default(0) @map("diversity_bonus")
-  decay                   Float    @default(0)
+  diversityBonus Float @default(0) @map("diversity_bonus")
+  decay          Float @default(0)
 
-  lastCopyAt              DateTime? @map("last_copy_at")
-  lastUpdated             DateTime  @updatedAt @map("last_updated")
+  lastCopyAt  DateTime? @map("last_copy_at")
+  lastUpdated DateTime  @updatedAt @map("last_updated")
 
   @@index([copyplanScore])
   @@map("plan_reputations")

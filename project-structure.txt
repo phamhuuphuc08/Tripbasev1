@@ -1,6 +1,7 @@
 Folder PATH listing for volume New Volume
 Volume serial number is 2E49-F508
-D:\DESKTOP\CODE_O\TRIPBASE\TRIPBASE\SRC
+D:.
+|   project-structure.txt
 |   proxy.ts
 |   
 +---app
@@ -116,6 +117,10 @@ D:\DESKTOP\CODE_O\TRIPBASE\TRIPBASE\SRC
 |   |       README.md
 |   |       
 |   +---copy-plan
+|   |       actions.ts
+|   |       copy-plan-button.tsx
+|   |       copy-plan-days-selector.tsx
+|   |       copy-plan-progress.tsx
 |   |       README.md
 |   |       
 |   +---itinerary
@@ -188,6 +193,7 @@ D:\DESKTOP\CODE_O\TRIPBASE\TRIPBASE\SRC
 |   |   README.md
 |   |   
 |   +---auth
+|   |       device.ts
 |   |       password.ts
 |   |       README.md
 |   |       session.ts
@@ -200,6 +206,7 @@ D:\DESKTOP\CODE_O\TRIPBASE\TRIPBASE\SRC
 |   |       checklist.repository.ts
 |   |       collaborator.repository.ts
 |   |       comment.repository.ts
+|   |       creator-reputation.repository.ts
 |   |       expense.repository.ts
 |   |       itinerary.repository.ts
 |   |       location-tag.repository.ts
@@ -217,7 +224,9 @@ D:\DESKTOP\CODE_O\TRIPBASE\TRIPBASE\SRC
 |   |       booking.service.ts
 |   |       budget.service.ts
 |   |       checklist.service.ts
+|   |       cite-trust.service.ts
 |   |       collaborator.service.ts
+|   |       copy-plan.service.ts
 |   |       creator-profile.service.ts
 |   |       invitation.service.ts
 |   |       itinerary.service.ts
@@ -226,6 +235,7 @@ D:\DESKTOP\CODE_O\TRIPBASE\TRIPBASE\SRC
 |   |       permission.service.ts
 |   |       place.service.ts
 |   |       README.md
+|   |       reputation.service.ts
 |   |       share-link.service.ts
 |   |       story.service.ts
 |   |       tag-dedup.service.ts

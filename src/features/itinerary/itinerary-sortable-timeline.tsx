@@ -10,16 +10,26 @@ import {
   useSortable, verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, MessageCircle, Pencil, ThumbsDown, ThumbsUp, TriangleAlert, X } from "lucide-react";
+import {
+  CheckCircle2, GripVertical, MapPinCheck, MessageCircle, Pencil,
+  ThumbsDown, ThumbsUp, TriangleAlert, X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import {
-  addItineraryCommentAction, removeItineraryCommentAction, removeItineraryItemAction,
-  reorderItineraryAction, voteItineraryItemAction,
-} from "@/features/itinerary/actions";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  addItineraryCommentAction,
+  removeItineraryCommentAction,
+  removeItineraryItemAction,
+  reorderItineraryAction,
+  setItineraryNegativeSignalAction,
+  setItineraryVerifiedVisitAction,
+  voteItineraryItemAction,
+} from "@/features/itinerary/actions";
 import { Link } from "@/i18n/navigation";
+import { Textarea } from "@/components/ui/textarea";
 
 export interface SortableTimelineComment {
   id: string;
@@ -36,7 +46,9 @@ export interface SortableTimelineItem {
   displayStart: string | null;
   displayEnd: string | null;
   notes: string | null;
+  locationTagId: string | null;
   locationTagTitle: string | null;
+  verifiedVisit: boolean;
   overlappingNames: string[];
   shortGap: { minutes: number; previousName: string } | null;
   travel: {
@@ -49,35 +61,53 @@ export interface SortableTimelineItem {
   openingHoursWarning: { openingHours: string; placeName: string | null } | null;
   votes: { up: number; down: number; score: number; currentUserVote: "UP" | "DOWN" | null };
   comments: SortableTimelineComment[];
+  negativeSignalType: "CLOSED" | "PRICE_MISMATCH" | "OTHER" | null;
+  negativeSignalNote: string | null;
 }
 
-function dayDropId(day: number) { return `day-${day}`; }
+function dayDropId(day: number) {
+  return `day-${day}`;
+}
 
 function getDayFromDropId(id: UniqueIdentifier) {
   const value = String(id);
   if (!value.startsWith("day-")) return null;
+
   const day = Number(value.slice(4));
   return Number.isInteger(day) && day >= 1 ? day : null;
 }
 
 function SortableItem({
-  tripId, item, isOwner, currentUserId, pending, shareToken,
+  tripId, item, isOwner, currentUserId, pending, tripStatus, shareToken,
 }: {
   tripId: string;
   item: SortableTimelineItem;
   isOwner: boolean;
   currentUserId: string | null;
   pending: boolean;
+  tripStatus: string;
   shareToken?: string | null;
 }) {
   const t = useTranslations("itinerary");
   const router = useRouter();
+
   const [commentText, setCommentText] = useState("");
   const [interactionError, setInteractionError] = useState<string | null>(null);
   const [interactionPending, startInteraction] = useTransition();
 
+  const [verifiedVisit, setVerifiedVisit] = useState(item.verifiedVisit);
+  const [verifiedVisitPending, startVerifiedVisitTransition] = useTransition();
+
+  const [negativeSignalType, setNegativeSignalType] =
+    useState<"CLOSED" | "PRICE_MISMATCH" | "OTHER" | null>(item.negativeSignalType);
+  const [negativeSignalNote, setNegativeSignalNote] =
+    useState(item.negativeSignalNote ?? "");
+  const [showNegativeForm, setShowNegativeForm] = useState(false);
+  const [negativePending, startNegativeTransition] = useTransition();
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: item.id, disabled: !isOwner || pending,
+    id: item.id,
+    disabled: !isOwner || pending,
   });
 
   const style = {
@@ -90,6 +120,7 @@ function SortableItem({
   const itemName = item.title || item.locationTagTitle || t("dayHeading", { day: item.day });
   const token = shareToken ?? null;
   const removeAction = removeItineraryItemAction.bind(null, tripId, item.id, token);
+
   const editHref = token
     ? `/trips/${tripId}?shareToken=${encodeURIComponent(token)}&editItem=${item.id}#itinerary`
     : `/trips/${tripId}?editItem=${item.id}#itinerary`;
@@ -104,7 +135,7 @@ function SortableItem({
 
     startInteraction(() => {
       void (async () => {
-        const result = await voteItineraryItemAction(item.id,voteType,token);  
+        const result = await voteItineraryItemAction(item.id, voteType, token);
 
         if (!result.success) {
           setInteractionError(
@@ -143,11 +174,7 @@ function SortableItem({
 
     startInteraction(() => {
       void (async () => {
-        const result = await addItineraryCommentAction(
-  item.id,
-  content,
-  token,
-);
+        const result = await addItineraryCommentAction(item.id, content, token);
 
         if (!result.success) {
           if (result.error === "LOGIN_REQUIRED") setInteractionError(t("interactionLoginRequired"));
@@ -168,7 +195,7 @@ function SortableItem({
 
     startInteraction(() => {
       void (async () => {
-        const result = await removeItineraryCommentAction( commentId, token);
+        const result = await removeItineraryCommentAction(commentId, token);
 
         if (!result.success) {
           setInteractionError(
@@ -179,6 +206,133 @@ function SortableItem({
           return;
         }
 
+        router.refresh();
+      })();
+    });
+  }
+
+  function toggleVerifiedVisit() {
+    if (!item.locationTagId || verifiedVisitPending) return;
+
+    setInteractionError(null);
+
+    startVerifiedVisitTransition(() => {
+      void (async () => {
+        const nextValue = !verifiedVisit;
+
+        const result = await setItineraryVerifiedVisitAction(
+          tripId,
+          item.locationTagId!,
+          nextValue,
+        );
+
+        if (!result.success) {
+          switch (result.error) {
+            case "LOGIN_REQUIRED":
+              setInteractionError("Bạn cần đăng nhập để xác nhận đã ghé.");
+              break;
+            case "TRIP_NOT_COMPLETED":
+              setInteractionError("Chỉ có thể xác nhận địa điểm sau khi chuyến đi đã hoàn thành.");
+              break;
+            case "FORBIDDEN":
+              setInteractionError("Chỉ chủ chuyến đi mới được xác nhận đã ghé.");
+              break;
+            case "LOCATION_TAG_NOT_FOUND":
+              setInteractionError("Không tìm thấy địa điểm.");
+              break;
+            case "TAG_NOT_IN_PLAN":
+              setInteractionError("Địa điểm này không còn nằm trong lịch trình.");
+              break;
+            case "INVALID_INPUT":
+              setInteractionError("Dữ liệu xác nhận không hợp lệ.");
+              break;
+            default:
+              setInteractionError("Không thể cập nhật trạng thái đã ghé.");
+          }
+
+          return;
+        }
+
+        setVerifiedVisit(result.verifiedVisit ?? nextValue);
+        router.refresh();
+      })();
+    });
+  }
+
+
+  function submitNegativeSignal() {
+    if (!item.locationTagId || !negativeSignalType || negativePending) return;
+
+    setInteractionError(null);
+
+    startNegativeTransition(() => {
+      void (async () => {
+        const result = await setItineraryNegativeSignalAction(
+          tripId,
+          item.locationTagId!,
+          negativeSignalType,
+          negativeSignalNote,
+        );
+
+        if (!result.success) {
+          switch (result.error) {
+            case "LOGIN_REQUIRED":
+              setInteractionError("Bạn cần đăng nhập.");
+              break;
+            case "FORBIDDEN":
+              setInteractionError("Chỉ chủ chuyến đi mới được báo vấn đề.");
+              break;
+            case "TRIP_NOT_COMPLETED":
+              setInteractionError("Chuyến đi phải hoàn thành trước.");
+              break;
+            case "VISIT_NOT_VERIFIED":
+              setInteractionError("Bạn phải xác nhận đã ghé địa điểm trước.");
+              break;
+            case "LOCATION_TAG_NOT_FOUND":
+              setInteractionError("Không tìm thấy địa điểm.");
+              break;
+            case "TAG_NOT_IN_PLAN":
+              setInteractionError("Địa điểm không còn nằm trong lịch trình.");
+              break;
+            case "INVALID_INPUT":
+              setInteractionError("Dữ liệu phản hồi không hợp lệ.");
+              break;
+            default:
+              setInteractionError("Không thể gửi phản hồi.");
+          }
+          return;
+        }
+
+        setNegativeSignalType(result.negativeSignalType ?? null);
+        setNegativeSignalNote(result.negativeSignalNote ?? "");
+        setShowNegativeForm(false);
+        router.refresh();
+      })();
+    });
+  }
+
+  function clearNegativeSignal() {
+    if (!item.locationTagId || negativePending) return;
+
+    setInteractionError(null);
+
+    startNegativeTransition(() => {
+      void (async () => {
+        const result = await setItineraryNegativeSignalAction(
+          tripId,
+          item.locationTagId!,
+          null,
+          null,
+        );
+
+        if (!result.success) {
+          setInteractionError("Không thể xóa phản hồi.");
+          return;
+        }
+
+        setNegativeSignalType(null);
+        setNegativeSignalNote("");
+        setShowNegativeForm(false);
         router.refresh();
       })();
     });
@@ -215,6 +369,122 @@ function SortableItem({
           </span>
         )}
 
+     
+
+{isOwner && tripStatus === "COMPLETED" && item.locationTagId && (
+          <div className="mt-1 flex flex-col items-start gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={verifiedVisit ? "default" : "outline"}
+              disabled={verifiedVisitPending}
+              onClick={toggleVerifiedVisit}
+              className="h-7 gap-1.5 px-2"
+            >
+              {verifiedVisit
+                ? <CheckCircle2 className="size-3.5" />
+                : <MapPinCheck className="size-3.5" />}
+              {verifiedVisitPending
+                ? "Đang cập nhật..."
+                : verifiedVisit
+                  ? "Đã ghé"
+                  : "Xác nhận đã ghé"}
+            </Button>
+
+            {verifiedVisit && (
+              <>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={negativeSignalType ? "secondary" : "outline"}
+                  disabled={negativePending}
+                  onClick={() => setShowNegativeForm((value) => !value)}
+                  className="h-7 px-2"
+                >
+                  {negativeSignalType ? "⚠ Đã báo vấn đề" : "⚠ Báo vấn đề"}
+                </Button>
+
+                {negativeSignalType && !showNegativeForm && (
+                  <div className="text-muted-foreground text-xs">
+                    {negativeSignalType === "CLOSED"
+                      ? "Địa điểm đã đóng cửa"
+                      : negativeSignalType === "PRICE_MISMATCH"
+                        ? "Giá khác xa dự kiến"
+                        : "Vấn đề khác"}
+                    {negativeSignalNote && ` · ${negativeSignalNote}`}
+                  </div>
+                )}
+
+                {showNegativeForm && (
+                  <div className="border-border flex w-full max-w-md flex-col gap-2 rounded-md border p-3">
+                    <label className="text-xs font-medium">Loại vấn đề</label>
+
+                    <select
+                      value={negativeSignalType ?? ""}
+                      onChange={(event) =>
+                        setNegativeSignalType(
+                          event.target.value
+                            ? (event.target.value as "CLOSED" | "PRICE_MISMATCH" | "OTHER")
+                            : null,
+                        )
+                      }
+                      disabled={negativePending}
+                      className="border-input bg-background h-9 rounded-md border px-2 text-sm"
+                    >
+                      <option value="">Chọn vấn đề</option>
+                      <option value="CLOSED">Địa điểm đã đóng cửa</option>
+                      <option value="PRICE_MISMATCH">Giá khác xa dự kiến</option>
+                      <option value="OTHER">Vấn đề khác</option>
+                    </select>
+
+                    <Textarea
+                      value={negativeSignalNote}
+                      onChange={(event) => setNegativeSignalNote(event.target.value)}
+                      maxLength={500}
+                      disabled={negativePending}
+                      placeholder="Ghi chú thêm..."
+                      className="min-h-20 text-sm"
+                    />
+
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={negativePending || !negativeSignalType}
+                        onClick={submitNegativeSignal}
+                      >
+                        {negativePending ? "Đang gửi..." : "Gửi phản hồi"}
+                      </Button>
+
+                      {item.negativeSignalType && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={negativePending}
+                          onClick={clearNegativeSignal}
+                        >
+                          Xóa phản hồi
+                        </Button>
+                      )}
+
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        disabled={negativePending}
+                        onClick={() => setShowNegativeForm(false)}
+                      >
+                        Hủy
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
         {item.notes && <span className="text-muted-foreground">{item.notes}</span>}
 
         {item.travel && (
@@ -230,10 +500,12 @@ function SortableItem({
             {!pending && item.travel.insufficientTravelTime && (
               <span className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
                 <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
-                <span>{t("travelWarning", {
-                  available: item.travel.availableMinutes,
-                  needed: item.travel.estimatedMinutes,
-                })}</span>
+                <span>
+                  {t("travelWarning", {
+                    available: item.travel.availableMinutes,
+                    needed: item.travel.estimatedMinutes,
+                  })}
+                </span>
               </span>
             )}
           </div>
@@ -242,29 +514,35 @@ function SortableItem({
         {!pending && item.overlappingNames.length > 0 && (
           <span className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
             <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
-            <span>{t("overlapWarning", {
-              names: item.overlappingNames.map((name) => `"${name}"`).join(", "),
-            })}</span>
+            <span>
+              {t("overlapWarning", {
+                names: item.overlappingNames.map((name) => `"${name}"`).join(", "),
+              })}
+            </span>
           </span>
         )}
 
         {!pending && item.shortGap && (
           <span className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
             <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
-            <span>{t("shortGapWarning", {
-              minutes: item.shortGap.minutes,
-              name: item.shortGap.previousName,
-            })}</span>
+            <span>
+              {t("shortGapWarning", {
+                minutes: item.shortGap.minutes,
+                name: item.shortGap.previousName,
+              })}
+            </span>
           </span>
         )}
 
         {!pending && item.openingHoursWarning && (
           <span className="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
             <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
-            <span>{t("openingHoursWarning", {
-              name: item.openingHoursWarning.placeName || itemName,
-              hours: item.openingHoursWarning.openingHours,
-            })}</span>
+            <span>
+              {t("openingHoursWarning", {
+                name: item.openingHoursWarning.placeName || itemName,
+                hours: item.openingHoursWarning.openingHours,
+              })}
+            </span>
           </span>
         )}
 
@@ -314,7 +592,10 @@ function SortableItem({
                 const canDelete = isOwner || comment.userId === currentUserId;
 
                 return (
-                  <li key={comment.id} className="bg-muted/50 flex items-start justify-between gap-2 rounded-md px-2.5 py-2">
+                  <li
+                    key={comment.id}
+                    className="bg-muted/50 flex items-start justify-between gap-2 rounded-md px-2.5 py-2"
+                  >
                     <div className="min-w-0 flex-1">
                       <span className="block text-xs font-medium">{comment.userName}</span>
                       <span className="text-muted-foreground block break-words text-xs">{comment.content}</span>
@@ -400,7 +681,7 @@ function SortableItem({
 }
 
 function DayDropZone({
-  day, items, tripId, isOwner, currentUserId, pending, shareToken,
+  day, items, tripId, isOwner, currentUserId, pending, tripStatus, shareToken,
 }: {
   day: number;
   items: SortableTimelineItem[];
@@ -408,18 +689,25 @@ function DayDropZone({
   isOwner: boolean;
   currentUserId: string | null;
   pending: boolean;
+  tripStatus: string;
   shareToken?: string | null;
 }) {
   const { setNodeRef, isOver } = useDroppable({
-    id: dayDropId(day), disabled: !isOwner || pending,
+    id: dayDropId(day),
+    disabled: !isOwner || pending,
   });
 
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-12 rounded-md transition-colors ${isOver ? "bg-primary/5 ring-primary/30 ring-2" : ""}`}
+      className={`min-h-12 rounded-md transition-colors ${
+        isOver ? "bg-primary/5 ring-primary/30 ring-2" : ""
+      }`}
     >
-      <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+      <SortableContext
+        items={items.map((item) => item.id)}
+        strategy={verticalListSortingStrategy}
+      >
         <ul className="flex flex-col gap-2">
           {items.map((item) => (
             <SortableItem
@@ -429,6 +717,7 @@ function DayDropZone({
               isOwner={isOwner}
               currentUserId={currentUserId}
               pending={pending}
+              tripStatus={tripStatus}
               shareToken={shareToken}
             />
           ))}
@@ -451,17 +740,20 @@ interface ItinerarySortableTimelineProps {
   isOwner: boolean;
   currentUserId: string | null;
   totalDays: number;
+  tripStatus: string;
   shareToken?: string | null;
 }
 
 function ItinerarySortableTimelineStateful({
-  tripId, initialItems, isOwner, currentUserId, totalDays, shareToken,
+  tripId, initialItems, isOwner, currentUserId, totalDays, tripStatus, shareToken,
 }: ItinerarySortableTimelineProps) {
   const t = useTranslations("itinerary");
   const router = useRouter();
+
   const [items, setItems] = useState(initialItems);
   const [error, setError] = useState(false);
   const [pending, startTransition] = useTransition();
+
   const token = shareToken ?? null;
 
   const sensors = useSensors(
@@ -478,8 +770,13 @@ function ItinerarySortableTimelineStateful({
     return groups;
   }, {});
 
-  items.forEach((item) => { (grouped[item.day] ??= []).push(item); });
-  Object.values(grouped).forEach((dayItems) => dayItems.sort((a, b) => a.sortOrder - b.sortOrder));
+  items.forEach((item) => {
+    (grouped[item.day] ??= []).push(item);
+  });
+
+  Object.values(grouped).forEach((dayItems) => {
+    dayItems.sort((a, b) => a.sortOrder - b.sortOrder);
+  });
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -537,11 +834,14 @@ function ItinerarySortableTimelineStateful({
       targetItems.splice(insertIndex, 0, { ...activeItem, day: targetDay });
 
       const reorderedSource = sourceItems.map((item, index) => ({
-        ...item, sortOrder: index,
+        ...item,
+        sortOrder: index,
       }));
 
       const reorderedTarget = targetItems.map((item, index) => ({
-        ...item, day: targetDay, sortOrder: index,
+        ...item,
+        day: targetDay,
+        sortOrder: index,
       }));
 
       const changedMap = new Map(
@@ -618,6 +918,7 @@ function ItinerarySortableTimelineStateful({
               isOwner={isOwner}
               currentUserId={currentUserId}
               pending={pending}
+              tripStatus={tripStatus}
               shareToken={token}
             />
           </div>
@@ -627,9 +928,7 @@ function ItinerarySortableTimelineStateful({
   );
 }
 
-export function ItinerarySortableTimeline(
-  props: ItinerarySortableTimelineProps,
-) {
+export function ItinerarySortableTimeline(props: ItinerarySortableTimelineProps) {
   return (
     <ItinerarySortableTimelineStateful
       key={JSON.stringify(props.initialItems)}

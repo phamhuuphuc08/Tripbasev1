@@ -1,16 +1,19 @@
-import { PlanVisibility, type PlanStatus, type TravelPace } from "@prisma/client";
+import { PlanStatus, PlanVisibility, type TravelPace } from "@prisma/client";
 import { prisma } from "@/server/db/client";
+
 import {
   createTrip as createTripRepo,
   deleteTrip as deleteTripRepo,
   findTripById,
   findTripsByOwner,
 } from "@/server/repositories/trip.repository";
+
 import {
   createTraveler,
   deleteTraveler,
   findTravelerById,
 } from "@/server/repositories/traveler.repository";
+
 import {
   assertCanEditTrip,
   getTripRole,
@@ -26,22 +29,30 @@ function tripDateKey(value: Date | null | undefined): number | null {
   return Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate());
 }
 
-function rebuildItineraryDate(tripStartDate: Date, day: number, currentTime: Date): Date {
-  return new Date(Date.UTC(
-    tripStartDate.getUTCFullYear(),
-    tripStartDate.getUTCMonth(),
-    tripStartDate.getUTCDate() + Math.max(day - 1, 0),
-    currentTime.getUTCHours(),
-    currentTime.getUTCMinutes(),
-    currentTime.getUTCSeconds(),
-    currentTime.getUTCMilliseconds(),
-  ));
+function rebuildItineraryDate(
+  tripStartDate: Date,
+  day: number,
+  currentTime: Date,
+): Date {
+  return new Date(
+    Date.UTC(
+      tripStartDate.getUTCFullYear(),
+      tripStartDate.getUTCMonth(),
+      tripStartDate.getUTCDate() + Math.max(day - 1, 0),
+      currentTime.getUTCHours(),
+      currentTime.getUTCMinutes(),
+      currentTime.getUTCSeconds(),
+      currentTime.getUTCMilliseconds(),
+    ),
+  );
 }
 
 async function assertOwner(tripId: string, userId: string) {
   const trip = await findTripById(tripId);
+
   if (!trip) throw new TripError("NOT_FOUND");
   if (trip.ownerId !== userId) throw new TripError("FORBIDDEN");
+
   return trip;
 }
 
@@ -55,9 +66,13 @@ async function assertEditorOrOwner(
     return result.trip;
   } catch (error) {
     if (error instanceof PermissionError) {
-      if (error.code === "TRIP_NOT_FOUND") throw new TripError("NOT_FOUND");
+      if (error.code === "TRIP_NOT_FOUND") {
+        throw new TripError("NOT_FOUND");
+      }
+
       throw new TripError("FORBIDDEN");
     }
+
     throw error;
   }
 }
@@ -78,12 +93,13 @@ export async function getTripDetail(
   const isOwner = role === "OWNER";
   const isPublic = trip.visibility === PlanVisibility.PUBLIC;
   const canView = isPublic || role !== "NONE" || shareLinkType !== null;
-  const canEdit = roleCanEdit(role) || (shareLinkType === "EDIT" && viewerId != null);
+  const canEdit =
+    roleCanEdit(role) ||
+    (shareLinkType === "EDIT" && viewerId != null);
 
   if (!canView) return null;
 
-  const requiresLogin =
-  viewerId == null && shareLinkType === "EDIT";
+  const requiresLogin = viewerId == null && shareLinkType === "EDIT";
 
   return {
     trip,
@@ -113,7 +129,10 @@ export function createTrip(
     travelStyle: string[];
   },
 ) {
-  return createTripRepo({ ownerId, ...input });
+  return createTripRepo({
+    ownerId,
+    ...input,
+  });
 }
 
 export async function updateTrip(
@@ -134,13 +153,52 @@ export async function updateTrip(
   shareToken?: string | null,
 ) {
   const currentTrip = await assertEditorOrOwner(tripId, userId, shareToken);
+
+  /*
+   * Chỉ Owner được phép:
+   * - chuyển sang COMPLETED
+   * - chuyển từ COMPLETED về trạng thái khác
+   */
+  if (
+    input.status !== currentTrip.status &&
+    (input.status === PlanStatus.COMPLETED ||
+      currentTrip.status === PlanStatus.COMPLETED) &&
+    currentTrip.ownerId !== userId
+  ) {
+    throw new TripError("FORBIDDEN");
+  }
+
   const startDateChanged =
     tripDateKey(currentTrip.startDate) !== tripDateKey(input.startDate);
 
   return prisma.$transaction(async (tx) => {
+    /*
+     * M12 — Verified by Author
+     *
+     * COMPLETED chưa chắc là Verified.
+     * Evidence MVP:
+     * - Story có ảnh
+     * - Booking có document
+     */
+    let verifiedByAuthor = false;
+
+    if (input.status === PlanStatus.COMPLETED) {
+const storyPhotoCount = await tx.storySlide.count({
+  where: {
+    tripId,
+    photo: { not: null },
+  },
+});
+
+verifiedByAuthor = storyPhotoCount > 0;
+    }
+
     const updatedTrip = await tx.trip.update({
       where: { id: tripId },
-      data: input,
+      data: {
+        ...input,
+        verifiedByAuthor,
+      },
     });
 
     if (startDateChanged && input.startDate) {
@@ -180,7 +238,10 @@ export async function updateTrip(
   });
 }
 
-export async function deleteTrip(tripId: string, userId: string) {
+export async function deleteTrip(
+  tripId: string,
+  userId: string,
+) {
   await assertOwner(tripId, userId);
   return deleteTripRepo(tripId);
 }
@@ -188,11 +249,18 @@ export async function deleteTrip(tripId: string, userId: string) {
 export async function addTraveler(
   tripId: string,
   userId: string,
-  input: { name: string; ageGroup: string | null },
+  input: {
+    name: string;
+    ageGroup: string | null;
+  },
   shareToken?: string | null,
 ) {
   await assertEditorOrOwner(tripId, userId, shareToken);
-  return createTraveler({ tripId, ...input });
+
+  return createTraveler({
+    tripId,
+    ...input,
+  });
 }
 
 export async function removeTraveler(
@@ -201,8 +269,16 @@ export async function removeTraveler(
   shareToken?: string | null,
 ) {
   const traveler = await findTravelerById(travelerId);
-  if (!traveler) throw new TripError("NOT_FOUND");
 
-  await assertEditorOrOwner(traveler.tripId, userId, shareToken);
+  if (!traveler) {
+    throw new TripError("NOT_FOUND");
+  }
+
+  await assertEditorOrOwner(
+    traveler.tripId,
+    userId,
+    shareToken,
+  );
+
   return deleteTraveler(travelerId);
 }

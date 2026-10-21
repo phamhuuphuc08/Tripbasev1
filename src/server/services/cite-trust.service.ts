@@ -2,16 +2,14 @@ import { prisma } from "@/server/db/client";
 
 const CITE_VOLUME_SCALE = 5;
 const CREATOR_DIVERSITY_SCALE = 3;
+const MAX_NEGATIVE_SIGNAL_PENALTY = 25;
+
+export type LocationTagNegativeSignal = "CLOSED" | "PRICE_MISMATCH" | "OTHER";
 
 export class CiteTrustError extends Error {}
 
-function clamp01(value: number): number {
-  return Math.max(0, Math.min(1, value));
-}
-
-function round2(value: number): number {
-  return Math.round(value * 100) / 100;
-}
+function clamp01(value: number): number { return Math.max(0, Math.min(1, value)); }
+function round2(value: number): number { return Math.round(value * 100) / 100; }
 
 /**
  * Đồng bộ bảng Citation từ itinerary thật.
@@ -133,6 +131,7 @@ export async function syncLocationTagCitationsFromItinerary() {
         ownerIdOfTag: true,
         isSelfCite: true,
         verifiedVisit: true,
+        negativeSignalType: true,
       },
     });
 
@@ -187,10 +186,8 @@ export async function syncLocationTagCitationsFromItinerary() {
      * vô tình xoá mất trạng thái đã ghé.
      */
     const keeper =
-      rows.find(
-        (row) =>
-          row.verifiedVisit,
-      ) ??
+      rows.find((row) => row.negativeSignalType !== null) ??
+      rows.find((row) => row.verifiedVisit) ??
       rows[0];
 
     if (!keeper) {
@@ -359,8 +356,8 @@ export async function syncLocationTagCitationsFromItinerary() {
  * 20% Verified Visit
  * 15% Cross-plan Consistency
  *
- * Negative Signal chưa tính vì schema hiện tại
- * chưa có dữ liệu negative review.
+ * Negative Signal: trừ tối đa 25 điểm,
+ * dựa trên tỷ lệ negative signal / verified visit.
  */
 export async function calculateLocationTagCiteTrustScore(
   locationTagId: string,
@@ -390,6 +387,9 @@ export async function calculateLocationTagCiteTrustScore(
               true,
 
             verifiedVisit:
+              true,
+
+            negativeSignalType:
               true,
 
             plan: {
@@ -461,6 +461,15 @@ export async function calculateLocationTagCiteTrustScore(
       crossPlanConsistency:
         0,
 
+      negativeSignalCount:
+        0,
+
+      negativeSignalRate:
+        0,
+
+      negativeSignalPenalty:
+        0,
+
       citeTrustScore:
         0,
     };
@@ -520,6 +529,21 @@ export async function calculateLocationTagCiteTrustScore(
         citation
           .verifiedVisit,
     ).length;
+
+  const negativeSignalCount =
+    citations.filter(
+      (citation) =>
+        citation.verifiedVisit &&
+        citation.negativeSignalType !== null,
+    ).length;
+
+  const negativeSignalRate =
+    verifiedVisitCount === 0
+      ? 0
+      : negativeSignalCount / verifiedVisitCount;
+
+  const negativeSignalPenalty =
+    MAX_NEGATIVE_SIGNAL_PENALTY * negativeSignalRate;
 
   const creatorIds =
     new Set(
@@ -644,7 +668,7 @@ export async function calculateLocationTagCiteTrustScore(
         0,
         Math.min(
           100,
-          rawScore,
+          rawScore - negativeSignalPenalty,
         ),
       ),
     );
@@ -681,6 +705,14 @@ export async function calculateLocationTagCiteTrustScore(
       round2(
         crossPlanConsistency,
       ),
+
+    negativeSignalCount,
+
+    negativeSignalRate:
+      round2(negativeSignalRate),
+
+    negativeSignalPenalty:
+      round2(negativeSignalPenalty),
 
     citeTrustScore,
   };
@@ -1019,6 +1051,7 @@ export async function setLocationTagVerifiedVisit(
             select: {
               id: true,
               verifiedVisit: true,
+              negativeSignalType: true,
             },
 
             orderBy: {
@@ -1032,10 +1065,8 @@ export async function setLocationTagVerifiedVisit(
          * ưu tiên giữ Citation đã verified.
          */
         const keeper =
-          existingRows.find(
-            (row) =>
-              row.verifiedVisit,
-          ) ??
+          existingRows.find((row) => row.negativeSignalType !== null) ??
+          existingRows.find((row) => row.verifiedVisit) ??
           existingRows[0];
 
         if (keeper) {
@@ -1056,6 +1087,10 @@ export async function setLocationTagVerifiedVisit(
                 isSelfCite,
 
                 verifiedVisit,
+
+                ...(!verifiedVisit
+                  ? { negativeSignalType: null, negativeSignalNote: null, negativeSignalAt: null }
+                  : {}),
               },
 
               select: {
@@ -1153,4 +1188,184 @@ export async function setLocationTagVerifiedVisit(
       selectedTag.id !==
       canonicalTag.id,
   };
+}
+/**
+ * M09.9.8 - Negative Signal
+ * Chỉ owner của Trip COMPLETED và đã verified visit
+ * mới được ghi phản hồi xấu cho LocationTag trong Trip.
+ */
+export async function setLocationTagNegativeSignal(
+  planId: string,
+  locationTagId: string,
+  userId: string,
+  negativeSignalType: LocationTagNegativeSignal | null,
+  note?: string | null,
+) {
+  if (!planId) throw new CiteTrustError("PLAN_ID_REQUIRED");
+  if (!locationTagId) throw new CiteTrustError("LOCATION_TAG_ID_REQUIRED");
+  if (!userId) throw new CiteTrustError("USER_ID_REQUIRED");
+
+  const [trip, selectedTag] = await Promise.all([
+    prisma.trip.findUnique({ where: { id: planId }, select: { id: true, ownerId: true, status: true } }),
+    prisma.locationTag.findUnique({
+      where: { id: locationTagId },
+      select: { id: true, ownerId: true, possibleDuplicateOf: { select: { id: true, ownerId: true } } },
+    }),
+  ]);
+
+  if (!trip) throw new CiteTrustError("TRIP_NOT_FOUND");
+  if (trip.ownerId !== userId) throw new CiteTrustError("FORBIDDEN");
+  if (trip.status !== "COMPLETED") throw new CiteTrustError("TRIP_NOT_COMPLETED");
+  if (!selectedTag) throw new CiteTrustError("LOCATION_TAG_NOT_FOUND");
+
+  const canonicalTag = selectedTag.possibleDuplicateOf ?? selectedTag;
+  const itineraryItem = await prisma.itineraryItem.findFirst({
+    where: {
+      tripId: planId,
+      OR: [
+        { locationTagId: selectedTag.id },
+        { locationTag: { possibleDuplicateOfId: canonicalTag.id } },
+      ],
+    },
+    select: { id: true },
+  });
+
+  if (!itineraryItem) throw new CiteTrustError("TAG_NOT_IN_PLAN");
+
+  const citation = await prisma.citation.findFirst({
+    where: { planId, locationTagId: canonicalTag.id },
+    select: { id: true, verifiedVisit: true },
+  });
+
+  if (!citation) throw new CiteTrustError("CITATION_NOT_FOUND");
+  if (!citation.verifiedVisit) throw new CiteTrustError("VISIT_NOT_VERIFIED");
+
+  const normalizedNote = note?.trim() || null;
+  const updated = await prisma.citation.update({
+    where: { id: citation.id },
+    data: {
+      negativeSignalType,
+      negativeSignalNote: negativeSignalType ? normalizedNote : null,
+      negativeSignalAt: negativeSignalType ? new Date() : null,
+    },
+    select: {
+      id: true, planId: true, locationTagId: true, verifiedVisit: true,
+      negativeSignalType: true, negativeSignalNote: true, negativeSignalAt: true,
+    },
+  });
+
+  const trust = await updateLocationTagCiteTrustScore(canonicalTag.id);
+  return {
+    ...updated,
+    requestedLocationTagId: selectedTag.id,
+    canonicalLocationTagId: canonicalTag.id,
+    wasCanonicalized: selectedTag.id !== canonicalTag.id,
+    citeTrustScore: trust.citeTrustScore,
+    negativeSignalCount: trust.negativeSignalCount,
+    negativeSignalRate: trust.negativeSignalRate,
+    negativeSignalPenalty: trust.negativeSignalPenalty,
+  };
+}
+
+export async function getTripVerifiedVisits(
+  tripId: string,
+): Promise<Map<string, boolean>> {
+  if (!tripId) return new Map();
+
+  const citations = await prisma.citation.findMany({
+    where: {
+      planId: tripId,
+      locationTagId: {
+        not: null,
+      },
+    },
+    select: {
+      locationTagId: true,
+      verifiedVisit: true,
+    },
+  });
+
+  const result = new Map<string, boolean>();
+
+  for (const citation of citations) {
+    if (!citation.locationTagId) continue;
+
+    result.set(
+      citation.locationTagId,
+      citation.verifiedVisit,
+    );
+  }
+
+  return result;
+}
+export async function getTripNegativeSignals(
+  tripId: string,
+): Promise<Map<string, {
+  type: LocationTagNegativeSignal | null;
+  note: string | null;
+}>> {
+  if (!tripId) return new Map();
+
+  const items = await prisma.itineraryItem.findMany({
+    where: {
+      tripId,
+      locationTagId: { not: null },
+    },
+    select: {
+      locationTagId: true,
+      locationTag: {
+        select: {
+          id: true,
+          possibleDuplicateOfId: true,
+        },
+      },
+    },
+  });
+
+  const citations = await prisma.citation.findMany({
+    where: {
+      planId: tripId,
+      locationTagId: { not: null },
+    },
+    select: {
+      locationTagId: true,
+      negativeSignalType: true,
+      negativeSignalNote: true,
+    },
+  });
+
+  const citationByTag = new Map(
+    citations
+      .filter((citation) => citation.locationTagId)
+      .map((citation) => [
+        citation.locationTagId!,
+        {
+          type: citation.negativeSignalType,
+          note: citation.negativeSignalNote,
+        },
+      ]),
+  );
+
+  const result = new Map<string, {
+    type: LocationTagNegativeSignal | null;
+    note: string | null;
+  }>();
+
+  for (const item of items) {
+    if (!item.locationTagId || !item.locationTag) continue;
+
+    const canonicalId =
+      item.locationTag.possibleDuplicateOfId ??
+      item.locationTag.id;
+
+    result.set(
+      item.locationTagId,
+      citationByTag.get(canonicalId) ?? {
+        type: null,
+        note: null,
+      },
+    );
+  }
+
+  return result;
 }

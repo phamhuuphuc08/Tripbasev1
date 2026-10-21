@@ -67,6 +67,10 @@ import {
 import { listTagsForPicker } from "@/server/services/location-tag.service";
 import { listStorySlides } from "@/server/services/story.service";
 import { getTripDetail } from "@/server/services/trip.service";
+import {
+  getTripNegativeSignals,
+  getTripVerifiedVisits,
+} from "@/server/services/cite-trust.service";
 
 function toDateInputValue(date: Date | null): string {
   return date ? date.toISOString().slice(0, 10) : "";
@@ -188,6 +192,8 @@ const [
   shareLinks,
   checklistItems,
   checklistAssignees,
+  verifiedVisits,
+  negativeSignals,
 ] = await Promise.all([
   listItineraryItems(tripId),
   canEdit ? listTagsForPicker() : Promise.resolve([]),
@@ -195,18 +201,15 @@ const [
   computeBudgetSummary(tripId),
   listBookings(tripId, session?.userId, shareToken),
   listStorySlides(tripId),
-  isOwner && session
-    ? listTripCollaborators(tripId, session.userId)
-    : Promise.resolve([]),
-  isOwner && session
-    ? listTripShareLinks(tripId, session.userId)
-    : Promise.resolve([]),
+  isOwner && session ? listTripCollaborators(tripId, session.userId) : Promise.resolve([]),
+  isOwner && session ? listTripShareLinks(tripId, session.userId) : Promise.resolve([]),
   listChecklistItems(tripId, session?.userId, shareToken),
   canEdit && session
     ? listChecklistAssignees(tripId, session.userId, shareToken)
     : Promise.resolve([]),
+  getTripVerifiedVisits(tripId),
+  getTripNegativeSignals(tripId),
 ]);
-
 
 const shareLinkItems = shareLinks.map((link) => ({
   id: link.id,
@@ -326,119 +329,97 @@ const checklistManagerItems = checklistItems.map((item) => ({
       : Math.max(dayCount, 1);
 
   const sortableItems = items.map((item) => {
-    const overlappingNames = (
-      overlapMap.get(item.id) ?? []
-    ).flatMap((overlapId) => {
-      const overlapItem =
-        itemById.get(overlapId);
+    const overlappingNames = (overlapMap.get(item.id) ?? []).flatMap((overlapId) => {
+      const overlapItem = itemById.get(overlapId);
 
       if (!overlapItem) return [];
 
       return [
         overlapItem.title ||
           overlapItem.locationTag?.title ||
-          tItinerary("dayHeading", {
-            day: overlapItem.day,
-          }),
+          tItinerary("dayHeading", { day: overlapItem.day }),
       ];
     });
 
-    const shortGap =
-      shortGapMap.get(item.id);
+  const shortGap = shortGapMap.get(item.id);
+  const previousGapItem = shortGap ? itemById.get(shortGap.previousItemId) : undefined;
 
-    const previousGapItem = shortGap
-      ? itemById.get(shortGap.previousItemId)
-      : undefined;
+  const travel = travelMap.get(item.id);
+  const previousTravelItem = travel ? itemById.get(travel.previousItemId) : undefined;
 
-    const travel =
-      travelMap.get(item.id);
+  const openingHoursWarning = openingHoursMap.get(item.id);
 
-    const previousTravelItem = travel
-      ? itemById.get(travel.previousItemId)
-      : undefined;
+  return {
+    id: item.id,
+    day: item.day,
+    sortOrder: item.sortOrder,
+    title: item.title || "",
+    displayStart: toTimeLabel(item.startTime),
+    displayEnd: toTimeLabel(item.endTime),
+    notes: item.notes ?? null,
 
-    const openingHoursWarning =
-      openingHoursMap.get(item.id);
+    locationTagId: item.locationTagId ?? null,
 
-    return {
-      id: item.id,
-      day: item.day,
-      sortOrder: item.sortOrder,
-      title: item.title || "",
-      displayStart: toTimeLabel(item.startTime),
-      displayEnd: toTimeLabel(item.endTime),
-      notes: item.notes ?? null,
+    locationTagTitle: item.locationTag
+      ? `${tCategory(toTagCategory(item.locationTag.category))} ${item.locationTag.title}`
+      : null,
 
-      locationTagTitle: item.locationTag
-        ? `${tCategory(
-            toTagCategory(
-              item.locationTag.category,
-            ),
-          )} ${item.locationTag.title}`
-        : null,
+    verifiedVisit: item.locationTagId
+      ? verifiedVisits.get(item.locationTagId) ?? false
+      : false,
+negativeSignalType: item.locationTagId
+  ? negativeSignals.get(item.locationTagId)?.type ?? null
+  : null,
 
-      overlappingNames,
+negativeSignalNote: item.locationTagId
+  ? negativeSignals.get(item.locationTagId)?.note ?? null
+  : null,
+    overlappingNames,
 
-      shortGap: shortGap
-        ? {
-            minutes: shortGap.gapMinutes,
-            previousName:
-              previousGapItem?.title ||
-              previousGapItem?.locationTag?.title ||
-              tItinerary("dayHeading", {
-                day:
-                  previousGapItem?.day ??
-                  item.day,
-              }),
-          }
-        : null,
+    shortGap: shortGap
+      ? {
+          minutes: shortGap.gapMinutes,
+          previousName:
+            previousGapItem?.title ||
+            previousGapItem?.locationTag?.title ||
+            tItinerary("dayHeading", {
+              day: previousGapItem?.day ?? item.day,
+            }),
+        }
+      : null,
 
-      travel: travel
-        ? {
-            distanceKm: travel.distanceKm,
-            estimatedMinutes:
-              travel.estimatedMinutes,
-            availableMinutes:
-              travel.availableMinutes,
-            insufficientTravelTime:
-              travel.insufficientTravelTime,
-            previousName:
-              previousTravelItem?.title ||
-              previousTravelItem
-                ?.locationTag?.title ||
-              tItinerary("dayHeading", {
-                day:
-                  previousTravelItem?.day ??
-                  item.day,
-              }),
-          }
-        : null,
+    travel: travel
+      ? {
+          distanceKm: travel.distanceKm,
+          estimatedMinutes: travel.estimatedMinutes,
+          availableMinutes: travel.availableMinutes,
+          insufficientTravelTime: travel.insufficientTravelTime,
+          previousName:
+            previousTravelItem?.title ||
+            previousTravelItem?.locationTag?.title ||
+            tItinerary("dayHeading", {
+              day: previousTravelItem?.day ?? item.day,
+            }),
+        }
+      : null,
 
-      openingHoursWarning:
-        openingHoursWarning
-          ? {
-              openingHours:
-                openingHoursWarning.openingHours,
-              placeName:
-                openingHoursWarning.placeName,
-            }
-          : null,
+    openingHoursWarning: openingHoursWarning
+      ? {
+          openingHours: openingHoursWarning.openingHours,
+          placeName: openingHoursWarning.placeName,
+        }
+      : null,
 
-      votes: summarizeItineraryVotes(
-        item.votes,
-        session?.userId,
-      ),
+    votes: summarizeItineraryVotes(item.votes, session?.userId),
 
-      comments: item.comments.map(
-        (comment) => ({
-          id: comment.id,
-          userId: comment.userId,
-          userName: comment.user.name,
-          content: comment.content,
-        }),
-      ),
-    };
-  });
+    comments: item.comments.map((comment) => ({
+      id: comment.id,
+      userId: comment.userId,
+      userName: comment.user.name,
+      content: comment.content,
+    })),
+  };
+});
 
   const mapMarkers = items
     .filter(
@@ -505,14 +486,22 @@ const checklistManagerItems = checklistItems.map((item) => ({
             {trip.name}
           </h1>
 
-          <Badge variant="outline">
-            {tStatus(
-              trip.status as
-                | "IDEA"
-                | "SCHEDULED"
-                | "COMPLETED",
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">
+              {tStatus(
+                trip.status as
+                  | "IDEA"
+                  | "SCHEDULED"
+                  | "COMPLETED",
+              )}
+            </Badge>
+
+            {trip.verifiedByAuthor && (
+              <Badge variant="secondary">
+                Đã xác minh chuyến đi
+              </Badge>
             )}
-          </Badge>
+          </div>
         </div>
 
         <p className="text-muted-foreground flex items-center gap-1.5 text-sm">
@@ -794,16 +783,11 @@ const checklistManagerItems = checklistItems.map((item) => ({
           ) : (
             <ItinerarySortableTimeline
               tripId={tripId}
-              initialItems={
-                sortableItems
-              }
-              isOwner={canEdit}
-              currentUserId={
-                session?.userId ?? null
-              }
-              totalDays={
-                tripDayCount
-              }
+              initialItems={sortableItems}
+              isOwner={isOwner}
+              currentUserId={session?.userId ?? null}
+              totalDays={tripDayCount}
+              tripStatus={trip.status}
               shareToken={shareToken}
             />
           )}

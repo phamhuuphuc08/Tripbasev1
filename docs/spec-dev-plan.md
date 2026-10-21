@@ -37,24 +37,24 @@ test xong, sẵn sàng release). Quy tắc bắt buộc cho mọi thay đổi:
 ---
 
 ## Tổng quan tiến độ
-
-| Mã  | Module                                                        | Ưu tiên | Data model | Service | UI | Trạng thái |
-| --- | ------------------------------------------------------------- | ------- | ---------- | ------- | -- | ---------- |
-| M00 | [Infra/Scaffold](#m00--infrascaffold)                         | —       | ✅          | —       | —  | ✅          |
-| M13 | [Auth (login/register)](#m13--auth-loginregister)             | —       | ✅          | ✅       | ✅  | ✅          |
-| M14 | [i18n & UI polish](#m14--i18n--ui-polish)                     | —       | —          | ✅       | ✅  | ✅          |
-| M01 | [Trip Builder](#m01--trip-builder)                            | P0      | ✅          | ✅       | 🟨 | 🟨         |
-| M02 | [Itinerary / Smart Timeline](#m02--itinerary--smart-timeline) | P0      | ✅          | ✅       | ✅  | ✅          |
-| M03 | [Map Planner](#m03--map-planner)                              | P0      | ✅          | ✅       | ✅  | ✅          |
-| M04 | [Budget Board](#m04--budget-board)                            | P0      | ✅          | ✅       | 🟨 | 🟨         |
-| M05 | [Booking Vault](#m05--booking-vault)                          | P1      | ✅          | ✅       | ✅  | 🟨         |
-| M06 | [Checklist](#m06--checklist)                                  | P0      | ✅          | ✅       | ✅  | ✅          |
-| M07 | [Share & Permission](#m07--share--permission)                 | P0      | ✅          | 🟨      | 🟨 | 🟨         |
-| M08 | [CopyPlan Engine](#m08--copyplan-engine)                      | P0      | ✅          | ⬜       | ⬜  | ⬜          |
-| M09 | [Reputation Engine](#m09--reputation-engine)                  | P1      | ✅          | 🟨      | 🟨 | 🟨         |
-| M10 | [Plan Marketplace / Explore](#m10--plan-marketplace--explore) | P1      | ✅          | 🟨      | 🟨 | 🟨         |
-| M11 | [Tag & Tip Library](#m11--tag--tip-library)                   | P1      | ✅          | ✅       | ✅  | 🟨         |
-| M12 | [Travel Memory](#m12--travel-memory)                          | P2      | ✅          | ✅       | 🟨 | 🟨         |
+                                                                                
+| Mã  | Module                                                        | Ưu tiên | Data model | Service | UI  | Trạng thái |
+|-----|---------------------------------------------------------------|---------|------------|---------|-----|------------|
+| M00 | [Infra/Scaffold](#m00--infrascaffold)                         | —       | ✅         | —       | —   | ✅        |
+| M13 | [Auth (login/register)](#m13--auth-loginregister)             | —       | ✅         | ✅      | ✅  | ✅       |
+| M14 | [i18n & UI polish](#m14--i18n--ui-polish)                     | —       | —          | ✅      | ✅  | ✅       |
+| M01 | [Trip Builder](#m01--trip-builder)                            | P0      | ✅         | ✅      | ✅  | ✅       |
+| M02 | [Itinerary / Smart Timeline](#m02--itinerary--smart-timeline) | P0      | ✅         | ✅      | ✅  | ✅       |
+| M03 | [Map Planner](#m03--map-planner)                              | P0      | ✅         | ✅      | ✅  | ✅       |
+| M04 | [Budget Board](#m04--budget-board)                            | P0      | ✅         | ✅      | ✅  | ✅       |
+| M05 | [Booking Vault](#m05--booking-vault)                          | P1      | ✅         | ✅      | ✅  | ✅       |
+| M06 | [Checklist](#m06--checklist)                                  | P0      | ✅         | ✅      | ✅  | ✅       |
+| M07 | [Share & Permission](#m07--share--permission)                 | P0      | ✅         | ✅      | ✅  | ✅       |
+| M08 | [CopyPlan Engine](#m08--copyplan-engine)                      | P0      | ✅         | ✅      | ✅  | ✅       |
+| M09 | [Reputation Engine](#m09--reputation-engine)                  | P1      | ✅         | ✅      | ✅  | ✅       |
+| M10 | [Plan Marketplace / Explore](#m10--plan-marketplace--explore) | P1      | ✅         | ✅      | ✅  | ✅       |
+| M11 | [Tag & Tip Library](#m11--tag--tip-library)                   | P1      | ✅         | ✅      | ✅  | ✅       |
+| M12 | [Travel Memory](#m12--travel-memory)                          | P2      | ✅         | ✅      | ✅  | ✅       |
 
 
 "Data model ✅" nghĩa là entity đã có trong `prisma/schema.prisma` **và** đã
@@ -191,8 +191,7 @@ theme-toggle,theme-provider,language-switcher,placeholder-screen}.tsx`
 
 Chưa làm:
 
-- [ ] Explore/Saved vẫn là `PlaceholderScreen` — chưa có UI thật để đánh
-      giá redesign trên các trang đó (Trip/Creator đã có UI thật)
+- [x] Explore/Saved đã có UI thật sau khi hoàn thiện M10; theme/i18n dùng chung với hệ thống hiện tại.
 - [ ] Chưa có cách người dùng tự chọn/khoá 1 ngôn ngữ lâu dài qua UI settings
       (hiện chỉ đổi tức thời bằng nút, next-intl tự set cookie `NEXT_LOCALE`)
 - [ ] Chưa test responsive mobile kỹ (mới verify ở viewport desktop)
@@ -216,44 +215,22 @@ Ghi chú kỹ thuật:
 
 - **Ưu tiên:** P0 · **Spec:** mục 4, 5, 6a
 - **Code:** `src/features/trip/{trip-form,styles,actions}.tsx`, `src/server/services/trip.service.ts`, model `Trip`, `Traveler`
-- **Trạng thái:** 🟨 Gần hoàn thiện MVP (CRUD/travelers/các field lập kế hoạch + quyền Editor đã chạy; còn guardrail Verified by Author và phần Edit Link của M07 chưa nối hết vào Server Action)
+- **Trạng thái:** ✅ Xong phạm vi MVP hiện tại (cập nhật 2026-10-07)
 
 Đã làm:
 
-- [x] Đọc chi tiết 1 trip thật từ DB (`getTripDetail`), phân quyền theo OWNER/
-      EDITOR/VIEWER và hiện đã nhận thêm `shareToken` từ M07 để mở trip qua
-      View/Edit Link hợp lệ.
-- [x] Trip dashboard thật (`/trips`, yêu cầu đăng nhập) — danh sách trip của
-      user, badge trạng thái + visibility, nút "Tạo trip mới".
-- [x] Form tạo trip (`/trips/new`): tên, điểm đến, ngày bắt đầu/kết thúc
-      (optional), visibility — `createTripAction` → redirect vào trip mới.
-- [x] Form chỉnh sửa trên `/trips/[tripId]`: OWNER và collaborator EDITOR thấy
-      quyền sửa (`canEdit`); VIEWER chỉ xem. Xoá trip vẫn chỉ OWNER.
-- [x] `TripForm` dùng chung create/edit, shadcn `Select` (Base UI) — render-prop
-      map giá trị → nhãn dịch thủ công.
-- [x] `Traveler`: thêm/xoá tên + độ tuổi tuỳ chọn; OWNER/EDITOR collaborator
-      thao tác được qua service permission, VIEWER chỉ xem.
-- [x] Xoá trip: trang xác nhận riêng `/trips/[tripId]/delete`, `deleteTripAction`
-      chỉ dành cho OWNER.
-- [x] Số người dự kiến, ngân sách dự kiến, phong cách chuyến đi (Ẩm thực/Mua
-      sắm/Văn hoá/Thiên nhiên), nhịp độ (Thong thả/Vừa phải/Dày lịch) đã lưu
-      trong `Trip.{travelerCount,budgetTarget,travelStyle,pace}` và hiển thị trên
-      Trip Detail.
-- [x] Khi sửa `Trip.startDate`, `trip.service.updateTrip` đồng bộ
-      `ItineraryItem.startTime/endTime` theo `startDate + (day - 1)` nhưng giữ
-      nguyên giờ/phút; cập nhật Trip + itinerary trong cùng Prisma transaction.
-- [x] Budget thực chi đã được tách và triển khai ở M04; Map Planner đã có MVP ở
-      M03 nên không còn là blocker của Trip Builder.
+- [x] CRUD Trip + Traveler; dashboard `/trips`, tạo/sửa/xoá Trip.
+- [x] Phân quyền OWNER / EDITOR / VIEWER; Edit Link được truyền xuống action/service qua `shareToken`.
+- [x] Các field lập kế hoạch: ngày đi, visibility, số người, budget target, pace, travel style.
+- [x] Khi đổi `Trip.startDate`, đồng bộ ngày thật của `ItineraryItem.startTime/endTime` nhưng giữ nguyên giờ/phút trong cùng transaction.
+- [x] Chỉ OWNER được chuyển Trip sang `COMPLETED` hoặc đổi Trip từ `COMPLETED` về trạng thái khác.
+- [x] `verifiedByAuthor` được tính khi Trip `COMPLETED`; evidence MVP hiện dùng ảnh Story do chính owner upload.
+- [x] Khi Trip rời trạng thái `COMPLETED`, `verifiedByAuthor` reset về `false`.
+- [x] Runtime test Owner-only COMPLETED + Verified by Author đã pass.
 
-Chưa làm:
+Nâng cấp sau MVP:
 
-- [ ] Badge "Verified by Author" khi chuyển sang "Đã đi" — cần bằng chứng tối
-      thiểu (ảnh/booking) theo guardrail mục 13; phụ thuộc M05/M12.
-- [ ] Hoàn tất quyền chỉnh sửa bằng **Edit Link** cho các Server Action của Trip
-      (truyền `shareToken` xuống action/service); phần đọc trang và `canEdit`
-      theo token đã có ở M07.
-
----
+- [ ] Có thể bổ sung thêm evidence loại `used booking` / check-in khi model hỗ trợ xác nhận việc sử dụng thực tế.
 
 ## M02 — Itinerary / Smart Timeline
 
@@ -384,35 +361,21 @@ Ghi chú kỹ thuật:
 
 - **Ưu tiên:** P0 · **Spec:** mục 4, 5, 11
 - **Code:** `src/features/budget/`, `src/server/services/budget.service.ts`, model `Expense`
-- **Trạng thái:** 🟨 Gần hoàn thiện (CRUD + tổng hợp/chia tiền + settlement + quyền Editor đã có; còn payer picker/receipt và Edit Link token)
+- **Trạng thái:** ✅ Xong phạm vi MVP hiện tại
 
 Đã làm:
 
-- [x] CRUD khoản chi trên Trip Detail: thêm, **sửa**, xoá; 8 hạng mục cố định
-      (`Vé máy bay`, `Khách sạn`, `Ăn uống`, `Vé tham quan`, `Di chuyển`,
-      `Mua sắm`, `Dự phòng`, `Khác`).
-- [x] `Expense` có `note`, `createdAt`, `splitBetween`; form sửa dùng
-      `?editExpense=<id>#budget`, giữ chung một luồng create/edit.
-- [x] Quyền collaborator M07 đã nối vào Budget: OWNER và EDITOR có thể
-      thêm/sửa/xoá, VIEWER chỉ xem; service kiểm tra quyền chứ không chỉ gate UI.
-- [x] Khi EDITOR thêm khoản chi, `paidById` dùng user đang thao tác; chưa có
-      picker để chọn một người trả khác.
-- [x] `computeBudgetSummary`: tổng đã chi, còn lại/vượt ngân sách, tổng theo
-      hạng mục, tổng chia theo thành viên, balances và settlement "ai trả ai"
-      được hiển thị trên Trip Detail.
-- [x] Các nút sửa/xoá dùng `aria-label` có tên/hạng mục cụ thể để tránh nhầm
-      giữa traveler/itinerary/budget và tốt hơn cho accessibility.
-- [x] Luồng Budget đã được kiểm tra cùng permission matrix OWNER/EDITOR/VIEWER
-      trong đợt hoàn thiện M07.
+- [x] CRUD khoản chi trên Trip Detail: thêm, sửa, xoá.
+- [x] 8 hạng mục chi phí cố định; hỗ trợ `note`, `splitBetween`, người trả, ngày tạo.
+- [x] Tổng chi, còn lại/vượt ngân sách, tổng theo hạng mục, balances và settlement "ai trả ai".
+- [x] OWNER/EDITOR được thao tác, VIEWER chỉ xem; permission được kiểm tra ở service.
+- [x] Giữ `shareToken` trong luồng Edit Link và các link edit/cancel/redirect.
+- [x] Kiểm thử luồng Budget và xác nhận M04 hoàn thiện.
 
-Chưa làm:
+Nâng cấp sau MVP:
 
-- [ ] Picker chọn `paidById` tuỳ ý trong nhóm thay vì mặc định user đang thao tác.
-- [ ] Upload hoá đơn/receipt cho từng khoản chi — liên quan Booking Vault (M05).
-- [ ] Nối **Edit Link token** vào Server Action Budget để user đăng nhập qua
-      link EDIT có thể lưu/sửa/xoá; phần page-level `canEdit` đã có ở M07.
-
----
+- [ ] Picker chọn người trả khác thay vì mặc định user đang thao tác.
+- [ ] Receipt riêng cho từng Expense nếu sau này cần; hiện Booking Vault đã có private document cho booking.
 
 ## M05 — Booking Vault
 
@@ -420,41 +383,22 @@ Chưa làm:
 - **Code:** `src/features/booking/`, `src/server/repositories/booking.repository.ts`,
   `src/server/services/booking.service.ts`, `src/server/storage/booking-document.ts`,
   route `src/app/api/bookings/[bookingId]/document/route.ts`, model `Booking`
-- **Trạng thái:** 🟨 Gần hoàn thiện MVP — CRUD + private document upload +
-  permission đã chạy và test; chưa có email forwarding/S3-compatible storage
+- **Trạng thái:** ✅ Xong phạm vi MVP hiện tại
 
 Đã làm:
 
-- [x] Danh sách booking theo trip trên Trip Detail.
-- [x] CRUD booking: thêm, sửa, xoá; OWNER/EDITOR có quyền thao tác, VIEWER chỉ xem.
-- [x] Upload tài liệu booking dạng PDF/JPG/PNG/WebP.
-- [x] Giới hạn tài liệu 8 MB; file quá lớn hoặc sai định dạng bị chặn ở client
-      và vẫn được validate lại ở server.
-- [x] Lưu file private tại `storage/bookings`, không expose trực tiếp qua
-      `public/`; `.gitignore` loại thư mục runtime này khỏi Git.
-- [x] Route bảo vệ `/api/bookings/[bookingId]/document` kiểm tra quyền xem trip
-      trước khi đọc/trả file; không có quyền không thể mở tài liệu trực tiếp.
-- [x] Khi thay tài liệu, file private cũ được dọn; khi xoá tài liệu hoặc xoá
-      booking, file local tương ứng được dọn best-effort.
-- [x] Docker có volume riêng `booking_documents:/app/storage/bookings` để file
-      không mất khi rebuild/restart container.
-- [x] Tương thích booking cũ có `fileUrl` bên ngoài; private key mới dùng route
-      bảo vệ để mở tài liệu.
-- [x] VIEW Link có thể xem booking/mở tài liệu nhưng không thêm/sửa/xoá.
-- [x] EDIT Link khi đã đăng nhập có thể thêm/sửa/xoá booking và upload/mở/xoá
-      tài liệu; `shareToken` được giữ trong luồng Booking.
-- [x] Đã test thực tế: upload/open/replace/delete tài liệu; PDF/JPG/PNG/WebP;
-      file >8 MB; file `.txt`; VIEW Link; EDIT Link; truy cập không có quyền.
-- [x] Sau đợt sửa lint liên quan ngày 2026-09-18: `npm run typecheck` pass và
-      `npm run lint` không còn error (warning cũ không liên quan vẫn có thể tồn tại).
+- [x] Danh sách booking theo trip; CRUD thêm/sửa/xoá.
+- [x] Upload private document PDF/JPG/PNG/WebP, giới hạn 8 MB; validate cả client và server.
+- [x] File private lưu tại `storage/bookings`, không expose trực tiếp qua `public/`.
+- [x] Route `/api/bookings/[bookingId]/document` kiểm tra quyền trước khi trả file.
+- [x] Khi replace/remove/delete booking, file cũ được dọn best-effort.
+- [x] OWNER/EDITOR thao tác; VIEWER/View Link chỉ xem; Edit Link đã giữ `shareToken`.
+- [x] Đã kiểm thử upload/open/replace/remove/delete, file hợp lệ/không hợp lệ và permission.
 
-Chưa làm:
+Nâng cấp sau MVP:
 
-- [ ] Email forwarding để tự động import/tạo booking từ email.
-- [ ] Chuyển private storage sang S3-compatible/object storage cho production
-      scale; local private storage hiện phù hợp cho MVP/local deploy.
-
----
+- [ ] Email forwarding để import booking tự động.
+- [ ] S3-compatible/object storage cho production scale.
 
 ## M06 — Checklist
 
@@ -499,354 +443,137 @@ Nâng cấp sau MVP:
 - **Code:** `src/features/share/`, `src/server/repositories/{collaborator,trip-invitation,share-link}.repository.ts`,
   `src/server/services/{permission,invitation,collaborator,share-link}.service.ts`,
   routes `/invitations`, `/share/[token]`, models `Collaborator`, `TripInvitation`, `ShareLink`
-- **Trạng thái:** 🟨 Gần hoàn thiện — Invite/Collaborator permission đã chạy và test; Share Link tạo/revoke/expiry + page-level access đã có, còn nối Edit Link vào toàn bộ Server Action
+- **Trạng thái:** ✅ Xong phạm vi MVP hiện tại
 
-Đã làm — Invite & Collaborator:
+Đã làm:
 
-- [x] OWNER vẫn được suy ra từ `Trip.ownerId`; `CollaboratorRole` chỉ có
-      `EDITOR`/`VIEWER`, không tạo OWNER giả trong collaborator.
-- [x] Thêm `TripInvitation` + `InvitationStatus`
-      (`PENDING/ACCEPTED/DECLINED`), migration
-      `20260915044309_add_trip_invitations`.
-- [x] Mời đích danh qua email với role EDITOR/VIEWER; người chưa có tài khoản
-      vẫn có thể giữ invitation PENDING.
-- [x] Trang `/invitations`: accept/decline; Header có mục **Lời mời** và badge
-      đếm số pending invitation; badge đã test thành công.
-- [x] OWNER có `CollaboratorManager`: đổi EDITOR↔VIEWER, xoá thành viên.
-- [x] Permission matrix đã test:
-      OWNER chỉnh sửa + quản lý thành viên/xoá trip;
-      EDITOR chỉnh Trip/M02/M04/M06;
-      VIEWER chỉ xem.
-- [x] Logic re-invite không bị kẹt bởi invitation `ACCEPTED` cũ sau khi
-      collaborator đã bị xoá: nếu không còn collaborator và invitation không
-      còn PENDING thì record được reopen thay vì chặn vĩnh viễn.
-
-Đã làm — Share Link:
-
-- [x] `share-link.repository.ts` + `share-link.service.ts`: tạo token bằng
-      `crypto.randomBytes(24)`, list theo trip, resolve token, revoke bằng
-      `revokedAt`, kiểm tra `expiresAt`.
-- [x] OWNER tạo được **VIEW** hoặc **EDIT** link; expiry hỗ trợ
-      Không hết hạn / 1 ngày / 7 ngày / 30 ngày.
-- [x] `ShareLinkManager`: tạo link, liệt kê link từ DB, copy URL, hiển thị
-      active/expired/revoked và thu hồi link.
-- [x] Route `src/app/[locale]/(app)/share/[token]/page.tsx` resolve token rồi
-      chuyển tới `/trips/[tripId]?shareToken=...`.
-- [x] `permission.service.ts` có `getTripShareLinkType()`:
-      token sai/trip khác/revoked/expired → vô hiệu;
-      VIEW → cho xem;
-      EDIT → chỉ cho `canEdit` khi user đã đăng nhập.
-- [x] `trip.service.getTripDetail(id, viewerId, shareToken)` + Trip Detail đọc
-      `searchParams.shareToken`, nên PRIVATE trip có View/Edit Link hợp lệ có
-      thể mở đúng thay vì 404.
-- [x] `checklist.service.ts` đã truyền token vào `assertCanViewTrip`/
-      `assertCanEditTrip`; lỗi PRIVATE + Share Link khi load Checklist đã được
-      xử lý và user xác nhận test thành công.
-- [x] Các lần `npm run typecheck` sau repository/service/actions/UI/route/
-      permission integration đều chạy sạch theo kết quả user cung cấp.
-
-Chưa làm để đóng M07:
-
-- [ ] Truyền `shareToken` vào **Server Action mutate** của M01 Trip/Traveler,
-      M02 Itinerary, M04 Budget, M06 Checklist. Hiện EDIT Link có thể làm
-      page-level `canEdit = true`, nhưng mutation vẫn cần token ở backend.
-- [ ] Giữ `shareToken` qua các internal link/query như edit itinerary,
-      `?editExpense=`, cancel edit và redirect sau Server Action.
-- [ ] Test end-to-end EDIT Link: login → thêm/sửa/xoá ở M01/M02/M04/M06 →
-      revoke link → quyền sửa mất ngay; test expiry tương tự.
-- [ ] Chạy lại matrix cuối cho View Link anonymous, Edit Link authenticated,
-      revoked/expired token và token của trip khác trước khi đánh dấu M07 ✅.
-
----
+- [x] OWNER suy ra từ `Trip.ownerId`; collaborator chỉ EDITOR/VIEWER.
+- [x] Invitation PENDING/ACCEPTED/DECLINED, trang `/invitations`, badge lời mời.
+- [x] OWNER quản lý collaborator: đổi EDITOR↔VIEWER, xoá thành viên.
+- [x] VIEW/EDIT Share Link, token random, expiry, revoke, resolve token.
+- [x] PRIVATE Trip mở đúng qua View/Edit Link hợp lệ.
+- [x] Edit Link yêu cầu đăng nhập trước khi cho mutation.
+- [x] `shareToken` được truyền xuyên suốt Trip/Traveler, Itinerary, Budget, Checklist, Booking và các internal link/redirect liên quan.
+- [x] Permission matrix OWNER / EDITOR / VIEWER / View Link / Edit Link / revoked-expired token đã được kiểm thử end-to-end.
 
 ## M08 — CopyPlan Engine
 
 - **Ưu tiên:** P0 · **Spec:** mục 3, 6b, 7, 13
-- **Code:** `src/features/copy-plan/`, model `PlanCopy`, `Trip.forkedFromPlanId`
-- **Trạng thái:** ⬜ Chưa bắt đầu
+- **Code:** `src/features/copy-plan/`, `src/server/services/copy-plan.service.ts`, model `PlanCopy`, `Trip.forkedFromPlanId`
+- **Trạng thái:** ✅ Xong phạm vi MVP hiện tại
 
-Chưa làm:
+Đã làm:
 
-- [ ] Fork 1-click (toàn bộ hoặc từng ngày)
-- [ ] Tính Retention Rate khi copy xong
-- [ ] Ghi nhận Completion Rate / Post-trip Rating sau khi copier đánh dấu "đã đi"
-- [ ] Guardrail: chặn self-copy tính điểm, device fingerprint (mục 13)
-
----
+- [x] Copy toàn bộ Public Plan.
+- [x] Copy riêng một ngày hoặc nhiều ngày được chọn; remap ngày về liên tiếp.
+- [x] Trip copy trở thành workspace PRIVATE riêng, lưu `forkedFromPlanId`.
+- [x] Lưu `PlanCopy` với `originalPlanId`, `copierUserId`, device hash, `initialItemCount`.
+- [x] Tính lại Retention Rate dựa trên các item còn giữ `copiedFromItemId`.
+- [x] `completeCopyPlan()` cập nhật `PlanCopy.completed = true` và `Trip.status = COMPLETED`.
+- [x] Post-trip Rating 1–5 chỉ cho copier/owner của Trip copy và chỉ sau khi completed.
+- [x] Guardrail Reputation: self-copy không tính; một user/device chỉ tính một lần.
+- [x] UI `CopyPlanProgress` hiển thị completion/rating trên Trip copy.
+- [x] Đã kiểm thử M08.
 
 ## M09 — Reputation Engine
 
 - **Ưu tiên:** P1 · **Spec:** mục 3, 7, 8, 9, 13, 15
-- **Code:** `src/app/[locale]/(app)/creators/[creatorId]/{page,edit/page}.tsx`,
-  `src/features/profile/`, `src/server/services/creator-profile.service.ts`,
-  `src/server/repositories/comment.repository.ts`,
-  `src/server/storage/avatar.ts`, model `CreatorReputation`, `Citation`,
-  `PlanCopy`
-- **Trạng thái:** 🟨 Phase 1 + Phase 2 xong (profile card + số liệu đóng
-  góp thật + edit hồ sơ/avatar/sở thích du lịch), chưa làm phần
-  scoring/CopyPlan (2026-09-04)
+- **Code:** `src/server/services/reputation.service.ts`, `src/server/services/cite-trust.service.ts`,
+  `src/server/repositories/creator-reputation.repository.ts`, Creator Profile và models `PlanReputation`,
+  `CreatorReputation`, `PlanCopy`, `Citation`
+- **Trạng thái:** ✅ Xong phạm vi MVP hiện tại
 
-Đã làm (Phase 1 — theo yêu cầu "làm thêm tính năng profile, click vào xem
-được profile như 1 thẻ hội viên, ghi nhận các đóng góp"):
+Đã làm:
 
-- [x] Trang `/creators/[creatorId]` thật thay cho placeholder cũ — style
-      "thẻ hội viên" (gradient, avatar chữ cái đầu tên, "Tham gia từ {ngày}")
-  - lưới 4 ô thống kê đóng góp
-- [x] `getCreatorProfile(userId)` — số liệu **thật, đếm trực tiếp từ DB**,
-      không mock: số trip đã tạo (`Trip.count` theo `ownerId`), số location
-      tag đã thêm (`LocationTag.count` theo `ownerId`), tổng `citeTrustScore`
-      cộng dồn trên các tag đó ("Điểm tin cậy tag" — chỉ là phép cộng đơn
-      giản trên field có sẵn, **không phải** công thức Cite Trust Score có
-      trọng số ở mục 8), và số comment (`Comment.count` theo `userId`) — hiện đếm trực tiếp dữ liệu
-      Comment thật của M02, không còn giả định luôn bằng 0
-- [x] Gắn link tới profile ở mọi nơi đang hiện tên chủ sở hữu: tên user
-      đăng nhập ở `SiteHeader`, "by {name}" trên card trip ở trang chủ, "by
-      {name}" trên card tag ở `/tags`, "Created by {owner}" ở trang chi tiết
-      trip — dùng `t.rich("by"/"meta", {link: ...})` để chỉ phần tên là link,
-      không phải cả câu
-- [x] Trang public, ai cũng xem được (không gate đăng nhập) — chỉ lộ số
-      liệu tổng hợp, không lộ nội dung trip riêng tư nào
+- [x] Creator Profile + edit hồ sơ/avatar/sở thích du lịch.
+- [x] CopyPlan Score: Copy Volume hiệu chỉnh bởi Retention, Completion Rate, Post-trip Rating, Diversity Bonus và decay.
+- [x] Guardrail CopyPlan Reputation: loại self-copy, dedupe theo user và device.
+- [x] Snapshot `PlanReputation` cho Public Plan.
+- [x] Creator Reputation tổng hợp từ các Public Plan, ưu tiên plan mới hơn bằng time-decay.
+- [x] Citation sync từ itinerary về tag canonical; self-cite không được tính điểm.
+- [x] Cite Trust Score tính từ eligible cite, quality, Verified Visit và cross-plan consistency.
+- [x] Verified Visit chỉ owner Trip, yêu cầu Trip `COMPLETED`, tag phải nằm trong itinerary.
+- [x] `runReputationScoringJob()` chạy theo thứ tự: Plan Reputation → Creator Reputation → Citation sync → Cite Trust.
+- [x] Đã kiểm thử M09.
 
-Đã làm (Phase 2 — theo yêu cầu "thiết kế profile icon chuẩn đi, cho phép
-update 1 số thông tin, điền sở thích liên quan du lịch, để làm cơ sở
-matching, suggestion sau này"):
+Ghi chú:
 
-- [x] Avatar ảnh thật — chọn hướng **upload ảnh, lưu local disk** (không
-      URL/emoji) theo lựa chọn của user. `src/server/storage/avatar.ts`:
-      validate mime type (jpeg/png/webp/gif) + giới hạn 4MB, ghi file vào
-      `public/uploads/avatars/<userId>-<timestamp>.<ext>`, Next.js tự
-      serve như static file, không cần route riêng. Dọn file avatar cũ
-      sau khi lưu file mới thành công (best-effort, không throw).
-  - `next.config.ts`: nâng `serverActions.bodySizeLimit` lên `5mb` (mặc
-    định 1MB không đủ cho ảnh).
-  - Docker: thêm named volume `avatar_uploads:/app/public/uploads` để
-    ảnh không mất khi rebuild image.
-- [x] `User` thêm field `bio`, `travelStyle`, `budgetLevel`,
-      `travelInterests` (migration `add_profile_fields`) — union cố định
-      ở app-layer (`src/features/profile/preferences.ts`), cùng cách làm
-      với `LocationTag.category`, không phải DB enum, thêm lựa chọn mới
-      không cần migration.
-  - `TRAVEL_STYLES`: Solo/Couple/Family/Group/Backpacker.
-  - `BUDGET_LEVELS`: Tiết kiệm/Tầm trung/Cao cấp.
-  - `TRAVEL_INTERESTS`: 10 mục cố định (Biển, Núi, Thành phố, Ẩm thực,
-    Văn hoá & lịch sử, Mạo hiểm, Giải trí đêm, Nghỉ dưỡng, Chụp ảnh,
-    Phượt tiết kiệm) — multi-select qua checkbox.
-- [x] Trang `/creators/[creatorId]/edit` — chỉ chủ sở hữu mới vào được
-      (redirect về login nếu chưa đăng nhập, redirect về trang profile
-      nếu không phải chính mình — check lại lần 2 ngay trong
-      `updateProfileAction`, không chỉ chặn ở UI). Form: avatar (có
-      preview qua `URL.createObjectURL`), tên, bio (textarea, tối đa 280
-      ký tự), 2 select phong cách/ngân sách (tuỳ chọn), lưới checkbox sở
-      thích.
-- [x] Trang profile hiện thêm: ảnh đại diện thật (fallback về chữ cái
-      đầu tên nếu chưa có), bio, và badge "Sở thích du lịch" (phong
-      cách + ngân sách + các sở thích đã chọn) — nút "Edit profile" chỉ
-      hiện với chính chủ.
-- **Chỉ dừng ở thu thập dữ liệu có cấu trúc** — chưa có bất kỳ thuật
-  toán matching/suggestion nào đọc `travelInterests`/`travelStyle`/
-  `budgetLevel`; đây là nền tảng dữ liệu để làm việc đó sau, chưa phải
-  tính năng matching thật.
-
-Chưa làm (vẫn thuộc M09 gốc — cần Reputation Engine đầy đủ):
-
-- [ ] Công thức CopyPlan Score (mục 7) — background job, không real-time
-- [ ] Công thức Cite Trust Score có trọng số đầy đủ (mục 8) — hiện chỉ có
-      tổng đơn giản, xem "Đã làm" ở trên
-- [ ] Creator Reputation tổng hợp có trọng số theo plan mới nhất
-      (`CreatorReputation` model vẫn chưa được ghi bởi bất kỳ service nào)
-- [ ] Scoring job scheduler (cron/queue — mục 15)
-- [ ] Guardrail chống gian lận (mục 13): wash-trading cluster, self-cite
-- [ ] Thuật toán matching/suggestion dựa trên sở thích du lịch — mới có
-      dữ liệu, chưa có logic dùng nó
-- [ ] Resize/nén ảnh avatar phía server (hiện lưu nguyên file gốc, giới
-      hạn duy nhất là 4MB)
-
-Ghi chú kỹ thuật:
-
-- Card trip ở trang chủ trước đó bọc toàn bộ card trong 1 `<Link>` — thêm
-  link riêng cho tên chủ sở hữu bên trong sẽ tạo `<a>` lồng `<a>`, không
-  hợp lệ HTML. Xử lý bằng pattern "stretched link": `<Link>` phủ
-  `absolute inset-0` làm nền cho cả card, nội dung phía trên đặt
-  `pointer-events-none`, chỉ bật lại `pointer-events-auto` ở đúng link
-  tên chủ sở hữu.
-- Base UI `Select`/`Checkbox` không nhận `value=""` làm giá trị "chưa
-  chọn" một cách gọn gàng — dùng sentinel string `"none"` (giống pattern
-  đã có ở `itinerary-item-form.tsx` cho tag tuỳ chọn), coi `"none"` là
-  `undefined` ở boundary của Server Action.
-- `public/` được `next start` serve trực tiếp từ đĩa tại runtime (app
-  này không dùng `output: "standalone"`), nên file ghi vào
-  `public/uploads/avatars/` sau khi build/start vẫn được serve ngay lập
-  tức ở `/uploads/avatars/<file>` — không cần route/API riêng để trả ảnh.
-
----
+- Reputation dùng background scoring job; completion/rating không bắt buộc tính lại score ngay trong cùng request.
 
 ## M10 — Plan Marketplace / Explore
 
 - **Ưu tiên:** P1 · **Spec:** mục 4, 5, 6b, 11
-- **Code:** `src/server/services/marketplace.service.ts`, `src/app/page.tsx`, model `Interaction`, `Trip` (visibility/status)
-- **Trạng thái:** 🟨 Đang làm
+- **Code:** `src/app/[locale]/(app)/explore/page.tsx`, `src/app/[locale]/(app)/saved/page.tsx`,
+  `src/server/services/marketplace.service.ts`, `src/server/services/saved-plan.service.ts`,
+  `src/server/repositories/saved-plan.repository.ts`, `src/features/marketplace/actions.ts`,
+  model `Interaction`
+- **Trạng thái:** ✅ Xong phạm vi MVP hiện tại
 
 Đã làm:
 
-- [x] Home page (`/`) có ô search theo điểm đến (`?q=`), query thật vào
-      DB (`Trip.visibility = PUBLIC`, `destination` chứa từ khoá, không
-      phân biệt hoa/thường), xếp hạng rule-based: khớp chính xác > khớp
-      đầu chuỗi > chứa từ khoá — **không dùng AI**, đúng tinh thần mục 8.1
-- [x] Không có từ khoá → hiện danh sách plan public gần nhất thay vì rỗng
-- [x] Route `/explore`, `/saved` vẫn placeholder — logic search thật hiện
-      nằm ở Home page, **chưa di chuyển/hợp nhất vào `/explore`**
-
-Chưa làm:
-
-- [ ] Hợp nhất search ở Home vào đúng trang Explore/Marketplace (mục 4),
-      hoặc quyết định Home page = Explore rút gọn
-- [ ] Filter theo ngân sách/CopyPlan Score/trạng thái (hiện chỉ lọc theo
-      điểm đến)
-- [ ] Like / Bookmark (không tính điểm uy tín — mục 3.2)
-- [ ] Saved Library thật (query theo `Interaction.type = BOOKMARK`)
-- [ ] Rate-limit Like/Bookmark theo thiết bị/tài khoản (mục 13)
-
----
+- [x] Explore/Marketplace thật, query Public Plan từ DB.
+- [x] Search điểm đến + filter/sort theo các tiêu chí Marketplace hiện có.
+- [x] Card plan hiển thị thông tin cần thiết và tích hợp CopyPlan.
+- [x] Bookmark/Unbookmark qua `Interaction.type = BOOKMARK`.
+- [x] Saved Library riêng cho từng user.
+- [x] Owner không cần bookmark chính plan của mình.
+- [x] Kiểm thử end-to-end M10 thành công.
 
 ## M11 — Tag & Tip Library
 
 - **Ưu tiên:** P1 · **Spec:** mục 4, 8.1
-- **Code:** `src/features/tag-tip/`, model `LocationTag`
-- **Trạng thái:** 🟨 Đang làm (lookup + dedup lõi + inline dedup trong
-  itinerary đã xong; còn geo-radius, citation và CRUD tag)
+- **Code:** `src/features/tag-tip/`, `src/server/services/location-tag.service.ts`,
+  `src/server/services/tag-dedup.service.ts`, `src/server/repositories/location-tag.repository.ts`,
+  model `LocationTag`
+- **Trạng thái:** ✅ Xong phạm vi MVP hiện tại
 
 Đã làm:
 
-- [x] Tách màn hình tạo tag ra `/tags/new` riêng (theo yêu cầu "Create tag
-      screen nên làm lại") — không còn form chìm ở cuối trang list. Trang
-      `/tags` có nút "Tạo tag" ở header (giống nút "Tạo trip" ở dashboard
-      trips) và luôn trỏ tới `/tags/new`; trang đó tự redirect sang
-      `/login?callbackUrl=/tags/new` nếu chưa đăng nhập (cùng convention
-      với các link `/trips` trong `SiteHeader`, gate nằm ở route đích chứ
-      không lặp lại ở từng nơi có link tới). Empty-state khi tìm không ra
-      kết quả có nút "Tạo tag này" mang theo từ khoá vừa gõ để prefill
-      sẵn tên trên `/tags/new`.
+- [x] `/tags` public: search theo tên, filter category, trust badge, creator link.
+- [x] `/tags/new`: tạo tag, yêu cầu login, hỗ trợ category, content, opening hours, lat/lng.
+- [x] 7 category cố định cho UI.
+- [x] Dedup fuzzy theo normalize + Levenshtein/token similarity, cùng category, threshold `0.72`.
+- [x] Inline dedup suggestion trong Itinerary Item Form.
+- [x] Nếu nghi trùng: gợi ý dùng lại; user vẫn có thể force-create và lưu `possibleDuplicateOfId`.
+- [x] LocationTag có thể gắn vào Itinerary; Citation được sync từ itinerary.
+- [x] Cite Trust Score/Verified Visit của M09 được hiển thị và sử dụng trong luồng tag.
+- [x] Map picker/toạ độ đã có trong form tạo tag.
 
-- [x] Trang `/tags` (public, không cần đăng nhập để xem/tìm) — search theo
-      tên + filter theo category, card hiện icon, category badge, trust
-      badge (🟢/🟡/⚪ theo `getTrustTier`), mô tả, chủ sở hữu
-- [x] 7 category cố định cho UI (`src/features/tag-tip/categories.ts`):
-      RESTAURANT, ATTRACTION, HOTEL, CAR_RENTAL, TRANSPORT, SIM, OTHER —
-      đáp ứng yêu cầu lookup ăn uống/tham quan/hotel **và** support (thuê
-      xe, di chuyển, SIM)
-- [x] Rule-based dedup (`tag-dedup.service.ts`): Levenshtein similarity,
-      so trong cùng category, ngưỡng `DUPLICATE_THRESHOLD = 0.72` — **chưa**
-      thêm điều kiện bán kính toạ độ (spec mục 8.1 có nhắc, nhưng tag hiện
-      chưa bắt buộc nhập lat/lng nên chưa áp dụng được ngay)
-- [x] Inline dedup trong `ItineraryItemForm`: gõ tên địa điểm → tìm ứng
-      viên gần giống và cho chọn dùng lại ngay. Logic normalize/fuzzy được
-      dùng chung với `tag-dedup.service.ts`, không còn bản Levenshtein riêng
-      trong client.
-- [x] `LocationTag` hỗ trợ `openingHours` dạng `HH:mm-HH:mm`; form tạo tag có
-      2 ô giờ mở/đóng cửa, validate cặp giờ và hỗ trợ khung qua nửa đêm.
-- [x] Tạo tag (`createTagAction`) → nếu nghi trùng, hiện cảnh báo + nút
-      "Vẫn tạo mới"; nếu user vẫn tạo, set `possibleDuplicateOfId` trỏ về
-      tag gốc — đúng guardrail mục 13 (không tính là nguồn độc lập)
-- [x] Seed 8 location tag mẫu (đa category, vài cái có `citeTrustScore` >
-      0 để demo đủ 3 trạng thái trust badge — điểm này hiện set tay qua
-      seed, chưa có cơ chế tự tính, xem M09)
-- [x] Verify qua trình duyệt thật: search + filter category đúng; gõ tên
-      gần giống 1 tag đã có (cùng category) → bị chặn tạo, hiện gợi ý dùng
-      lại; bấm "Vẫn tạo mới" → tạo được, DB có `possible_duplicate_of`
-      trỏ đúng về tag gốc (check trực tiếp qua `psql`)
+Nâng cấp sau MVP:
 
-Bug đã fix trong lúc build: React tự xoá field uncontrolled sau mỗi lần
-Server Action chạy — lúc phát hiện trùng, ô "Tên" bị xoá trắng ngay khi
-user cần thấy lại nó nhất để quyết định. Fix bằng cách server trả lại giá
-trị đã submit (`submitted`) + tăng 1 counter (`attempt`) dùng làm `key` của
-`<form>` để remount và áp `defaultValue` mới — xem
-`src/features/tag-tip/{actions.ts,create-tag-form.tsx}`.
-
-Chưa làm:
-
-- [ ] Bán kính toạ độ trong dedup — cần bắt buộc lat/lng khi tạo LocationTag
-      (hiện optional, chưa có input map/pick toạ độ trên form)
-- [ ] Citation thật (model `Citation`) khi 1 plan trích dẫn 1 tag — chưa
-      có UI/luồng nào tạo `Citation`, nên `citeTrustScore` chưa tự tăng
-- [ ] Self-cite: quy tắc (không cộng điểm khi tự cite đồ của mình) chỉ áp
-      dụng được khi có Citation thật; chưa implement vì lý do trên
-- [ ] Sửa/xoá tag đã tạo
-
----
+- [ ] Dedup có thể bổ sung khoảng cách địa lý/radius để bám spec chặt hơn khi dữ liệu lớn.
+- [ ] CRUD sửa/xoá tag có thể mở rộng nếu cần quản trị nội dung đầy đủ.
 
 ## M12 — Travel Memory
 
 - **Ưu tiên:** P2 · **Spec:** mục 4, 6a
 - **Code:** `src/features/story/`, `src/server/services/story.service.ts`,
-  `src/server/storage/story-photo.ts`, model `StorySlide`
-- **Trạng thái:** 🟨 Phase 1 xong — **Trip Story**, cách hiểu riêng của mục
-  này (2026-09-07)
+  `src/server/storage/story-photo.ts`, `src/server/services/copy-plan.service.ts`,
+  `src/server/services/reputation.service.ts`, Budget Board và model `StorySlide`
+- **Trạng thái:** ✅ Xong phạm vi MVP hiện tại (2026-10-07)
 
-Đã làm (Trip Story — theo yêu cầu "thêm 1 tính năng mà bạn cho rằng cực
-kỳ độc đáo và hút user trẻ, những bạn muốn di chuyển và rất thích viết
-story của mình"):
+Đã làm:
 
-- **Không phải diễn giải đúng nghĩa đen của spec** ("album, note, tổng
-  kết chi phí, review itinerary" — vẫn chưa làm, xem "Chưa làm" bên
-  dưới). Đây là ý tưởng riêng để lấp khoảng trống data model mà M12 chưa
-  có: 1 định dạng "story" kiểu Instagram/TikTok Stories — vuốt/chạm để
-  xem từng đoạn, tự chuyển sau vài giây, do chính chủ trip viết tay
-  (không AI, không tự sinh caption).
-- [x] Model `StorySlide` (migration `add_story_slides`): `day` (null =
-      slide bìa, không gắn ngày cụ thể), `caption` (bắt buộc, tối đa 220
-      ký tự), `theme` (1 trong 5 tông màu gradient cố định — union
-      app-level, coerce ở boundary, cùng pattern với `ExpenseCategory`),
-      `photo` (ảnh nền tuỳ chọn, upload local disk qua
-      `src/server/storage/story-photo.ts`, cùng cơ chế với avatar), thứ
-      tự theo `sortOrder`.
-- [x] Card "Trip Story" trên trang chi tiết trip: thumbnail thu nhỏ mỗi
-      slide (gradient hoặc ảnh + trích caption), nút "Xem story", form
-      thêm slide (chọn ngày/bìa, viết caption, chọn 1 trong 5 tông màu,
-      upload ảnh tuỳ chọn), xoá slide (chỉ chủ sở hữu).
-- [x] Trang xem story `/trips/[tripId]/story` (`StoryViewer`, client
-      component): full-screen dạng thẻ tỉ lệ điện thoại, thanh tiến trình
-      nhiều đoạn ở trên (như Instagram Stories), tự chuyển đoạn sau 6
-      giây, chạm trái/phải hoặc phím mũi tên để lùi/tiến, nút Share
-      (copy link) và nút Đóng.
-- [x] **Cố ý nới lỏng quy tắc truy cập so với `getTripDetail`** (mục
-      3.3/6b nói plan public vẫn cần đăng nhập mới xem chi tiết):
-      `getStoryView` cho xem story của trip PUBLIC **không cần đăng
-      nhập** — đúng tinh thần 1 link Instagram/TikTok story mở ra là xem
-      được ngay, không bắt tạo tài khoản. Trip PRIVATE vẫn chỉ chủ sở
-      hữu xem được (404 với người khác, kể cả đã đăng nhập).
-- [x] Debug đáng chú ý: khi test, click/gõ phím qua công cụ automation
-      đột nhiên không có tác dụng dù không có lỗi console — hoá ra do
-      cửa sổ Chrome bị mất focus ở cấp hệ điều hành (khả năng do lệnh
-      `open -a Docker` trước đó làm nổi cửa sổ Docker Desktop lên trên).
-      Chuyển sang thao tác trực tiếp qua JS (set giá trị input bằng
-      native setter + dispatch event, `.click()` trên phần tử,
-      `form.requestSubmit()`) để tiếp tục test không phụ thuộc focus hệ
-      điều hành — xác nhận đây là hạn chế môi trường test, không phải
-      bug của tính năng.
-- [x] Verify qua trình duyệt thật + Postgres thật: tạo 2 slide (1 slide
-      bìa tông OCEAN, 1 slide "Ngày 1" tông FOREST) → thumbnail và story
-      viewer hiện đúng màu/caption/badge ngày; tự chuyển đoạn đúng sau 6s;
-      chạm trái quay lại đúng đoạn trước; xoá 1 slide → đúng slide biến
-      mất, slide còn lại không đổi; đổi trip sang PUBLIC rồi đăng xuất →
-      xem story vẫn được, không bị chặn đăng nhập; đổi lại PRIVATE → xem
-      story trả về 404 khi chưa đăng nhập; xoá hết slide → hiện đúng màn
-      "Chưa có story" thay vì viewer trống/vỡ. `lint`/`typecheck`/`build`
-      pass. Xoá dữ liệu test sau khi xong.
+- [x] Trip Story: slide theo ngày/bìa, caption, theme, ảnh tuỳ chọn, thumbnail và Story Viewer full-screen.
+- [x] Story Viewer tự chuyển slide, điều hướng trái/phải, share link; PUBLIC Story xem không cần login, PRIVATE chỉ owner.
+- [x] Note/album sau chuyến đi dùng Story; tổng kết chi phí tái sử dụng Budget Board, không tạo module chi phí trùng lặp.
+- [x] CopyPlan completion: `PlanCopy.completed = true` đồng thời `Trip.status = COMPLETED`.
+- [x] Post-trip Rating 1–5 chỉ được ghi sau khi CopyPlan hoàn thành.
+- [x] Completion + Post-trip Rating được Reputation Engine đọc vào CopyPlan Score qua background scoring job.
+- [x] Chỉ OWNER được chuyển Trip sang `COMPLETED` hoặc đổi Trip từ `COMPLETED` về trạng thái khác.
+- [x] Evidence check MVP dùng ảnh Story do chính owner upload.
+- [x] `verifiedByAuthor = true` khi Trip `COMPLETED` và có Story photo; không có evidence thì vẫn `COMPLETED` nhưng không Verified.
+- [x] Nếu Trip đã `COMPLETED` rồi mới upload ảnh Story, `verifiedByAuthor` được tính lại tự động.
+- [x] Xoá Story photo cuối cùng hoặc chuyển Trip khỏi `COMPLETED` sẽ reset `verifiedByAuthor = false`.
+- [x] UI hiển thị badge **Đã xác minh chuyến đi** khi `verifiedByAuthor = true`.
+- [x] Runtime test toàn bộ luồng M12 thành công ngày 2026-10-07.
 
-Chưa làm:
+Nâng cấp sau MVP:
 
-- [ ] Phần đúng nghĩa đen ban đầu của M12 theo spec: album ảnh tổng hợp
-      cả trip, tổng kết chi phí tự động (có `Budget Board`/M04 rồi,
-      chưa nối vào đây), review lại itinerary sau khi đi
-- [ ] Feed dữ liệu ngược vào Reputation Engine (M09) — Trip Story hiện
-      không ảnh hưởng CopyPlan Score/Cite Trust Score
-- [ ] Sửa lại thứ tự slide đã tạo (kéo-thả) — hiện chỉ thêm nối đuôi +
-      xoá, không sắp xếp lại được
-- [ ] Sửa nội dung 1 slide đã tạo (hiện chỉ thêm/xoá)
-- [ ] Đếm lượt xem/lượt share thật (nút Share chỉ copy link, không có số
-      liệu lượt xem)
-
----
+- [ ] Kéo-thả/sắp xếp lại Story slide.
+- [ ] Sửa nội dung slide đã tạo.
+- [ ] View/share analytics.
+- [ ] Có thể bổ sung evidence `used booking` hoặc check-in khi model có trạng thái xác nhận sử dụng thực tế.
 
 ## Docker / Local Deploy
 
@@ -888,6 +615,20 @@ WEB_PORT=3001 docker compose up --build
 ---
 
 ## Changelog
+
+
+### 2026-10-07
+
+- **Hoàn thiện M12 — Travel Memory:**
+  - Rà soát Story, Budget, CopyPlan và Reputation để tái sử dụng chức năng đã có thay vì tạo module trùng lặp.
+  - Bổ sung Owner-only `COMPLETED`: chỉ chủ Trip được xác nhận hoặc đổi trạng thái khỏi `COMPLETED`.
+  - Bổ sung evidence check bằng Story photo của owner và đồng bộ `Trip.verifiedByAuthor`.
+  - Trip đã `COMPLETED` rồi mới thêm/xoá Story photo vẫn tự tính lại Verified.
+  - Thêm badge **Đã xác minh chuyến đi** trên Trip Detail.
+  - Xác nhận Post-trip Rating 1–5 + Completion được đưa vào CopyPlan Score/Reputation background job.
+  - Runtime test M12 thành công; đánh dấu M12 ✅.
+- Đồng bộ lại trạng thái tài liệu cho M01, M04, M05, M07, M08, M09, M10, M11 và M12 theo tiến độ hiện tại.
+
 
 ### 2026-09-04
 
