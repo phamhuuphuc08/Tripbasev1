@@ -121,8 +121,17 @@ export default async function TagsPage({
             const Icon = CATEGORY_ICON[tag.category as TagCategory] ?? Sparkles;
             const tier = getTrustTier(tag.citeTrustScore);
             return (
-              <Card key={tag.id} className="gap-2 py-4">
-                <CardContent className="flex flex-col gap-1.5 text-sm">
+              <Card
+                key={tag.id}
+                className="hover:border-primary/40 relative gap-2 py-4 transition-colors hover:shadow-sm"
+              >
+                <Link
+                  href={`/tags/${tag.id}`}
+                  aria-label={`Xem ${tag.title}`}
+                  className="absolute inset-0 z-0 rounded-xl"
+                />
+
+  <CardContent className="pointer-events-none relative z-10 flex flex-col gap-1.5 text-sm">
                   <div className="flex items-start justify-between gap-2">
                     <span className="flex items-center gap-1.5 font-medium">
                       <Icon className="text-primary size-4 shrink-0" />
@@ -149,7 +158,7 @@ export default async function TagsPage({
                         link: (chunks) => (
                           <Link
                             href={`/creators/${tag.owner.id}`}
-                            className="hover:text-foreground hover:underline"
+                            className="pointer-events-auto hover:text-foreground hover:underline"
                           >
                             {chunks}
                           </Link>

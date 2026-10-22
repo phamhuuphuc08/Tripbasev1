@@ -1,8 +1,11 @@
 "use client";
 
+import { Check, X } from "lucide-react";
 import { useActionState } from "react";
 import { useTranslations } from "next-intl";
+
 import { Button } from "@/components/ui/button";
+
 import {
   acceptInvitationAction,
   declineInvitationAction,
@@ -19,46 +22,110 @@ const ERROR_KEYS = {
   INVITATION_EMAIL_MISMATCH: "errors.emailMismatch",
   USER_NOT_FOUND: "errors.userNotFound",
   RESPONSE_FAILED: "errors.responseFailed",
-} as const satisfies Record<InvitationResponseError, string>;
+} as const satisfies Record<
+  InvitationResponseError,
+  string
+>;
 
 export function InvitationResponseButtons({
   invitationId,
+  tripId,
 }: {
   invitationId: string;
+  tripId: string;
 }) {
-  const t = useTranslations("share.invitations");
+  const t =
+    useTranslations(
+      "share.invitations",
+    );
 
-  const [acceptState, acceptAction, acceptPending] = useActionState(
-    acceptInvitationAction.bind(null, invitationId),
+  const [
+    acceptState,
+    acceptAction,
+    acceptPending,
+  ] = useActionState(
+    acceptInvitationAction.bind(
+      null,
+      invitationId,
+      tripId,
+    ),
     initialState,
   );
 
-  const [declineState, declineAction, declinePending] = useActionState(
-    declineInvitationAction.bind(null, invitationId),
+  const [
+    declineState,
+    declineAction,
+    declinePending,
+  ] = useActionState(
+    declineInvitationAction.bind(
+      null,
+      invitationId,
+    ),
     initialState,
   );
 
-  const pending = acceptPending || declinePending;
-  const error = acceptState.error ?? declineState.error;
+  const pending =
+    acceptPending ||
+    declinePending;
+
+  const error =
+    acceptState.error ??
+    declineState.error;
 
   return (
     <div className="flex flex-col gap-3">
       {error && (
-        <p role="alert" className="text-destructive text-sm">
-          {t(ERROR_KEYS[error])}
-        </p>
+        <div
+          role="alert"
+          className="border-destructive/20 bg-destructive/5 rounded-xl border px-3 py-2"
+        >
+          <p className="text-destructive text-sm">
+            {t(
+              ERROR_KEYS[
+                error
+              ],
+            )}
+          </p>
+        </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
-        <form action={acceptAction}>
-          <Button type="submit" disabled={pending}>
-            {acceptPending ? t("acceptPending") : t("accept")}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <form
+          action={acceptAction}
+          className="w-full"
+        >
+          <Button
+            type="submit"
+            disabled={pending}
+            className="h-11 w-full rounded-xl"
+          >
+            <Check className="size-4" />
+
+            {acceptPending
+              ? t(
+                  "acceptPending",
+                )
+              : t("accept")}
           </Button>
         </form>
 
-        <form action={declineAction}>
-          <Button type="submit" variant="outline" disabled={pending}>
-            {declinePending ? t("declinePending") : t("decline")}
+        <form
+          action={declineAction}
+          className="w-full"
+        >
+          <Button
+            type="submit"
+            variant="outline"
+            disabled={pending}
+            className="h-11 w-full rounded-xl"
+          >
+            <X className="size-4" />
+
+            {declinePending
+              ? t(
+                  "declinePending",
+                )
+              : t("decline")}
           </Button>
         </form>
       </div>

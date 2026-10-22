@@ -365,6 +365,40 @@ export function countTripsByOwner(
   });
 }
 
+export function findTripsSharedWithUser(
+  userId: string,
+) {
+  return prisma.trip.findMany({
+    where: {
+      collaborators: {
+        some: {
+          userId,
+        },
+      },
+    },
+
+    include: {
+      collaborators: {
+        where: {
+          userId,
+        },
+
+        select: {
+          role: true,
+        },
+      },
+
+      owner: {
+        select: ownerSelect,
+      },
+    },
+
+    orderBy: {
+      updatedAt: "desc",
+    },
+  });
+}
+
 export function createTrip(
   data: {
     ownerId: string;

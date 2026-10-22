@@ -61,7 +61,10 @@ export default async function InvitationsPage() {
                   <p>{t("invitedEmail", { email: invitation.email })}</p>
                 </div>
 
-                <InvitationResponseButtons invitationId={invitation.id} />
+                <InvitationResponseButtons
+                  invitationId={invitation.id}
+                  tripId={invitation.trip.id}
+                />
               </CardContent>
             </Card>
           ))}

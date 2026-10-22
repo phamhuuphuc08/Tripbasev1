@@ -31,6 +31,19 @@ export function findLocationTagById(id: string) {
       citeTrustScore: true,
       possibleDuplicateOfId: true,
       ownerId: true,
+      createdAt: true,
+      owner: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      _count: {
+        select: {
+          itineraryItems: true,
+          citations: true,
+        },
+      },
     },
   });
 }

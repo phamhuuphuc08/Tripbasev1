@@ -160,6 +160,7 @@ export async function inviteToTripAction(
 
 export async function acceptInvitationAction(
   invitationId: string,
+  tripId: string,
   _prevState: InvitationResponseState,
   _formData: FormData,
 ): Promise<InvitationResponseState> {
@@ -176,7 +177,7 @@ export async function acceptInvitationAction(
   }
 
   const locale = await getLocale();
-  return redirect({ href: "/invitations", locale });
+  return redirect({ href: `/trips/${tripId}`, locale });
 }
 
 export async function declineInvitationAction(

@@ -6,6 +6,7 @@ import {
   deleteTrip as deleteTripRepo,
   findTripById,
   findTripsByOwner,
+  findTripsSharedWithUser,
 } from "@/server/repositories/trip.repository";
 
 import {
@@ -113,6 +114,10 @@ export async function getTripDetail(
 
 export function listOwnedTrips(ownerId: string) {
   return findTripsByOwner(ownerId);
+}
+
+export function listSharedTrips(userId: string) {
+  return findTripsSharedWithUser(userId);
 }
 
 export function createTrip(
