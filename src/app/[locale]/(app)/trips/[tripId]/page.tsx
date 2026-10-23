@@ -130,6 +130,7 @@ const [
   tShare,
   tChecklist,
   tStory,
+  tCopyPlan,
   format,
 ] = await Promise.all([
   getTranslations("tripDetail"),
@@ -145,6 +146,7 @@ const [
   getTranslations("share.invite"),
   getTranslations("checklist"),
   getTranslations("story"),
+  getTranslations("copyPlan"),
   getFormatter(),
 ]);
 
@@ -480,6 +482,16 @@ negativeSignalNote: item.locationTagId
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-12">
+      {trip.coverImageUrl && (
+        <div className="overflow-hidden rounded-xl border">
+          <img
+            src={trip.coverImageUrl}
+            alt={trip.name}
+            className="h-56 w-full object-cover sm:h-72"
+          />
+        </div>
+      )}
+
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <h1 className="text-xl font-semibold">
@@ -498,7 +510,7 @@ negativeSignalNote: item.locationTagId
 
             {trip.verifiedByAuthor && (
               <Badge variant="secondary">
-                Đã xác minh chuyến đi
+                {t("verifiedTrip")}
               </Badge>
             )}
           </div>
@@ -580,7 +592,7 @@ negativeSignalNote: item.locationTagId
     <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs">
       <GitFork className="text-primary size-3.5" />
 
-      <span>Sao chép từ</span>
+      <span>{tCopyPlan("copiedFrom")}</span>
 
       <Link
         href={`/trips/${trip.forkedFrom.id}`}
@@ -589,7 +601,7 @@ negativeSignalNote: item.locationTagId
         {trip.forkedFrom.name}
       </Link>
 
-      <span>· Chủ sở hữu:</span>
+      <span>· {tCopyPlan("originalOwner")}</span>
 
       <Link
         href={`/creators/${trip.forkedFrom.owner.id}`}
@@ -750,7 +762,7 @@ negativeSignalNote: item.locationTagId
       {/* Copy nhanh một ngày */}
       <div className="flex flex-col gap-2">
         <p className="text-muted-foreground text-sm">
-          Sao chép riêng một ngày vào kế hoạch của bạn:
+          {tCopyPlan("copySingleDayDescription")}
         </p>
 
         <div className="flex flex-wrap gap-2">
@@ -1563,6 +1575,7 @@ negativeSignalNote: item.locationTagId
                 id: trip.id,
                 name: trip.name,
                 destination: trip.destination,
+                coverImageUrl: trip.coverImageUrl,
                 startDate: toDateInputValue(
                   trip.startDate,
                 ),

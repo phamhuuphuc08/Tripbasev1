@@ -404,6 +404,7 @@ export function createTrip(
     ownerId: string;
     name: string;
     destination: string;
+    coverImageUrl: string | null;
     startDate: Date | null;
     endDate: Date | null;
     visibility: PlanVisibility;
@@ -423,6 +424,7 @@ export function updateTrip(
   data: {
     name: string;
     destination: string;
+    coverImageUrl?: string;
     startDate: Date | null;
     endDate: Date | null;
     visibility: PlanVisibility;

@@ -22,6 +22,7 @@ export interface TripSearchResult {
   id: string;
   name: string;
   destination: string;
+  coverImageUrl: string | null;
   startDate: Date | null;
   endDate: Date | null;
   status: string;
@@ -224,6 +225,7 @@ function mapTripToSearchResult(
     id: trip.id,
     name: trip.name,
     destination: trip.destination,
+    coverImageUrl: trip.coverImageUrl,
     startDate: trip.startDate,
     endDate: trip.endDate,
     status: trip.status,

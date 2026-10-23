@@ -10,6 +10,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
+import { getFormatter, getTranslations } from "next-intl/server";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,19 +23,13 @@ import {
 import { Input } from "@/components/ui/input";
 
 import { toggleSavedPlanAction } from "@/features/marketplace/actions";
-
 import { Link } from "@/i18n/navigation";
-
 import { getSession } from "@/server/auth/session";
-
 import {
   type ExploreSort,
   listExplorePlans,
 } from "@/server/services/marketplace.service";
-
-import {
-  listSavedPlans,
-} from "@/server/services/saved-plan.service";
+import { listSavedPlans } from "@/server/services/saved-plan.service";
 
 type SearchParams = {
   q?: string;
@@ -53,86 +48,32 @@ type SearchParams = {
 };
 
 const TRAVEL_STYLE_OPTIONS = [
-  {
-    value: "FOOD",
-    label: "Ẩm thực",
-  },
-  {
-    value: "SHOPPING",
-    label: "Mua sắm",
-  },
-  {
-    value: "CULTURE",
-    label: "Văn hoá",
-  },
-  {
-    value: "NATURE",
-    label: "Thiên nhiên",
-  },
+  "FOOD",
+  "SHOPPING",
+  "CULTURE",
+  "NATURE",
 ] as const;
 
 const PACE_OPTIONS = [
-  {
-    value: "",
-    label: "Mọi nhịp độ",
-  },
-  {
-    value: "RELAXED",
-    label: "Thư giãn",
-  },
-  {
-    value: "NORMAL",
-    label: "Bình thường",
-  },
-  {
-    value: "BUSY",
-    label: "Dày lịch",
-  },
+  "",
+  "RELAXED",
+  "NORMAL",
+  "BUSY",
 ] as const;
 
 const STATUS_OPTIONS = [
-  {
-    value: "",
-    label: "Mọi trạng thái",
-  },
-  {
-    value: "IDEA",
-    label: "Ý tưởng",
-  },
-  {
-    value: "SCHEDULED",
-    label: "Đã lên lịch",
-  },
-  {
-    value: "COMPLETED",
-    label: "Đã hoàn thành",
-  },
+  "",
+  "IDEA",
+  "SCHEDULED",
+  "COMPLETED",
 ] as const;
 
-const SORT_OPTIONS: Array<{
-  value: ExploreSort;
-  label: string;
-}> = [
-  {
-    value: "RELEVANCE",
-    label: "Liên quan nhất",
-  },
-  {
-    value: "TRUST",
-    label: "Uy tín nhất",
-  },
-  {
-    value: "POPULAR",
-    label: "Phổ biến nhất",
-  },
-  {
-    value: "RATING",
-    label: "Đánh giá cao",
-  },
-  {
-    value: "NEWEST",
-    label: "Mới nhất",
-  },
+const SORT_OPTIONS: ExploreSort[] = [
+  "RELEVANCE",
+  "TRUST",
+  "POPULAR",
+  "RATING",
+  "NEWEST",
 ];
 
 function toNumber(
@@ -163,92 +104,12 @@ function toPage(
 function normalizeSort(
   value: string | undefined,
 ): ExploreSort | undefined {
-  const allowed =
-    new Set<ExploreSort>(
-      SORT_OPTIONS.map(
-        (item) => item.value,
-      ),
-    );
-
   return value &&
-    allowed.has(
+    SORT_OPTIONS.includes(
       value as ExploreSort,
     )
     ? (value as ExploreSort)
     : undefined;
-}
-
-function formatMoney(
-  value: number | null,
-): string {
-  if (value == null) {
-    return "Chưa đặt ngân sách";
-  }
-
-  return (
-    new Intl.NumberFormat(
-      "vi-VN",
-      {
-        maximumFractionDigits: 0,
-      },
-    ).format(value) + " ₫"
-  );
-}
-
-function formatDateRange(
-  startDate: Date | null,
-  endDate: Date | null,
-): string {
-  if (
-    !startDate &&
-    !endDate
-  ) {
-    return "Chưa đặt ngày";
-  }
-
-  const formatter =
-    new Intl.DateTimeFormat(
-      "vi-VN",
-      {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      },
-    );
-
-  if (
-    startDate &&
-    endDate
-  ) {
-    return `${formatter.format(
-      startDate,
-    )} – ${formatter.format(
-      endDate,
-    )}`;
-  }
-
-  return formatter.format(
-    startDate ??
-      endDate!,
-  );
-}
-
-function paceLabel(
-  value: string,
-): string {
-  if (
-    value === "RELAXED"
-  ) {
-    return "Thư giãn";
-  }
-
-  if (
-    value === "BUSY"
-  ) {
-    return "Dày lịch";
-  }
-
-  return "Bình thường";
 }
 
 function buildPageHref(
@@ -259,69 +120,25 @@ function buildPageHref(
     new URLSearchParams();
 
   const entries: Array<
-    [
-      string,
-      string | undefined,
-    ]
+    [string, string | undefined]
   > = [
     ["q", params.q],
-    [
-      "destination",
-      params.destination,
-    ],
-    [
-      "styles",
-      params.styles,
-    ],
-    [
-      "budgetMin",
-      params.budgetMin,
-    ],
-    [
-      "budgetMax",
-      params.budgetMax,
-    ],
-    [
-      "pace",
-      params.pace,
-    ],
-    [
-      "status",
-      params.status,
-    ],
-    [
-      "startDateFrom",
-      params.startDateFrom,
-    ],
-    [
-      "startDateTo",
-      params.startDateTo,
-    ],
-    [
-      "minDays",
-      params.minDays,
-    ],
-    [
-      "maxDays",
-      params.maxDays,
-    ],
-    [
-      "sort",
-      params.sort,
-    ],
+    ["destination", params.destination],
+    ["styles", params.styles],
+    ["budgetMin", params.budgetMin],
+    ["budgetMax", params.budgetMax],
+    ["pace", params.pace],
+    ["status", params.status],
+    ["startDateFrom", params.startDateFrom],
+    ["startDateTo", params.startDateTo],
+    ["minDays", params.minDays],
+    ["maxDays", params.maxDays],
+    ["sort", params.sort],
   ];
 
-  for (
-    const [key, value]
-    of entries
-  ) {
-    if (
-      value?.trim()
-    ) {
-      query.set(
-        key,
-        value,
-      );
+  for (const [key, value] of entries) {
+    if (value?.trim()) {
+      query.set(key, value);
     }
   }
 
@@ -341,9 +158,13 @@ export default async function ExplorePage({
   const [
     params,
     session,
+    t,
+    format,
   ] = await Promise.all([
     searchParams,
     getSession(),
+    getTranslations("explore"),
+    getFormatter(),
   ]);
 
   const formKey =
@@ -359,9 +180,6 @@ export default async function ExplorePage({
       .filter(Boolean) ??
     [];
 
-  /*
-   * Marketplace result.
-   */
   const result =
     await listExplorePlans({
       query:
@@ -417,12 +235,6 @@ export default async function ExplorePage({
       pageSize: 12,
     });
 
-  /*
-   * Lấy danh sách Bookmark của user hiện tại.
-   *
-   * Không đăng nhập:
-   * savedPlans = []
-   */
   const savedPlans =
     session
       ? await listSavedPlans(
@@ -430,52 +242,114 @@ export default async function ExplorePage({
         )
       : [];
 
-  /*
-   * Set giúp check Bookmark O(1)
-   * thay vì tìm trong array mỗi card.
-   */
   const savedPlanIds =
     new Set(
       savedPlans.map(
-        (plan) => plan.id,
+        (plan) =>
+          plan.id,
       ),
     );
 
-  /*
-   * Dùng khi user chưa login
-   * nhưng bấm Bookmark.
-   *
-   * Sau khi login quay lại
-   * đúng Explore page hiện tại.
-   */
   const currentExploreHref =
     buildPageHref(
       params,
       result.page,
     );
 
-  return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-10">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold">
-          Khám phá kế hoạch
-        </h1>
+  const formatMoney = (
+    value: number | null,
+  ) =>
+    value == null
+      ? t("budgetUnset")
+      : format.number(
+          value,
+          {
+            style: "currency",
+            currency: "VND",
+            maximumFractionDigits: 0,
+          },
+        );
 
-        <p className="text-muted-foreground text-sm">
-          Tìm kiếm các kế hoạch công khai theo điểm đến,
-          tên chuyến đi hoặc người tạo. Kết quả được xếp
-          hạng bằng Reputation snapshot.
-        </p>
+  const formatDateRange = (
+    startDate: Date | null,
+    endDate: Date | null,
+  ) => {
+    if (
+      !startDate &&
+      !endDate
+    ) {
+      return t("dateUnset");
+    }
+
+    if (
+      startDate &&
+      endDate
+    ) {
+      return format.dateTimeRange(
+        startDate,
+        endDate,
+        {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        },
+      );
+    }
+
+    return format.dateTime(
+      startDate ??
+        endDate!,
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      },
+    );
+  };
+
+  const paceLabel = (
+    value: string,
+  ) => {
+    if (value === "RELAXED") {
+      return t("paceRelaxed");
+    }
+
+    if (value === "BUSY") {
+      return t("paceBusy");
+    }
+
+    return t("paceNormal");
+  };
+
+  return (
+    <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10">
+      <div className="from-primary/10 via-primary/5 to-background flex flex-col gap-3 rounded-3xl border bg-gradient-to-br px-6 py-7 sm:px-8">
+        <div className="flex items-center gap-3">
+          <span className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-2xl">
+            <Search className="size-5" />
+          </span>
+
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              {t("heading")}
+            </h1>
+
+            <p className="text-muted-foreground mt-1 max-w-3xl text-sm leading-6">
+              {t("description")}
+            </p>
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
-            Tìm kiếm & bộ lọc
+      <Card className="overflow-hidden rounded-2xl border-border/70 shadow-sm">
+        <CardHeader className="border-b bg-muted/20">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Search className="text-primary size-4" />
+            {t("filtersHeading")}
           </CardTitle>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="pt-5">
           <form
             key={formKey}
             method="get"
@@ -490,8 +364,10 @@ export default async function ExplorePage({
                   params.q ??
                   ""
                 }
-                placeholder="Tên chuyến đi, điểm đến hoặc người tạo..."
-                className="pl-9"
+                placeholder={
+                  t("searchPlaceholder")
+                }
+                className="h-10 rounded-xl pl-9"
               />
             </div>
 
@@ -501,7 +377,10 @@ export default async function ExplorePage({
                 params.destination ??
                 ""
               }
-              placeholder="Điểm đến"
+              placeholder={
+                t("destinationPlaceholder")
+              }
+              className="h-10 rounded-xl"
             />
 
             <select
@@ -516,21 +395,17 @@ export default async function ExplorePage({
                     : "TRUST"
                 )
               }
-              className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+              className="border-input bg-background h-10 rounded-xl border px-3 text-sm"
             >
               {SORT_OPTIONS.map(
                 (option) => (
                   <option
-                    key={
-                      option.value
-                    }
-                    value={
-                      option.value
-                    }
+                    key={option}
+                    value={option}
                   >
-                    {
-                      option.label
-                    }
+                    {t(
+                      `sort.${option}`,
+                    )}
                   </option>
                 ),
               )}
@@ -544,7 +419,10 @@ export default async function ExplorePage({
                 params.budgetMin ??
                 ""
               }
-              placeholder="Ngân sách từ"
+              placeholder={
+                t("budgetMinPlaceholder")
+              }
+              className="h-10 rounded-xl"
             />
 
             <Input
@@ -555,7 +433,10 @@ export default async function ExplorePage({
                 params.budgetMax ??
                 ""
               }
-              placeholder="Ngân sách đến"
+              placeholder={
+                t("budgetMaxPlaceholder")
+              }
+              className="h-10 rounded-xl"
             />
 
             <select
@@ -564,22 +445,24 @@ export default async function ExplorePage({
                 params.pace ??
                 ""
               }
-              className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+              className="border-input bg-background h-10 rounded-xl border px-3 text-sm"
             >
               {PACE_OPTIONS.map(
                 (option) => (
                   <option
                     key={
-                      option.value ||
+                      option ||
                       "all"
                     }
-                    value={
-                      option.value
-                    }
+                    value={option}
                   >
-                    {
-                      option.label
-                    }
+                    {option
+                      ? t(
+                          `pace.${option}`,
+                        )
+                      : t(
+                          "paceAll",
+                        )}
                   </option>
                 ),
               )}
@@ -591,22 +474,24 @@ export default async function ExplorePage({
                 params.status ??
                 ""
               }
-              className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+              className="border-input bg-background h-10 rounded-xl border px-3 text-sm"
             >
               {STATUS_OPTIONS.map(
                 (option) => (
                   <option
                     key={
-                      option.value ||
+                      option ||
                       "all"
                     }
-                    value={
-                      option.value
-                    }
+                    value={option}
                   >
-                    {
-                      option.label
-                    }
+                    {option
+                      ? t(
+                          `status.${option}`,
+                        )
+                      : t(
+                          "statusAll",
+                        )}
                   </option>
                 ),
               )}
@@ -619,6 +504,7 @@ export default async function ExplorePage({
                 params.startDateFrom ??
                 ""
               }
+              className="h-10 rounded-xl"
             />
 
             <Input
@@ -628,6 +514,7 @@ export default async function ExplorePage({
                 params.startDateTo ??
                 ""
               }
+              className="h-10 rounded-xl"
             />
 
             <Input
@@ -638,7 +525,10 @@ export default async function ExplorePage({
                 params.minDays ??
                 ""
               }
-              placeholder="Số ngày tối thiểu"
+              placeholder={
+                t("minDaysPlaceholder")
+              }
+              className="h-10 rounded-xl"
             />
 
             <Input
@@ -649,39 +539,38 @@ export default async function ExplorePage({
                 params.maxDays ??
                 ""
               }
-              placeholder="Số ngày tối đa"
+              placeholder={
+                t("maxDaysPlaceholder")
+              }
+              className="h-10 rounded-xl"
             />
 
             <div className="md:col-span-2 lg:col-span-4">
               <p className="mb-2 text-sm font-medium">
-                Phong cách du lịch
+                {t("travelStyleHeading")}
               </p>
 
               <div className="flex flex-wrap gap-3">
                 {TRAVEL_STYLE_OPTIONS.map(
                   (style) => (
                     <label
-                      key={
-                        style.value
-                      }
-                      className="border-border flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                      key={style}
+                      className="border-border hover:border-primary/40 hover:bg-primary/5 flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-colors"
                     >
                       <input
                         type="checkbox"
                         name="style"
-                        value={
-                          style.value
-                        }
+                        value={style}
                         defaultChecked={
                           travelStyles.includes(
-                            style.value,
+                            style,
                           )
                         }
                       />
 
-                      {
-                        style.label
-                      }
+                      {t(
+                        `style.${style}`,
+                      )}
                     </label>
                   ),
                 )}
@@ -704,9 +593,10 @@ export default async function ExplorePage({
             <div className="flex flex-wrap gap-2 md:col-span-2 lg:col-span-4">
               <Button
                 type="submit"
+                className="rounded-xl"
               >
                 <Search className="size-4" />
-                Tìm kiếm
+                {t("searchButton")}
               </Button>
 
               <Button
@@ -714,11 +604,10 @@ export default async function ExplorePage({
                 render={
                   <Link href="/explore" />
                 }
-                nativeButton={
-                  false
-                }
+                nativeButton={false}
+                className="rounded-xl"
               >
-                Xóa bộ lọc
+                {t("clearFilters")}
               </Button>
 
               {session && (
@@ -727,12 +616,11 @@ export default async function ExplorePage({
                   render={
                     <Link href="/saved" />
                   }
-                  nativeButton={
-                    false
-                  }
+                  nativeButton={false}
+                  className="rounded-xl"
                 >
                   <Bookmark className="size-4" />
-                  Đã lưu
+                  {t("savedButton")}
                 </Button>
               )}
             </div>
@@ -740,15 +628,28 @@ export default async function ExplorePage({
         </CardContent>
       </Card>
 
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-muted/20 px-4 py-3">
         <div>
-          <h2 className="font-medium">
-            {result.total} kế hoạch phù hợp
+          <h2 className="text-base font-semibold">
+            {t(
+              "resultsCount",
+              {
+                count:
+                  result.total,
+              },
+            )}
           </h2>
 
           <p className="text-muted-foreground text-xs">
-            Trang {result.page}/
-            {result.totalPages}
+            {t(
+              "pageCount",
+              {
+                page:
+                  result.page,
+                total:
+                  result.totalPages,
+              },
+            )}
           </p>
         </div>
 
@@ -758,31 +659,40 @@ export default async function ExplorePage({
               0 && (
               <Badge variant="outline">
                 <Bookmark className="mr-1 size-3" />
-                {savedPlans.length} đã lưu
+
+                {t(
+                  "savedCount",
+                  {
+                    count:
+                      savedPlans.length,
+                  },
+                )}
               </Badge>
-            )}
+          )}
 
           <Badge variant="outline">
-            Marketplace
+            {t("marketplace")}
           </Badge>
         </div>
       </div>
 
       {result.items.length ===
       0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="font-medium">
-              Không tìm thấy kế hoạch phù hợp.
+        <Card className="rounded-2xl">
+          <CardContent className="py-16 text-center">
+            <Search className="text-muted-foreground mx-auto size-7" />
+
+            <p className="mt-4 font-medium">
+              {t("emptyTitle")}
             </p>
 
             <p className="text-muted-foreground mt-1 text-sm">
-              Thử thay đổi từ khóa hoặc nới lỏng bộ lọc.
+              {t("emptyDescription")}
             </p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {result.items.map(
             (trip) => {
               const isSaved =
@@ -796,109 +706,123 @@ export default async function ExplorePage({
 
               return (
                 <Card
-                  key={
-                    trip.id
-                  }
-                  className="flex h-full flex-col"
+                  key={trip.id}
+                  className="group relative flex h-full flex-col overflow-hidden rounded-2xl border-border/70 py-0 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
                 >
-                  <CardHeader className="gap-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="line-clamp-2 min-w-0 flex-1 text-base">
-                        {
+                  <div className="bg-muted relative aspect-[16/10] w-full overflow-hidden">
+                    {trip.coverImageUrl ? (
+                      <img
+                        src={
+                          trip.coverImageUrl
+                        }
+                        alt={
                           trip.name
                         }
-                      </CardTitle>
+                        className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <div className="from-muted to-muted/40 flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-br">
+                        <MapPin className="text-muted-foreground size-7" />
 
-                      <div className="flex shrink-0 items-center gap-1">
-                        {/*
-                         * Đã đăng nhập và
-                         * không phải plan của mình.
-                         */}
-                        {session &&
-                          !isOwnPlan && (
-                          <form
-                            action={async () => {
-                              "use server";
+                        <span className="text-muted-foreground text-xs">
+                          {t("noCover")}
+                        </span>
+                      </div>
+                    )}
 
-                              await toggleSavedPlanAction(
-                                trip.id,
-                              );
-                            }}
-                          >
+                    <div className="absolute top-3 right-3 flex items-center gap-2">
+                      {!isOwnPlan && (
+                        <>
+                          {session ? (
+                            <form
+                              action={async () => {
+                                "use server";
+
+                                await toggleSavedPlanAction(
+                                  trip.id,
+                                );
+                              }}
+                            >
+                              <Button
+                                type="submit"
+                                variant="secondary"
+                                size="icon"
+                                title={
+                                  isSaved
+                                    ? t("unsave")
+                                    : t("save")
+                                }
+                                aria-label={
+                                  isSaved
+                                    ? t("unsave")
+                                    : t("save")
+                                }
+                                className="bg-background/90 shadow-sm backdrop-blur"
+                              >
+                                <Bookmark
+                                  className={
+                                    isSaved
+                                      ? "size-4 fill-current"
+                                      : "size-4"
+                                  }
+                                />
+                              </Button>
+                            </form>
+                          ) : (
                             <Button
-                              type="submit"
-                              variant="ghost"
+                              variant="secondary"
                               size="icon"
+                              render={
+                                <Link
+                                  href={`/login?callbackUrl=${encodeURIComponent(
+                                    currentExploreHref,
+                                  )}`}
+                                />
+                              }
+                              nativeButton={false}
                               title={
-                                isSaved
-                                  ? "Bỏ lưu kế hoạch"
-                                  : "Lưu kế hoạch"
+                                t("loginToSave")
                               }
                               aria-label={
-                                isSaved
-                                  ? "Bỏ lưu kế hoạch"
-                                  : "Lưu kế hoạch"
+                                t("loginToSave")
                               }
+                              className="bg-background/90 shadow-sm backdrop-blur"
                             >
-                              <Bookmark
-                                className={
-                                  isSaved
-                                    ? "size-4 fill-current"
-                                    : "size-4"
-                                }
-                              />
+                              <Bookmark className="size-4" />
                             </Button>
-                          </form>
-                        )}
-
-                        {/*
-                         * Chưa đăng nhập:
-                         * bấm Bookmark -> Login.
-                         */}
-                        {!session && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            render={
-                              <Link
-                                href={`/login?callbackUrl=${encodeURIComponent(
-                                  currentExploreHref,
-                                )}`}
-                              />
-                            }
-                            nativeButton={
-                              false
-                            }
-                            title="Đăng nhập để lưu"
-                            aria-label="Đăng nhập để lưu kế hoạch"
-                          >
-                            <Bookmark className="size-4" />
-                          </Button>
-                        )}
-
-                        <Badge variant="secondary">
-                          {trip.marketplaceRankScore.toFixed(
-                            1,
                           )}
-                        </Badge>
-                      </div>
+                        </>
+                      )}
+
+                      <Badge
+                        variant="secondary"
+                        className="bg-background/90 shadow-sm backdrop-blur"
+                      >
+                        {trip.marketplaceRankScore.toFixed(
+                          1,
+                        )}
+                      </Badge>
                     </div>
+                  </div>
+
+                  <CardHeader className="gap-2 px-4 pt-4 pb-0">
+                    <CardTitle className="line-clamp-2 text-base leading-snug">
+                      {trip.name}
+                    </CardTitle>
 
                     <div className="text-muted-foreground flex items-center gap-1.5 text-sm">
-                      <MapPin className="size-3.5" />
+                      <MapPin className="text-primary size-3.5 shrink-0" />
 
                       <span className="line-clamp-1">
-                        {
-                          trip.destination
-                        }
+                        {trip.destination}
                       </span>
                     </div>
                   </CardHeader>
 
-                  <CardContent className="flex flex-1 flex-col gap-4">
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="text-muted-foreground flex items-center gap-1.5">
-                        <CalendarDays className="size-3.5" />
+                  <CardContent className="flex flex-1 flex-col gap-4 px-4 pt-3 pb-4">
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                      <div className="text-muted-foreground flex items-start gap-1.5">
+                        <CalendarDays className="mt-0.5 size-3.5 shrink-0" />
 
                         <span>
                           {formatDateRange(
@@ -909,29 +833,35 @@ export default async function ExplorePage({
                       </div>
 
                       <div className="text-muted-foreground flex items-center gap-1.5">
-                        <Clock3 className="size-3.5" />
+                        <Clock3 className="size-3.5 shrink-0" />
 
                         <span>
-                          {
-                            trip.itineraryItemCount
-                          }{" "}
-                          hoạt động
+                          {t(
+                            "activityCount",
+                            {
+                              count:
+                                trip.itineraryItemCount,
+                            },
+                          )}
                         </span>
                       </div>
 
                       <div className="text-muted-foreground flex items-center gap-1.5">
-                        <Users className="size-3.5" />
+                        <Users className="size-3.5 shrink-0" />
 
                         <span>
-                          {
-                            trip.travelerCount
-                          }{" "}
-                          người
+                          {t(
+                            "travelerCount",
+                            {
+                              count:
+                                trip.travelerCount,
+                            },
+                          )}
                         </span>
                       </div>
 
                       <div className="text-muted-foreground flex items-center gap-1.5">
-                        <Gauge className="size-3.5" />
+                        <Gauge className="size-3.5 shrink-0" />
 
                         <span>
                           {paceLabel(
@@ -941,7 +871,7 @@ export default async function ExplorePage({
                       </div>
 
                       <div className="text-muted-foreground col-span-2 flex items-center gap-1.5">
-                        <Wallet className="size-3.5" />
+                        <Wallet className="size-3.5 shrink-0" />
 
                         <span>
                           {formatMoney(
@@ -956,25 +886,26 @@ export default async function ExplorePage({
                       0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {trip.travelStyle.map(
-                          (
-                            style,
-                          ) => (
+                          (style) => (
                             <Badge
-                              key={
-                                style
-                              }
+                              key={style}
                               variant="outline"
+                              className="rounded-full"
                             >
-                              {
-                                style
-                              }
+                              {TRAVEL_STYLE_OPTIONS.includes(
+                                style as typeof TRAVEL_STYLE_OPTIONS[number],
+                              )
+                                ? t(
+                                    `style.${style as typeof TRAVEL_STYLE_OPTIONS[number]}`,
+                                  )
+                                : style}
                             </Badge>
                           ),
                         )}
                       </div>
                     )}
 
-                    <div className="border-border mt-auto grid grid-cols-3 gap-2 border-t pt-3 text-center text-xs">
+                    <div className="bg-muted/40 grid grid-cols-3 gap-2 rounded-xl px-2 py-3 text-center text-xs">
                       <div>
                         <div className="font-semibold">
                           {trip.copyplanScore.toFixed(
@@ -982,20 +913,18 @@ export default async function ExplorePage({
                           )}
                         </div>
 
-                        <div className="text-muted-foreground">
-                          CopyPlan
+                        <div className="text-muted-foreground mt-0.5">
+                          {t("copyPlanScore")}
                         </div>
                       </div>
 
-                      <div>
+                      <div className="border-border border-x">
                         <div className="font-semibold">
-                          {
-                            trip.eligibleCopyCount
-                          }
+                          {trip.eligibleCopyCount}
                         </div>
 
-                        <div className="text-muted-foreground">
-                          lượt copy
+                        <div className="text-muted-foreground mt-0.5">
+                          {t("copyCount")}
                         </div>
                       </div>
 
@@ -1011,61 +940,55 @@ export default async function ExplorePage({
                             : "—"}
                         </div>
 
-                        <div className="text-muted-foreground">
-                          đánh giá
+                        <div className="text-muted-foreground mt-0.5">
+                          {t("rating")}
                         </div>
                       </div>
                     </div>
 
                     <div className="text-muted-foreground text-xs">
-                      Tạo bởi{" "}
+                      {t("createdBy")}{" "}
 
                       <Link
                         href={`/creators/${trip.ownerId}`}
                         className="text-foreground font-medium hover:underline"
                       >
-                        {
-                          trip.ownerName
-                        }
+                        {trip.ownerName}
                       </Link>
                     </div>
 
                     {isSaved && (
-                      <div className="text-primary flex items-center gap-1.5 text-xs">
+                      <div className="text-primary flex items-center gap-1.5 text-xs font-medium">
                         <Bookmark className="size-3 fill-current" />
-                        Đã lưu vào thư viện
+                        {t("savedToLibrary")}
                       </div>
                     )}
 
-                    <div className="flex gap-2">
+                    <div className="mt-auto flex gap-2 pt-1">
                       <Button
                         variant="outline"
-                        className="flex-1"
+                        className="flex-1 rounded-xl"
                         render={
                           <Link
                             href={`/trips/${trip.id}`}
                           />
                         }
-                        nativeButton={
-                          false
-                        }
+                        nativeButton={false}
                       >
-                        Xem chi tiết
+                        {t("viewDetails")}
                       </Button>
 
                       <Button
-                        className="flex-1"
+                        className="flex-1 rounded-xl"
                         render={
                           <Link
                             href={`/trips/${trip.id}#itinerary`}
                           />
                         }
-                        nativeButton={
-                          false
-                        }
+                        nativeButton={false}
                       >
                         <Copy className="size-4" />
-                        CopyPlan
+                        {t("copyPlan")}
                       </Button>
                     </div>
                   </CardContent>
@@ -1078,7 +1001,7 @@ export default async function ExplorePage({
 
       {result.totalPages >
         1 && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 pt-2">
           <Button
             variant="outline"
             disabled={
@@ -1087,26 +1010,34 @@ export default async function ExplorePage({
             render={
               result.hasPreviousPage
                 ? (
-                    <Link
-                      href={buildPageHref(
-                        params,
-                        result.page -
-                          1,
-                      )}
-                    />
-                  )
+                  <Link
+                    href={buildPageHref(
+                      params,
+                      result.page -
+                        1,
+                    )}
+                  />
+                )
                 : undefined
             }
             nativeButton={
               !result.hasPreviousPage
             }
+            className="rounded-xl"
           >
-            Trang trước
+            {t("previousPage")}
           </Button>
 
           <span className="text-muted-foreground px-2 text-sm">
-            {result.page}/
-            {result.totalPages}
+            {t(
+              "pageShort",
+              {
+                page:
+                  result.page,
+                total:
+                  result.totalPages,
+              },
+            )}
           </span>
 
           <Button
@@ -1117,21 +1048,22 @@ export default async function ExplorePage({
             render={
               result.hasNextPage
                 ? (
-                    <Link
-                      href={buildPageHref(
-                        params,
-                        result.page +
-                          1,
-                      )}
-                    />
-                  )
+                  <Link
+                    href={buildPageHref(
+                      params,
+                      result.page +
+                        1,
+                    )}
+                  />
+                )
                 : undefined
             }
             nativeButton={
               !result.hasNextPage
             }
+            className="rounded-xl"
           >
-            Trang sau
+            {t("nextPage")}
           </Button>
         </div>
       )}

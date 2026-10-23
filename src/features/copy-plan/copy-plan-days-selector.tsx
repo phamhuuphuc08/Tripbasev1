@@ -4,6 +4,7 @@ import {
   useActionState,
   useState,
 } from "react";
+import { useTranslations } from "next-intl";
 
 import {
   copyPlanDaysAction,
@@ -17,21 +18,21 @@ interface CopyPlanDaysSelectorProps {
 
 const initialState: CopyPlanActionState = {};
 
-function getErrorMessage(
+function getErrorKey(
   error: CopyPlanActionState["error"],
 ) {
   switch (error) {
     case "DAY_NOT_FOUND":
-      return "Vui lòng chọn ít nhất một ngày có hoạt động.";
+      return "errors.selectDay";
 
     case "PLAN_NOT_FOUND":
-      return "Không tìm thấy kế hoạch.";
+      return "errors.notFound";
 
     case "PLAN_NOT_PUBLIC":
-      return "Kế hoạch này không còn công khai.";
+      return "errors.notPublic";
 
     case "COPY_FAILED":
-      return "Không thể sao chép kế hoạch. Vui lòng thử lại.";
+      return "errors.failed";
 
     default:
       return null;
@@ -42,6 +43,11 @@ export function CopyPlanDaysSelector({
   tripId,
   days,
 }: CopyPlanDaysSelectorProps) {
+  const t =
+    useTranslations(
+      "copyPlan",
+    );
+
   const [selectedDays, setSelectedDays] =
     useState<number[]>([]);
 
@@ -60,8 +66,8 @@ export function CopyPlanDaysSelector({
     initialState,
   );
 
-  const errorMessage =
-    getErrorMessage(state.error);
+  const errorKey =
+    getErrorKey(state.error);
 
   function toggleDay(
     day: number,
@@ -93,12 +99,11 @@ export function CopyPlanDaysSelector({
     >
       <div className="flex flex-col gap-1">
         <p className="text-sm font-medium">
-          Sao chép nhiều ngày
+          {t("multiDayHeading")}
         </p>
 
         <p className="text-muted-foreground text-xs">
-          Chọn các ngày bạn muốn đưa vào
-          kế hoạch mới.
+          {t("multiDayDescription")}
         </p>
       </div>
 
@@ -132,16 +137,21 @@ export function CopyPlanDaysSelector({
               />
 
               <span>
-                Ngày {day}
+                {t(
+                  "day",
+                  {
+                    day,
+                  },
+                )}
               </span>
             </label>
           );
         })}
       </div>
 
-      {errorMessage && (
+      {errorKey && (
         <p className="text-destructive text-sm">
-          {errorMessage}
+          {t(errorKey)}
         </p>
       )}
 
@@ -154,10 +164,18 @@ export function CopyPlanDaysSelector({
         className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50 inline-flex h-9 w-fit items-center justify-center rounded-md px-4 text-sm font-medium transition-colors"
       >
         {isPending
-          ? "Đang sao chép..."
+          ? t("copying")
           : selectedCount > 0
-            ? `Sao chép ${selectedCount} ngày đã chọn`
-            : "Chọn ngày để sao chép"}
+            ? t(
+                "copySelectedDays",
+                {
+                  count:
+                    selectedCount,
+                },
+              )
+            : t(
+                "selectDaysToCopy",
+              )}
       </button>
     </form>
   );

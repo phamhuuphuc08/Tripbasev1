@@ -1,10 +1,19 @@
 "use client";
 
-import { Check, X } from "lucide-react";
-import { useActionState } from "react";
-import { useTranslations } from "next-intl";
+import {
+  Check,
+  X,
+} from "lucide-react";
+import {
+  useActionState,
+} from "react";
+import {
+  useTranslations,
+} from "next-intl";
 
-import { Button } from "@/components/ui/button";
+import {
+  Button,
+} from "@/components/ui/button";
 
 import {
   acceptInvitationAction,
@@ -77,7 +86,7 @@ export function InvitationResponseButtons({
       {error && (
         <div
           role="alert"
-          className="border-destructive/20 bg-destructive/5 rounded-xl border px-3 py-2"
+          className="border-destructive/20 bg-destructive/5 rounded-xl border px-3 py-2.5"
         >
           <p className="text-destructive text-sm">
             {t(
@@ -90,25 +99,6 @@ export function InvitationResponseButtons({
       )}
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <form
-          action={acceptAction}
-          className="w-full"
-        >
-          <Button
-            type="submit"
-            disabled={pending}
-            className="h-11 w-full rounded-xl"
-          >
-            <Check className="size-4" />
-
-            {acceptPending
-              ? t(
-                  "acceptPending",
-                )
-              : t("accept")}
-          </Button>
-        </form>
-
         <form
           action={declineAction}
           className="w-full"
@@ -126,6 +116,25 @@ export function InvitationResponseButtons({
                   "declinePending",
                 )
               : t("decline")}
+          </Button>
+        </form>
+
+        <form
+          action={acceptAction}
+          className="w-full"
+        >
+          <Button
+            type="submit"
+            disabled={pending}
+            className="h-11 w-full rounded-xl shadow-sm"
+          >
+            <Check className="size-4" />
+
+            {acceptPending
+              ? t(
+                  "acceptPending",
+                )
+              : t("accept")}
           </Button>
         </form>
       </div>

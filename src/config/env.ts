@@ -16,6 +16,16 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url().optional(),
   // Signs session JWTs — see src/server/auth/session.ts.
   AUTH_SECRET: z.string().min(16, "AUTH_SECRET must be at least 16 characters"),
+
+  APP_URL: z
+    .string()
+    .url()
+    .default("http://localhost:3000"),
+
+  EMAIL_USER: z.string().email().optional(),
+  EMAIL_CLIENT_ID: z.string().min(1).optional(),
+  EMAIL_CLIENT_SECRET: z.string().min(1).optional(),
+  EMAIL_REFRESH_TOKEN: z.string().min(1).optional(),
 });
 
 export const env = envSchema.parse(process.env);

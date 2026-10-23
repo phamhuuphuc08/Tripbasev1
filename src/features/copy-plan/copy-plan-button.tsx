@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 import { Copy } from "lucide-react";
+import { useTranslations } from "next-intl";
+
 import { Button } from "@/components/ui/button";
 
 import {
@@ -12,21 +14,21 @@ import {
 
 const initialState: CopyPlanActionState = {};
 
-function getErrorMessage(
+function getErrorKey(
   error: CopyPlanActionState["error"],
 ) {
   switch (error) {
     case "PLAN_NOT_FOUND":
-      return "Không tìm thấy kế hoạch cần sao chép.";
+      return "errors.notFound";
 
     case "PLAN_NOT_PUBLIC":
-      return "Kế hoạch này không cho phép sao chép.";
+      return "errors.notAllowed";
 
     case "DAY_NOT_FOUND":
-      return "Ngày này không có lịch trình để sao chép.";
+      return "errors.dayEmpty";
 
     case "COPY_FAILED":
-      return "Không thể sao chép kế hoạch. Vui lòng thử lại.";
+      return "errors.failed";
 
     default:
       return null;
@@ -41,6 +43,11 @@ export function CopyPlanButton({
 }: {
   tripId: string;
 }) {
+  const t =
+    useTranslations(
+      "copyPlan",
+    );
+
   const action = copyPlanAction.bind(
     null,
     tripId,
@@ -52,8 +59,8 @@ export function CopyPlanButton({
       initialState,
     );
 
-  const errorMessage =
-    getErrorMessage(state.error);
+  const errorKey =
+    getErrorKey(state.error);
 
   return (
     <div className="flex flex-col gap-2">
@@ -66,17 +73,17 @@ export function CopyPlanButton({
           <Copy className="size-4" />
 
           {pending
-            ? "Đang sao chép..."
-            : "Sao chép kế hoạch"}
+            ? t("copying")
+            : t("copyPlan")}
         </Button>
       </form>
 
-      {errorMessage && (
+      {errorKey && (
         <p
           role="alert"
           className="text-destructive text-sm"
         >
-          {errorMessage}
+          {t(errorKey)}
         </p>
       )}
     </div>
@@ -93,6 +100,11 @@ export function CopyPlanDayButton({
   tripId: string;
   day: number;
 }) {
+  const t =
+    useTranslations(
+      "copyPlan",
+    );
+
   const action = copyPlanDayAction.bind(
     null,
     tripId,
@@ -105,8 +117,8 @@ export function CopyPlanDayButton({
       initialState,
     );
 
-  const errorMessage =
-    getErrorMessage(state.error);
+  const errorKey =
+    getErrorKey(state.error);
 
   return (
     <div className="flex flex-col gap-1">
@@ -121,17 +133,22 @@ export function CopyPlanDayButton({
           <Copy className="size-3.5" />
 
           {pending
-            ? "Đang sao chép..."
-            : `Sao chép ngày ${day}`}
+            ? t("copying")
+            : t(
+                "copyDay",
+                {
+                  day,
+                },
+              )}
         </Button>
       </form>
 
-      {errorMessage && (
+      {errorKey && (
         <p
           role="alert"
           className="text-destructive text-xs"
         >
-          {errorMessage}
+          {t(errorKey)}
         </p>
       )}
     </div>

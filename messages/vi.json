@@ -14,22 +14,33 @@
     "themeToggle": "Đổi giao diện sáng/tối",
     "moduleLabel": "Module"
   },
-  "home": {
-    "subtitle": "Trip operating system + mạng lưới uy tín cho nhóm/cá nhân/creator du lịch tự túc.",
-    "searchPlaceholder": "Muốn đi đâu? VD: Đà Lạt, Seoul, Phú Quốc...",
-    "searchAriaLabel": "Tìm điểm đến",
-    "searchButton": "Tìm plan",
-    "quickLinksWord": "PLAN",
-    "quickLinksLabel": "Bắt đầu nhanh",
-    "quickLinkTrips": "Chuyến đi của bạn",
-    "quickLinkExplore": "Khám phá",
-    "quickLinkTags": "Tag & Tip",
-    "quickLinkSaved": "Đã lưu",
-    "exploreWord": "EXPLORE",
-    "recentHeading": "Plan public gần đây",
-    "matchHeading": "Plan public khớp với \"{query}\"",
-    "empty": "Chưa có plan public nào khớp \"{query}\". Thử từ khoá khác, hoặc <link>tạo tài khoản</link> để tự dựng plan mới."
-  },
+"home": {
+  "subtitle": "Trip operating system + mạng lưới uy tín cho nhóm/cá nhân/creator du lịch tự túc.",
+  "searchPlaceholder": "Muốn đi đâu? VD: Đà Lạt, Seoul, Phú Quốc...",
+  "searchAriaLabel": "Tìm điểm đến",
+  "searchButton": "Tìm plan",
+  "quickLinksWord": "PLAN",
+  "quickLinksLabel": "Bắt đầu nhanh",
+  "quickLinkTrips": "Chuyến đi của bạn",
+  "quickLinkExplore": "Khám phá",
+  "quickLinkTags": "Tag & Tip",
+  "quickLinkSaved": "Đã lưu",
+  "exploreWord": "EXPLORE",
+  "recentHeading": "Plan public gần đây",
+  "matchHeading": "Plan public khớp với \"{query}\"",
+  "empty": "Chưa có plan public nào khớp \"{query}\". Thử từ khoá khác, hoặc <link>tạo tài khoản</link> để tự dựng plan mới.",
+
+  "heroBadge": "Khám phá · Lập kế hoạch · Chia sẻ",
+  "noCover": "Chưa có ảnh đại diện",
+  "exploreMore": "Khám phá thêm",
+
+  "featurePlanTitle": "Lập kế hoạch chuyến đi",
+  "featurePlanDescription": "Tổ chức lịch trình, ngân sách, booking và danh sách việc cần làm trong cùng một chuyến đi.",
+  "featureExploreTitle": "Khám phá hành trình",
+  "featureExploreDescription": "Tìm những chuyến đi công khai, địa điểm và kinh nghiệm từ cộng đồng TripBase.",
+  "featureShareTitle": "Chia sẻ kinh nghiệm",
+  "featureShareDescription": "Chia sẻ chuyến đi, Tag & Tip và cùng bạn bè hoàn thiện kế hoạch."
+},
   "tripStatus": {
     "IDEA": "💭 Ý tưởng",
     "SCHEDULED": "📅 Đã lên lịch",
@@ -45,12 +56,19 @@
     "PUBLIC": "🌐 Public"
   },
   "trip": {
-    "dashboard": {
-      "heading": "Chuyến đi của bạn",
-      "createButton": "Tạo trip mới",
-      "empty": "Bạn chưa có trip nào.",
-      "emptyCta": "Tạo trip đầu tiên"
-    },
+"dashboard": {
+  "heading": "Chuyến đi của bạn",
+  "description": "Quản lý và tiếp tục những hành trình của bạn.",
+  "createButton": "Tạo trip mới",
+  "empty": "Bạn chưa có trip nào.",
+  "emptyCta": "Tạo trip đầu tiên",
+  "noCover": "Chưa có ảnh đại diện",
+  "sharedHeading": "Được chia sẻ với tôi",
+  "sharedDescription": "Các chuyến đi bạn đã được mời tham gia.",
+  "sharedBy": "Được chia sẻ bởi {name}",
+  "roleEditor": "Có thể chỉnh sửa",
+  "roleViewer": "Chỉ xem"
+},
     "form": {
       "nameLabel": "Tên trip",
       "namePlaceholder": "VD: Đà Lạt 3N2Đ nhóm bạn",
@@ -78,6 +96,11 @@
       "editTitle": "Chỉnh sửa trip",
       "editSubmit": "Lưu thay đổi",
       "editSubmitPending": "Đang lưu…",
+      "coverImageLabel": "Ảnh đại diện chuyến đi",
+      "coverImageHint": "Hỗ trợ JPG, PNG hoặc WebP. Dung lượng tối đa 5 MB.",
+      "chooseCoverImage": "Chọn ảnh",
+      "noCoverImageSelected": "Chưa chọn ảnh",
+
       "deleteLink": "Xoá trip"
     },
     "errors": {
@@ -108,6 +131,7 @@
   "tripDetail": {
     "gateDescription": "{destination} — plan này public, đăng nhập để xem đầy đủ Timeline/Map/Budget.",
     "loginCta": "Đăng nhập để xem chi tiết",
+    "verifiedTrip": "Đã xác minh chuyến đi",
     "meta": "Tạo bởi <link>{owner}</link> · {count, plural, =0 {chưa có điểm nào} other {# điểm}} trong itinerary"
   },
   "itinerary": {
@@ -206,6 +230,127 @@
       "invalidCredentials": "Email hoặc mật khẩu không đúng."
     }
   },
+
+"explore": {
+  "heading": "Khám phá kế hoạch",
+  "description": "Tìm chuyến đi theo điểm đến, ngân sách, phong cách và kinh nghiệm từ cộng đồng TripBase.",
+  "filtersHeading": "Tìm kiếm & bộ lọc",
+  "searchPlaceholder": "Tên chuyến đi, điểm đến hoặc người tạo...",
+  "destinationPlaceholder": "Điểm đến",
+  "budgetMinPlaceholder": "Ngân sách từ",
+  "budgetMaxPlaceholder": "Ngân sách đến",
+  "minDaysPlaceholder": "Số ngày tối thiểu",
+  "maxDaysPlaceholder": "Số ngày tối đa",
+  "travelStyleHeading": "Phong cách du lịch",
+  "searchButton": "Tìm kiếm",
+  "clearFilters": "Xóa bộ lọc",
+  "savedButton": "Đã lưu",
+  "resultsCount": "{count} kế hoạch phù hợp",
+  "pageCount": "Trang {page}/{total}",
+  "pageShort": "{page}/{total}",
+  "savedCount": "{count} đã lưu",
+  "marketplace": "Marketplace",
+  "emptyTitle": "Không tìm thấy kế hoạch phù hợp.",
+  "emptyDescription": "Thử thay đổi từ khóa hoặc nới lỏng bộ lọc.",
+  "noCover": "Chưa có ảnh đại diện",
+  "save": "Lưu kế hoạch",
+  "unsave": "Bỏ lưu kế hoạch",
+  "loginToSave": "Đăng nhập để lưu kế hoạch",
+  "budgetUnset": "Chưa đặt ngân sách",
+  "dateUnset": "Chưa đặt ngày",
+  "activityCount": "{count} hoạt động",
+  "travelerCount": "{count} người",
+  "paceRelaxed": "Thư giãn",
+  "paceNormal": "Bình thường",
+  "paceBusy": "Dày lịch",
+  "copyPlanScore": "CopyPlan",
+  "copyCount": "lượt copy",
+  "rating": "đánh giá",
+  "createdBy": "Tạo bởi",
+  "savedToLibrary": "Đã lưu vào thư viện",
+  "viewDetails": "Xem chi tiết",
+  "copyPlan": "CopyPlan",
+  "previousPage": "Trang trước",
+  "nextPage": "Trang sau",
+
+  "style": {
+    "FOOD": "Ẩm thực",
+    "SHOPPING": "Mua sắm",
+    "CULTURE": "Văn hoá",
+    "NATURE": "Thiên nhiên"
+  },
+
+  "pace": {
+    "RELAXED": "Thư giãn",
+    "NORMAL": "Bình thường",
+    "BUSY": "Dày lịch"
+  },
+
+  "paceAll": "Mọi nhịp độ",
+
+  "status": {
+    "IDEA": "Ý tưởng",
+    "SCHEDULED": "Đã lên lịch",
+    "COMPLETED": "Đã hoàn thành"
+  },
+
+  "statusAll": "Mọi trạng thái",
+
+  "sort": {
+    "RELEVANCE": "Liên quan nhất",
+    "TRUST": "Uy tín nhất",
+    "POPULAR": "Phổ biến nhất",
+    "RATING": "Đánh giá cao",
+    "NEWEST": "Mới nhất"
+  }
+},
+
+"copyPlan": {
+  "copyPlan": "Sao chép kế hoạch",
+  "copying": "Đang sao chép...",
+  "copyDay": "Sao chép ngày {day}",
+  "copiedFrom": "Sao chép từ",
+  "originalOwner": "Chủ sở hữu:",
+  "copySingleDayDescription": "Sao chép riêng một ngày vào kế hoạch của bạn:",
+  "multiDayHeading": "Sao chép nhiều ngày",
+  "multiDayDescription": "Chọn các ngày bạn muốn đưa vào kế hoạch mới.",
+  "day": "Ngày {day}",
+  "copySelectedDays": "Sao chép {count} ngày đã chọn",
+  "selectDaysToCopy": "Chọn ngày để sao chép",
+  "errors": {
+    "notFound": "Không tìm thấy kế hoạch cần sao chép.",
+    "notAllowed": "Kế hoạch này không cho phép sao chép.",
+    "dayEmpty": "Ngày này không có lịch trình để sao chép.",
+    "selectDay": "Vui lòng chọn ít nhất một ngày có hoạt động.",
+    "notPublic": "Kế hoạch này không còn công khai.",
+    "failed": "Không thể sao chép kế hoạch. Vui lòng thử lại."
+  }
+},
+
+"saved": {
+  "title": "Thư viện đã lưu",
+  "description": "Danh sách các kế hoạch bạn đã lưu để xem lại sau.",
+  "emptyTitle": "Chưa có kế hoạch nào được lưu",
+  "emptyDescription": "Bạn có thể lưu các kế hoạch từ trang Explore để xem lại sau.",
+  "exploreButton": "Khám phá kế hoạch",
+  "savedHeading": "Kế hoạch đã lưu",
+  "libraryCount": "{count} kế hoạch trong thư viện của bạn.",
+  "savedCount": "{count} đã lưu",
+  "noCover": "Chưa có ảnh đại diện",
+  "unsave": "Bỏ lưu kế hoạch",
+  "activityCount": "{count} hoạt động",
+  "travelerCount": "{count} người",
+  "trustScore": "Trust {score}",
+  "savedAt": "Đã lưu {date}",
+  "viewPlan": "Xem kế hoạch",
+  "style": {
+    "FOOD": "Ẩm thực",
+    "SHOPPING": "Mua sắm",
+    "CULTURE": "Văn hoá",
+    "NATURE": "Thiên nhiên"
+  }
+},
+
   "tagCategory": {
     "RESTAURANT": "🍜 Ăn uống",
     "ATTRACTION": "🏞️ Tham quan",
@@ -220,47 +365,77 @@
     "emerging": "🟡 Emerging",
     "unverified": "⚪ Chưa xác thực"
   },
-  "tagTip": {
-    "heading": "Tag & Tip Library",
-    "subtitle": "Tra cứu địa điểm ăn uống, tham quan, khách sạn và các tiện ích hỗ trợ (thuê xe, di chuyển, SIM...) đã có sẵn — dùng lại thay vì tạo trùng.",
-    "searchPlaceholder": "Tìm theo tên...",
-    "searchButton": "Tìm",
-    "allCategories": "Tất cả danh mục",
-    "empty": "Chưa có tag nào khớp.",
-    "emptyCta": "Tạo tag này",
-    "by": "bởi <link>{name}</link>",
-    "createButton": "Tạo tag",
-    "createHeading": "Tạo tag mới",
-    "newPageDescription": "Điền thông tin địa điểm hoặc tip bên dưới — hệ thống sẽ tự kiểm tra trùng lặp trước, giúp thư viện không bị trùng nội dung gần giống nhau.",
-    "backToLibrary": "Tag & Tip Library",
-    "form": {
-      "titleLabel": "Tên",
-      "titlePlaceholder": "VD: Bánh Xèo Bà Dưỡng",
-      "categoryLabel": "Danh mục",
-      "contentLabel": "Mô tả (tuỳ chọn)",
-      "contentPlaceholder": "VD: Quán ăn ngon, giá rẻ, có chỗ đậu xe",
-      "latitudeLabel": "Vĩ độ (tuỳ chọn)",
-      "longitudeLabel": "Kinh độ (tuỳ chọn)",
-      "coordinatesHint": "Nhập toạ độ để địa điểm hiện trên Map Planner của trip.",
-      "submit": "Tạo tag",
-      "submitPending": "Đang tạo…",
-      "createAnyway": "Vẫn tạo mới",
-      "duplicateWarning": "Đã có tag tương tự: \"{title}\" — cân nhắc dùng lại thay vì tạo mới.",
-      "createdSuccess": "Đã tạo tag \"{title}\".",
-      "openingTimeLabel": "Giờ mở cửa (tuỳ chọn)",
-      "closingTimeLabel": "Giờ đóng cửa (tuỳ chọn)",
-      "openingHoursHint": "Nếu nhập giờ mở cửa thì cần nhập cả giờ đóng cửa. Hỗ trợ địa điểm mở qua nửa đêm, ví dụ 18:00–02:00."
-    },
-    "errors": {
-      "loginRequired": "Cần đăng nhập để tạo tag mới.",
-      "titleRequired": "Vui lòng nhập tên.",
-      "invalidInput": "Thông tin nhập vào không hợp lệ.",
-      "coordinatesInvalid": "Toạ độ không hợp lệ. Vĩ độ từ -90 đến 90, kinh độ từ -180 đến 180.",
-      "openingHoursPairRequired": "Vui lòng nhập cả giờ mở cửa và giờ đóng cửa.",
-      "openingHoursInvalid": "Giờ mở cửa/đóng cửa không hợp lệ.",
-      "createFailed": "Không thể tạo tag này."
-    }
+"tagTip": {
+  "heading": "Tag & Tip Library",
+  "subtitle": "Tra cứu địa điểm ăn uống, tham quan, khách sạn và các tiện ích hỗ trợ (thuê xe, di chuyển, SIM...) đã có sẵn — dùng lại thay vì tạo trùng.",
+  "searchPlaceholder": "Tìm theo tên...",
+  "searchButton": "Tìm",
+  "allCategories": "Tất cả danh mục",
+  "empty": "Chưa có tag nào khớp.",
+  "emptyCta": "Tạo tag này",
+  "by": "bởi <link>{name}</link>",
+  "createButton": "Tạo tag",
+  "createHeading": "Tạo tag mới",
+  "newPageDescription": "Điền thông tin địa điểm hoặc tip bên dưới — hệ thống sẽ tự kiểm tra trùng lặp trước, giúp thư viện không bị trùng nội dung gần giống nhau.",
+  "backToLibrary": "Tag & Tip Library",
+
+  "communityTitle": "Tag & Tip cộng đồng",
+  "resultsCount": "{count} kết quả phù hợp.",
+  "emptyTitle": "Không tìm thấy Tag & Tip phù hợp",
+
+  "tipsHeading": "Mẹo khi tạo Tag & Tip",
+  "tipsDescription": "Một vài gợi ý giúp nội dung hữu ích hơn cho cộng đồng.",
+
+  "tipNameTitle": "Đặt tên rõ ràng",
+  "tipNameDescription": "Dùng tên địa điểm hoặc dịch vụ dễ nhận biết.",
+
+  "tipCategoryTitle": "Chọn đúng danh mục",
+  "tipCategoryDescription": "Giúp người khác tìm được Tag & Tip nhanh hơn.",
+
+  "tipContentTitle": "Viết nội dung thực tế",
+  "tipContentDescription": "Chia sẻ thông tin ngắn gọn, dễ hiểu và có ích cho chuyến đi.",
+
+  "form": {
+    "titleLabel": "Tên",
+    "titlePlaceholder": "VD: Bánh Xèo Bà Dưỡng",
+    "categoryLabel": "Danh mục",
+    "contentLabel": "Mô tả (tuỳ chọn)",
+    "contentPlaceholder": "VD: Quán ăn ngon, giá rẻ, có chỗ đậu xe",
+    "latitudeLabel": "Vĩ độ (tuỳ chọn)",
+    "longitudeLabel": "Kinh độ (tuỳ chọn)",
+    "coordinatesHint": "Nhập toạ độ để địa điểm hiện trên Map Planner của trip.",
+
+    "basicInfoTitle": "Thông tin cơ bản",
+    "basicInfoDescription": "Nhập tên, danh mục và nội dung cho Tag & Tip.",
+    "contentHint": "Mô tả ngắn gọn kinh nghiệm hoặc thông tin hữu ích cho người khác.",
+
+    "openingHoursTitle": "Thời gian hoạt động",
+    "openingHoursDescription": "Không bắt buộc nếu địa điểm không có giờ cố định.",
+
+    "locationTitle": "Vị trí",
+    "locationDescription": "Chọn trực tiếp trên bản đồ hoặc nhập tọa độ.",
+
+    "submit": "Tạo tag",
+    "submitPending": "Đang tạo…",
+    "createAnyway": "Vẫn tạo mới",
+    "duplicateWarning": "Đã có tag tương tự: \"{title}\" — cân nhắc dùng lại thay vì tạo mới.",
+    "createdSuccess": "Đã tạo tag \"{title}\".",
+    "openingTimeLabel": "Giờ mở cửa (tuỳ chọn)",
+    "closingTimeLabel": "Giờ đóng cửa (tuỳ chọn)",
+    "openingHoursHint": "Nếu nhập giờ mở cửa thì cần nhập cả giờ đóng cửa. Hỗ trợ địa điểm mở qua nửa đêm, ví dụ 18:00–02:00."
   },
+
+  "errors": {
+    "loginRequired": "Cần đăng nhập để tạo tag mới.",
+    "titleRequired": "Vui lòng nhập tên.",
+    "invalidInput": "Thông tin nhập vào không hợp lệ.",
+    "coordinatesInvalid": "Toạ độ không hợp lệ. Vĩ độ từ -90 đến 90, kinh độ từ -180 đến 180.",
+    "openingHoursPairRequired": "Vui lòng nhập cả giờ mở cửa và giờ đóng cửa.",
+    "openingHoursInvalid": "Giờ mở cửa/đóng cửa không hợp lệ.",
+    "createFailed": "Không thể tạo tag này."
+  }
+},
+
 "map": {
   "heading": "Map Planner",
   "empty": "Chưa có điểm nào có toạ độ để hiện trên bản đồ — thêm vĩ độ/kinh độ khi tạo tag trong Tag & Tip Library.",
@@ -431,29 +606,39 @@
       "inviteFailed": "Không thể gửi lời mời. Vui lòng thử lại."
     }
   },
-  "invitations": {
-    "heading": "Lời mời của tôi",
-    "description": "Các lời mời tham gia chuyến đi đang chờ bạn phản hồi.",
-    "empty": "Bạn không có lời mời nào đang chờ.",
-    "loginRequired": "Bạn cần đăng nhập để xem lời mời.",
-    "loginButton": "Đăng nhập",
-    "roleEditor": "Editor",
-    "roleViewer": "Viewer",
-    "invitedBy": "Được mời bởi {name}",
-    "invitedEmail": "Email nhận lời mời: {email}",
-    "accept": "Chấp nhận",
-    "acceptPending": "Đang chấp nhận…",
-    "decline": "Từ chối",
-    "declinePending": "Đang từ chối…",
-    "errors": {
-      "loginRequired": "Bạn cần đăng nhập.",
-      "notFound": "Không tìm thấy lời mời này.",
-      "notPending": "Lời mời này đã được xử lý.",
-      "emailMismatch": "Lời mời này không dành cho tài khoản của bạn.",
-      "userNotFound": "Không tìm thấy tài khoản.",
-      "responseFailed": "Không thể xử lý lời mời. Vui lòng thử lại."
-    }
-  },
+"invitations": {
+  "heading": "Lời mời của tôi",
+  "description": "Các lời mời tham gia chuyến đi đang chờ bạn phản hồi.",
+  "empty": "Bạn không có lời mời nào đang chờ.",
+  "loginRequired": "Bạn cần đăng nhập để xem lời mời.",
+  "loginButton": "Đăng nhập",
+  "roleEditor": "Editor",
+  "roleViewer": "Viewer",
+  "invitedBy": "Được mời bởi {name}",
+  "invitedEmail": "Email nhận lời mời: {email}",
+  "accept": "Chấp nhận",
+  "acceptPending": "Đang chấp nhận…",
+  "decline": "Từ chối",
+  "declinePending": "Đang từ chối…",
+
+  "loginTitle": "Đăng nhập để xem lời mời",
+  "loginDescription": "Bạn cần đăng nhập để xem và phản hồi các lời mời tham gia chuyến đi.",
+  "emptyTitle": "Không có lời mời đang chờ",
+  "viewTripsButton": "Xem chuyến đi của tôi",
+  "pendingTitle": "Lời mời đang chờ",
+  "pendingDescription": "Kiểm tra thông tin trước khi tham gia chuyến đi.",
+  "count": "{count} lời mời",
+  "noCover": "Chưa có ảnh đại diện",
+
+  "errors": {
+    "loginRequired": "Bạn cần đăng nhập.",
+    "notFound": "Không tìm thấy lời mời này.",
+    "notPending": "Lời mời này đã được xử lý.",
+    "emailMismatch": "Lời mời này không dành cho tài khoản của bạn.",
+    "userNotFound": "Không tìm thấy tài khoản.",
+    "responseFailed": "Không thể xử lý lời mời. Vui lòng thử lại."
+  }
+},
 "members": {
   "heading": "Thành viên",
   "description": "Quản lý quyền của những người đã tham gia chuyến đi.",

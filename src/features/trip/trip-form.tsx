@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,6 +28,7 @@ export interface TripFormDefaults {
   id: string;
   name: string;
   destination: string;
+  coverImageUrl: string | null;
   startDate: string;
   endDate: string;
   travelerCount: number;
@@ -51,6 +52,10 @@ export function TripForm({
   const tVisibility = useTranslations("tripVisibility");
   const tStatus = useTranslations("tripStatus");
   const token = shareToken ?? null;
+
+  const [coverPreview, setCoverPreview] = useState<string | null>(
+    defaultValues?.coverImageUrl ?? null,
+  );
 
   const action =
     mode === "edit" && defaultValues
@@ -87,6 +92,66 @@ export function TripForm({
           defaultValue={defaultValues?.destination}
         />
       </div>
+
+<div className="flex flex-col gap-2">
+  <Label htmlFor="coverImage">
+    {t("coverImageLabel")}
+  </Label>
+
+  {coverPreview && (
+    <div className="overflow-hidden rounded-xl border">
+      <img
+        src={coverPreview}
+        alt={t("coverImageLabel")}
+        className="h-48 w-full object-cover"
+      />
+    </div>
+  )}
+
+  <label
+    htmlFor="coverImage"
+    className="border-input bg-background hover:bg-muted flex h-10 w-fit cursor-pointer items-center rounded-lg border px-4 text-sm font-medium transition-colors"
+  >
+    {t("chooseCoverImage")}
+  </label>
+
+  <input
+    id="coverImage"
+    name="coverImage"
+    type="file"
+    accept="image/jpeg,image/png,image/webp"
+    className="sr-only"
+    onChange={(event) => {
+      const file =
+        event.target.files?.[0];
+
+      if (!file) {
+        setCoverPreview(
+          defaultValues?.coverImageUrl ??
+            null,
+        );
+        return;
+      }
+
+      const previewUrl =
+        URL.createObjectURL(file);
+
+      setCoverPreview(
+        previewUrl,
+      );
+    }}
+  />
+
+  {!coverPreview && (
+    <p className="text-muted-foreground text-sm">
+      {t("noCoverImageSelected")}
+    </p>
+  )}
+
+  <p className="text-muted-foreground text-xs">
+    {t("coverImageHint")}
+  </p>
+</div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">

@@ -28,7 +28,18 @@
     "exploreWord": "EXPLORE",
     "recentHeading": "Recent public plans",
     "matchHeading": "Public plans matching \"{query}\"",
-    "empty": "No public plan matches \"{query}\" yet. Try another search, or <link>create an account</link> to build your own."
+    "empty": "No public plan matches \"{query}\" yet. Try another search, or <link>create an account</link> to build your own.",
+
+    "featurePlanTitle": "Plan your trip",
+    "featurePlanDescription": "Organize your itinerary, budget, bookings, and preparation checklist in one trip.",
+    "featureExploreTitle": "Explore journeys",
+    "featureExploreDescription": "Discover public trips, places, and travel experiences from the TripBase community.",
+    "featureShareTitle": "Share experiences",
+    "heroBadge": "Explore · Plan · Share",
+    "noCover": "No cover image",
+    "exploreMore": "Explore more",
+    "featureShareDescription": "Share trips and Tag & Tips, and plan together with your friends."
+
   },
   "tripStatus": {
     "IDEA": "💭 Idea",
@@ -45,12 +56,19 @@
     "PUBLIC": "🌐 Public"
   },
   "trip": {
-    "dashboard": {
-      "heading": "Your trips",
-      "createButton": "Create a trip",
-      "empty": "You don't have any trips yet.",
-      "emptyCta": "Create your first trip"
-    },
+"dashboard": {
+  "heading": "Your trips",
+  "description": "Manage and continue your journeys.",
+  "createButton": "Create a trip",
+  "empty": "You don't have any trips yet.",
+  "emptyCta": "Create your first trip",
+  "noCover": "No cover image",
+  "sharedHeading": "Shared with me",
+  "sharedDescription": "Trips you've been invited to join.",
+  "sharedBy": "Shared by {name}",
+  "roleEditor": "Can edit",
+  "roleViewer": "View only"
+},
     "form": {
       "nameLabel": "Trip name",
       "namePlaceholder": "e.g. Da Lat 3D2N with friends",
@@ -78,6 +96,10 @@
       "editTitle": "Edit trip",
       "editSubmit": "Save changes",
       "editSubmitPending": "Saving…",
+      "coverImageLabel": "Trip cover image",
+      "coverImageHint": "Supports JPG, PNG, or WebP. Maximum file size: 5 MB.",
+      "chooseCoverImage": "Choose image",
+      "noCoverImageSelected": "No image selected",
       "deleteLink": "Delete trip"
     },
     "errors": {
@@ -108,6 +130,7 @@
   "tripDetail": {
     "gateDescription": "{destination} — this plan is public, log in to see the full Timeline/Map/Budget.",
     "loginCta": "Log in to view details",
+    "verifiedTrip": "Verified trip",
     "meta": "Created by <link>{owner}</link> · {count, plural, =0 {no items yet} other {# items}} in itinerary"
   },
   "itinerary": {
@@ -206,6 +229,127 @@
       "invalidCredentials": "Incorrect email or password."
     }
   },
+
+"explore": {
+  "heading": "Explore plans",
+  "description": "Discover trips by destination, budget, travel style, and experiences from the TripBase community.",
+  "filtersHeading": "Search & filters",
+  "searchPlaceholder": "Trip name, destination, or creator...",
+  "destinationPlaceholder": "Destination",
+  "budgetMinPlaceholder": "Minimum budget",
+  "budgetMaxPlaceholder": "Maximum budget",
+  "minDaysPlaceholder": "Minimum days",
+  "maxDaysPlaceholder": "Maximum days",
+  "travelStyleHeading": "Travel style",
+  "searchButton": "Search",
+  "clearFilters": "Clear filters",
+  "savedButton": "Saved",
+  "resultsCount": "{count} matching plans",
+  "pageCount": "Page {page}/{total}",
+  "pageShort": "{page}/{total}",
+  "savedCount": "{count} saved",
+  "marketplace": "Marketplace",
+  "emptyTitle": "No matching plans found.",
+  "emptyDescription": "Try changing your search terms or relaxing the filters.",
+  "noCover": "No cover image",
+  "save": "Save plan",
+  "unsave": "Remove saved plan",
+  "loginToSave": "Log in to save this plan",
+  "budgetUnset": "Budget not set",
+  "dateUnset": "Dates not set",
+  "activityCount": "{count} activities",
+  "travelerCount": "{count} travelers",
+  "paceRelaxed": "Relaxed",
+  "paceNormal": "Normal",
+  "paceBusy": "Busy",
+  "copyPlanScore": "CopyPlan",
+  "copyCount": "copies",
+  "rating": "rating",
+  "createdBy": "Created by",
+  "savedToLibrary": "Saved to your library",
+  "viewDetails": "View details",
+  "copyPlan": "CopyPlan",
+  "previousPage": "Previous",
+  "nextPage": "Next",
+
+  "style": {
+    "FOOD": "Food",
+    "SHOPPING": "Shopping",
+    "CULTURE": "Culture",
+    "NATURE": "Nature"
+  },
+
+  "pace": {
+    "RELAXED": "Relaxed",
+    "NORMAL": "Normal",
+    "BUSY": "Busy"
+  },
+
+  "paceAll": "All paces",
+
+  "status": {
+    "IDEA": "Idea",
+    "SCHEDULED": "Scheduled",
+    "COMPLETED": "Completed"
+  },
+
+  "statusAll": "All statuses",
+
+  "sort": {
+    "RELEVANCE": "Most relevant",
+    "TRUST": "Most trusted",
+    "POPULAR": "Most popular",
+    "RATING": "Highest rated",
+    "NEWEST": "Newest"
+  }
+},
+
+"copyPlan": {
+  "copyPlan": "Copy plan",
+  "copying": "Copying...",
+  "copyDay": "Copy day {day}",
+  "copiedFrom": "Copied from",
+  "originalOwner": "Original owner:",
+  "copySingleDayDescription": "Copy an individual day to your plan:",
+  "multiDayHeading": "Copy multiple days",
+  "multiDayDescription": "Select the days you want to add to the new plan.",
+  "day": "Day {day}",
+  "copySelectedDays": "Copy {count} selected days",
+  "selectDaysToCopy": "Select days to copy",
+  "errors": {
+    "notFound": "The plan to copy could not be found.",
+    "notAllowed": "This plan does not allow copying.",
+    "dayEmpty": "This day has no itinerary to copy.",
+    "selectDay": "Please select at least one day with activities.",
+    "notPublic": "This plan is no longer public.",
+    "failed": "Unable to copy the plan. Please try again."
+  }
+},
+
+"saved": {
+  "title": "Saved Library",
+  "description": "Plans you saved so you can easily return to them later.",
+  "emptyTitle": "No saved plans yet",
+  "emptyDescription": "You can save plans from Explore and return to them here later.",
+  "exploreButton": "Explore plans",
+  "savedHeading": "Saved plans",
+  "libraryCount": "{count} plans in your library.",
+  "savedCount": "{count} saved",
+  "noCover": "No cover image",
+  "unsave": "Remove saved plan",
+  "activityCount": "{count} activities",
+  "travelerCount": "{count} travelers",
+  "trustScore": "Trust {score}",
+  "savedAt": "Saved {date}",
+  "viewPlan": "View plan",
+  "style": {
+    "FOOD": "Food",
+    "SHOPPING": "Shopping",
+    "CULTURE": "Culture",
+    "NATURE": "Nature"
+  }
+},
+
   "tagCategory": {
     "RESTAURANT": "🍜 Food & drink",
     "ATTRACTION": "🏞️ Attraction",
@@ -220,47 +364,76 @@
     "emerging": "🟡 Emerging",
     "unverified": "⚪ Unverified"
   },
-  "tagTip": {
-    "heading": "Tag & Tip Library",
-    "subtitle": "Look up existing restaurants, attractions, hotels, and support tips (car rental, transport, SIM...) — reuse instead of creating a duplicate.",
-    "searchPlaceholder": "Search by name...",
-    "searchButton": "Search",
-    "allCategories": "All categories",
-    "empty": "No tag matches yet.",
-    "emptyCta": "Create it",
-    "by": "by <link>{name}</link>",
-    "createButton": "Create tag",
-    "createHeading": "Create a tag",
-    "newPageDescription": "Fill in the place or tip below — we'll check for duplicates first, so the library stays free of near-identical entries.",
-    "backToLibrary": "Tag & Tip Library",
-    "form": {
-      "titleLabel": "Name",
-      "titlePlaceholder": "e.g. Banh Xeo Ba Duong",
-      "categoryLabel": "Category",
-      "contentLabel": "Description (optional)",
-      "contentPlaceholder": "e.g. Great food, cheap, has parking",
-      "latitudeLabel": "Latitude (optional)",
-      "longitudeLabel": "Longitude (optional)",
-      "coordinatesHint": "Add coordinates so this place shows up on the trip's Map Planner.",
-      "submit": "Create tag",
-      "submitPending": "Creating…",
-      "createAnyway": "Create anyway",
-      "duplicateWarning": "A similar tag already exists: \"{title}\" — consider reusing it instead.",
-      "createdSuccess": "Created tag \"{title}\".",
-      "openingTimeLabel": "Opening time (optional)",
-      "closingTimeLabel": "Closing time (optional)",
-      "openingHoursHint": "If you enter an opening time, also enter a closing time. Overnight hours such as 18:00–02:00 are supported."
-    },
-    "errors": {
-      "loginRequired": "You need to log in to create a tag.",
-      "titleRequired": "Please enter a name.",
-      "invalidInput": "The entered information is invalid.",
-      "coordinatesInvalid": "Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180.",
-      "openingHoursPairRequired": "Please enter both opening and closing times.",
-      "openingHoursInvalid": "Opening or closing time is invalid.",
-      "createFailed": "Could not create this tag."
-    }
+"tagTip": {
+  "heading": "Tag & Tip Library",
+  "subtitle": "Look up existing restaurants, attractions, hotels, and support tips (car rental, transport, SIM...) — reuse instead of creating a duplicate.",
+  "searchPlaceholder": "Search by name...",
+  "searchButton": "Search",
+  "allCategories": "All categories",
+  "empty": "No tag matches yet.",
+  "emptyCta": "Create it",
+  "by": "by <link>{name}</link>",
+  "createButton": "Create tag",
+  "createHeading": "Create a tag",
+  "newPageDescription": "Fill in the place or tip below — we'll check for duplicates first, so the library stays free of near-identical entries.",
+  "backToLibrary": "Tag & Tip Library",
+
+  "communityTitle": "Community Tag & Tips",
+  "resultsCount": "{count} matching results.",
+  "emptyTitle": "No matching Tag & Tip found",
+
+  "tipsHeading": "Tips for creating Tag & Tip",
+  "tipsDescription": "A few suggestions to make your contribution more useful to the community.",
+
+  "tipNameTitle": "Use a clear name",
+  "tipNameDescription": "Use a recognizable place or service name.",
+
+  "tipCategoryTitle": "Choose the right category",
+  "tipCategoryDescription": "Helps others find your Tag & Tip more easily.",
+
+  "tipContentTitle": "Share practical information",
+  "tipContentDescription": "Keep your advice concise, clear, and useful for travelers.",
+
+  "form": {
+    "titleLabel": "Name",
+    "titlePlaceholder": "e.g. Banh Xeo Ba Duong",
+    "categoryLabel": "Category",
+    "contentLabel": "Description (optional)",
+    "contentPlaceholder": "e.g. Great food, cheap, has parking",
+    "latitudeLabel": "Latitude (optional)",
+    "longitudeLabel": "Longitude (optional)",
+    "coordinatesHint": "Add coordinates so this place shows up on the trip's Map Planner.",
+
+    "basicInfoTitle": "Basic information",
+    "basicInfoDescription": "Enter the name, category, and content for this Tag & Tip.",
+    "contentHint": "Briefly describe useful information or experience for other travelers.",
+
+    "openingHoursTitle": "Opening hours",
+    "openingHoursDescription": "Optional if the place does not have fixed operating hours.",
+
+    "locationTitle": "Location",
+    "locationDescription": "Choose a point on the map or enter coordinates manually.",
+
+    "submit": "Create tag",
+    "submitPending": "Creating…",
+    "createAnyway": "Create anyway",
+    "duplicateWarning": "A similar tag already exists: \"{title}\" — consider reusing it instead.",
+    "createdSuccess": "Created tag \"{title}\".",
+    "openingTimeLabel": "Opening time (optional)",
+    "closingTimeLabel": "Closing time (optional)",
+    "openingHoursHint": "If you enter an opening time, also enter a closing time. Overnight hours such as 18:00–02:00 are supported."
   },
+
+  "errors": {
+    "loginRequired": "You need to log in to create a tag.",
+    "titleRequired": "Please enter a name.",
+    "invalidInput": "The entered information is invalid.",
+    "coordinatesInvalid": "Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180.",
+    "openingHoursPairRequired": "Please enter both opening and closing times.",
+    "openingHoursInvalid": "Opening or closing time is invalid.",
+    "createFailed": "Could not create this tag."
+  }
+},
 "map": {
   "heading": "Map Planner",
   "empty": "No geolocated points to show yet — add latitude/longitude when creating a tag in the Tag & Tip Library.",
@@ -431,29 +604,40 @@
       "inviteFailed": "Could not send the invitation. Please try again."
     }
   },
-  "invitations": {
-    "heading": "My invitations",
-    "description": "Trip invitations waiting for your response.",
-    "empty": "You don't have any pending invitations.",
-    "loginRequired": "You need to log in to view your invitations.",
-    "loginButton": "Log in",
-    "roleEditor": "Editor",
-    "roleViewer": "Viewer",
-    "invitedBy": "Invited by {name}",
-    "invitedEmail": "Invitation email: {email}",
-    "accept": "Accept",
-    "acceptPending": "Accepting…",
-    "decline": "Decline",
-    "declinePending": "Declining…",
-    "errors": {
-      "loginRequired": "You need to log in.",
-      "notFound": "This invitation could not be found.",
-      "notPending": "This invitation has already been handled.",
-      "emailMismatch": "This invitation does not belong to your account.",
-      "userNotFound": "User account not found.",
-      "responseFailed": "Could not process the invitation. Please try again."
-    }
-  },
+"invitations": {
+  "heading": "My invitations",
+  "description": "Trip invitations waiting for your response.",
+  "empty": "You don't have any pending invitations.",
+  "loginRequired": "You need to log in to view your invitations.",
+  "loginButton": "Log in",
+  "roleEditor": "Editor",
+  "roleViewer": "Viewer",
+  "invitedBy": "Invited by {name}",
+  "invitedEmail": "Invitation email: {email}",
+  "accept": "Accept",
+  "acceptPending": "Accepting…",
+  "decline": "Decline",
+  "declinePending": "Declining…",
+
+  "loginTitle": "Log in to view invitations",
+  "loginDescription": "You need to log in to view and respond to trip invitations.",
+  "emptyTitle": "No pending invitations",
+  "viewTripsButton": "View my trips",
+  "pendingTitle": "Pending invitations",
+  "pendingDescription": "Review the trip details before joining.",
+  "count": "{count} invitations",
+  "noCover": "No cover image",
+
+  "errors": {
+    "loginRequired": "You need to log in.",
+    "notFound": "This invitation could not be found.",
+    "notPending": "This invitation has already been handled.",
+    "emailMismatch": "This invitation does not belong to your account.",
+    "userNotFound": "User account not found.",
+    "responseFailed": "Could not process the invitation. Please try again."
+  }
+},
+
 "members": {
   "heading": "Members",
   "description": "Manage permissions for people who joined this trip.",

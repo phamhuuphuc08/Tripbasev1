@@ -1,5 +1,6 @@
 "use server";
 
+import { uploadTripCoverImage } from "@/server/services/trip-image.service";
 import { PlanStatus, PlanVisibility, TravelPace } from "@prisma/client";
 import { getLocale, getTranslations } from "next-intl/server";
 import { z } from "zod";
@@ -139,12 +140,39 @@ export async function createTripAction(
     };
   }
 
+  let coverImageUrl:
+    string | null = null;
+
+  const coverImage =
+    formData.get(
+      "coverImage",
+    );
+
+  if (
+    coverImage instanceof File &&
+    coverImage.size > 0
+  ) {
+    try {
+      coverImageUrl =
+        await uploadTripCoverImage(
+          session.userId,
+          coverImage,
+        );
+    } catch {
+      return {
+        error:
+          "Không thể tải ảnh đại diện chuyến đi.",
+      };
+    }
+  }
+
   let trip;
 
   try {
     trip = await createTrip(session.userId, {
       name: parsed.data.name,
       destination: parsed.data.destination,
+      coverImageUrl,
       startDate,
       endDate,
       visibility: parsed.data.visibility,
@@ -229,6 +257,32 @@ export async function updateTripAction(
     };
   }
 
+  let coverImageUrl:
+    string | undefined;
+
+  const coverImage =
+    formData.get(
+      "coverImage",
+    );
+
+  if (
+    coverImage instanceof File &&
+    coverImage.size > 0
+  ) {
+    try {
+      coverImageUrl =
+        await uploadTripCoverImage(
+          session.userId,
+          coverImage,
+        );
+    } catch {
+      return {
+        error:
+          "Không thể tải ảnh đại diện chuyến đi.",
+      };
+    }
+  }
+
   try {
     await updateTrip(
       tripId,
@@ -236,6 +290,9 @@ export async function updateTripAction(
       {
         name: parsed.data.name,
         destination: parsed.data.destination,
+        ...(coverImageUrl
+          ? { coverImageUrl }
+          : {}),
         startDate,
         endDate,
         visibility: parsed.data.visibility,

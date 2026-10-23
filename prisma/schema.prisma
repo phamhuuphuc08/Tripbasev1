@@ -89,25 +89,40 @@ model User {
   budgetLevel     String?  @map("budget_level")
   travelInterests String[] @default([]) @map("travel_interests")
   passwordHash    String?  @map("password_hash")
+  sessionVersion  Int      @default(0) @map("session_version")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  trips               Trip[]             @relation("TripOwner")
-  locationTags        LocationTag[]      @relation("TagOwner")
-  collaboratorOn      Collaborator[]     @relation("CollaboratorUser")
-  invitesSent         Collaborator[]     @relation("CollaboratorInviter")
-  tripInvitationsSent TripInvitation[]   @relation("TripInvitationInviter")
+  trips               Trip[]               @relation("TripOwner")
+  locationTags        LocationTag[]        @relation("TagOwner")
+  collaboratorOn      Collaborator[]       @relation("CollaboratorUser")
+  invitesSent         Collaborator[]       @relation("CollaboratorInviter")
+  tripInvitationsSent TripInvitation[]     @relation("TripInvitationInviter")
   shareLinksCreated   ShareLink[]
   interactions        Interaction[]
   planCopiesMade      PlanCopy[]
   creatorReputation   CreatorReputation?
-  citationsMade       Citation[]         @relation("CiterUser")
+  citationsMade       Citation[]           @relation("CiterUser")
   votes               Vote[]
   comments            Comment[]
   expensesPaid        Expense[]
   checklistAssigned   ChecklistItem[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
 }
 
 // ---------------------------------------------------------------------------
@@ -118,6 +133,7 @@ model Trip {
   id               String         @id @default(cuid())
   name             String
   destination      String
+  coverImageUrl    String?        @map("cover_image_url")
   startDate        DateTime?      @map("start_date")
   endDate          DateTime?      @map("end_date")
   currency         String         @default("VND")

@@ -42,6 +42,8 @@ export async function listSavedPlans(
       id: trip.id,
       name: trip.name,
       destination: trip.destination,
+      coverImageUrl:
+        trip.coverImageUrl,
       startDate: trip.startDate,
       endDate: trip.endDate,
       status: trip.status,

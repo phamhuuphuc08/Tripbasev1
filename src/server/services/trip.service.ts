@@ -125,6 +125,7 @@ export function createTrip(
   input: {
     name: string;
     destination: string;
+    coverImageUrl: string | null;
     startDate: Date | null;
     endDate: Date | null;
     visibility: PlanVisibility;
@@ -146,6 +147,7 @@ export async function updateTrip(
   input: {
     name: string;
     destination: string;
+    coverImageUrl?: string;
     startDate: Date | null;
     endDate: Date | null;
     visibility: PlanVisibility;
