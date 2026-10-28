@@ -14,6 +14,16 @@ datasource db {
 // ---------------------------------------------------------------------------
 // Enums
 // ---------------------------------------------------------------------------
+enum TagApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
 
 enum PlanVisibility {
   PRIVATE
@@ -83,6 +93,7 @@ model User {
   id              String   @id @default(cuid())
   name            String
   email           String   @unique
+  role            UserRole @default(USER)
   image           String?
   bio             String?
   travelStyle     String?  @map("travel_style")
@@ -222,12 +233,18 @@ model LocationTag {
   possibleDuplicateOf   LocationTag?  @relation("TagDuplicate", fields: [possibleDuplicateOfId], references: [id])
   duplicates            LocationTag[] @relation("TagDuplicate")
   citeTrustScore        Float         @default(0) @map("cite_trust_score")
-  createdAt             DateTime      @default(now()) @map("created_at")
+
+  approvalStatus TagApprovalStatus @default(PENDING) @map("approval_status")
+  reviewNote     String?           @map("review_note")
+  reviewedAt     DateTime?         @map("reviewed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
 
   itineraryItems ItineraryItem[]
   citations      Citation[]
 
   @@index([ownerId])
+  @@index([approvalStatus])
   @@map("location_tags")
 }
 

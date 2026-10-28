@@ -1,9 +1,11 @@
 import {
   Compass,
   Menu,
+  ShieldCheck,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
+import { prisma } from "@/server/db/client";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
@@ -13,18 +15,30 @@ import { getSession } from "@/server/auth/session";
 import { listMyPendingInvitations } from "@/server/services/invitation.service";
 
 export async function SiteHeader() {
-  const [session, t] =
-    await Promise.all([
-      getSession(),
-      getTranslations("nav"),
-    ]);
+  const [session, t] = await Promise.all([
+    getSession(),
+    getTranslations("nav"),
+  ]);
 
-  const pendingInvitations =
-    session
-      ? await listMyPendingInvitations(
-          session.userId,
-        )
-      : [];
+  const currentUser = session
+    ? await prisma.user.findUnique({
+        where: {
+          id: session.userId,
+        },
+        select: {
+          role: true,
+        },
+      })
+    : null;
+
+  const isAdmin =
+    currentUser?.role === "ADMIN";
+
+  const pendingInvitations = session
+    ? await listMyPendingInvitations(
+        session.userId,
+      )
+    : [];
 
   const pendingInvitationCount =
     pendingInvitations.length;
@@ -78,11 +92,9 @@ export async function SiteHeader() {
                 {t("invitations")}
               </span>
 
-              {pendingInvitationCount >
-                0 && (
+              {pendingInvitationCount > 0 && (
                 <span className="bg-primary text-primary-foreground flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none">
-                  {pendingInvitationCount >
-                  99
+                  {pendingInvitationCount > 99
                     ? "99+"
                     : pendingInvitationCount}
                 </span>
@@ -104,6 +116,21 @@ export async function SiteHeader() {
 
           <ThemeToggle />
 
+          {isAdmin && (
+            <Button
+              render={
+                <Link href="/admin" />
+              }
+              nativeButton={false}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <ShieldCheck className="size-4" />
+              {t("admin")}
+            </Button>
+          )}
+
           {session ? (
             <>
               <Link
@@ -113,9 +140,7 @@ export async function SiteHeader() {
                 {session.name}
               </Link>
 
-              <form
-                action={logoutAction}
-              >
+              <form action={logoutAction}>
                 <Button
                   type="submit"
                   variant="ghost"
@@ -207,16 +232,12 @@ export async function SiteHeader() {
                   className="hover:bg-muted flex items-center justify-between gap-3 rounded-xl px-3 py-3 font-medium transition-colors"
                 >
                   <span>
-                    {t(
-                      "invitations",
-                    )}
+                    {t("invitations")}
                   </span>
 
-                  {pendingInvitationCount >
-                    0 && (
+                  {pendingInvitationCount > 0 && (
                     <span className="bg-primary text-primary-foreground flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold">
-                      {pendingInvitationCount >
-                      99
+                      {pendingInvitationCount > 99
                         ? "99+"
                         : pendingInvitationCount}
                     </span>
@@ -230,6 +251,19 @@ export async function SiteHeader() {
               >
                 {t("tags")}
               </Link>
+
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="hover:bg-muted flex items-center gap-2 rounded-xl px-3 py-3 font-medium transition-colors"
+                >
+                  <ShieldCheck className="size-4" />
+
+                  <span>
+                    {t("admin")}
+                  </span>
+                </Link>
+              )}
             </nav>
 
             {/* MOBILE SETTINGS */}
@@ -247,19 +281,13 @@ export async function SiteHeader() {
             {/* MOBILE AUTH */}
             <div className="border-t p-3">
               {session ? (
-                <form
-                  action={
-                    logoutAction
-                  }
-                >
+                <form action={logoutAction}>
                   <Button
                     type="submit"
                     variant="outline"
                     className="w-full rounded-xl"
                   >
-                    {t(
-                      "logout",
-                    )}
+                    {t("logout")}
                   </Button>
                 </form>
               ) : (
@@ -268,29 +296,21 @@ export async function SiteHeader() {
                     render={
                       <Link href="/login" />
                     }
-                    nativeButton={
-                      false
-                    }
+                    nativeButton={false}
                     variant="outline"
                     className="rounded-xl"
                   >
-                    {t(
-                      "login",
-                    )}
+                    {t("login")}
                   </Button>
 
                   <Button
                     render={
                       <Link href="/register" />
                     }
-                    nativeButton={
-                      false
-                    }
+                    nativeButton={false}
                     className="rounded-xl"
                   >
-                    {t(
-                      "register",
-                    )}
+                    {t("register")}
                   </Button>
                 </div>
               )}

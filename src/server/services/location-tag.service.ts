@@ -76,16 +76,20 @@ export async function createTagWithDedupCheck(
     };
   }
 
-  const tag = await createLocationTag({
-    ownerId,
-    title,
-    category: input.category,
-    content: input.content?.trim() || null,
-    latitude: input.latitude,
-    longitude: input.longitude,
-    openingHours,
-    possibleDuplicateOfId: force && duplicate ? duplicate.id : null,
-  });
+const tag = await createLocationTag({
+  ownerId,
+  title,
+  category: input.category,
+  content: input.content?.trim() || null,
+  latitude: input.latitude,
+  longitude: input.longitude,
+  openingHours,
+  possibleDuplicateOfId:
+    force && duplicate
+      ? duplicate.id
+      : null,
+  approvalStatus: "PENDING",
+});
 
   return { status: "created", tag };
 }
