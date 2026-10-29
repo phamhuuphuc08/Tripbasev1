@@ -132,6 +132,9 @@ export async function createTagAction(
     if (error instanceof Error) {
       if (error.message === "OPENING_HOURS_INVALID") return { attempt, submitted, error: t("openingHoursInvalid") };
       if (error.message === "TITLE_REQUIRED") return { attempt, submitted, error: t("titleRequired") };
+      if (error.message === "TAG_CREATE_SUSPENDED") return { attempt, submitted, error: t("createSuspended") };
+      if (error.message === "ACCOUNT_SUSPENDED") return { attempt, submitted, error: t("accountSuspended") };
+      if (error.message === "ACCOUNT_UNAVAILABLE") return { attempt, submitted, error: t("accountUnavailable") };
     }
 
     return { attempt, submitted, error: t("createFailed") };

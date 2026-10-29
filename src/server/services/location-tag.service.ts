@@ -1,11 +1,16 @@
 import { toTagCategory, type TagCategory } from "@/features/tag-tip/categories";
 import {
-  createLocationTag, findAllLocationTagsForPicker, findLocationTagById,
-  findLocationTagsByCategory, searchLocationTags,
+  createLocationTag,
+  findAllLocationTagsForPicker,
+  findLocationTagById,
+  findLocationTagsByCategory,
+  searchLocationTags,
 } from "@/server/repositories/location-tag.repository";
 import { findPossibleDuplicate } from "@/server/services/tag-dedup.service";
+import { assertCanCreateTag } from "@/server/services/user-restriction.service";
 
-const OPENING_HOURS_RE = /^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$/;
+const OPENING_HOURS_RE =
+  /^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$/;
 
 export function searchTags(filter: { query?: string; category?: TagCategory }) {
   return searchLocationTags(filter);
@@ -44,10 +49,16 @@ export type CreateTagResult =
   | { status: "created"; tag: Awaited<ReturnType<typeof createLocationTag>> }
   | { status: "duplicate"; suggestion: { id: string; title: string } };
 
-export function normalizeOpeningHours(value: string | null | undefined): string | null {
+export function normalizeOpeningHours(
+  value: string | null | undefined,
+): string | null {
   const normalized = value?.trim() ?? "";
   if (!normalized) return null;
-  if (!OPENING_HOURS_RE.test(normalized)) throw new Error("OPENING_HOURS_INVALID");
+
+  if (!OPENING_HOURS_RE.test(normalized)) {
+    throw new Error("OPENING_HOURS_INVALID");
+  }
+
   return normalized;
 }
 
@@ -62,6 +73,8 @@ export async function createTagWithDedupCheck(
   input: CreateTagInput,
   force = false,
 ): Promise<CreateTagResult> {
+  await assertCanCreateTag(ownerId);
+
   const title = input.title.trim();
   if (!title) throw new Error("TITLE_REQUIRED");
 
@@ -72,24 +85,24 @@ export async function createTagWithDedupCheck(
   if (duplicate && !force) {
     return {
       status: "duplicate",
-      suggestion: { id: duplicate.id, title: duplicate.title },
+      suggestion: {
+        id: duplicate.id,
+        title: duplicate.title,
+      },
     };
   }
 
-const tag = await createLocationTag({
-  ownerId,
-  title,
-  category: input.category,
-  content: input.content?.trim() || null,
-  latitude: input.latitude,
-  longitude: input.longitude,
-  openingHours,
-  possibleDuplicateOfId:
-    force && duplicate
-      ? duplicate.id
-      : null,
-  approvalStatus: "PENDING",
-});
+  const tag = await createLocationTag({
+    ownerId,
+    title,
+    category: input.category,
+    content: input.content?.trim() || null,
+    latitude: input.latitude,
+    longitude: input.longitude,
+    openingHours,
+    possibleDuplicateOfId: force && duplicate ? duplicate.id : null,
+    approvalStatus: "PENDING",
+  });
 
   return { status: "created", tag };
 }

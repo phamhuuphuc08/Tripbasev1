@@ -38,7 +38,7 @@ export async function registerUser(input: {
     passwordHash,
   });
 
-  await createSession({ userId: user.id, email: user.email, name: user.name });
+  await createSession({ userId: user.id, email: user.email, name: user.name, sessionVersion: user.sessionVersion });
   return user;
 }
 
@@ -56,7 +56,7 @@ export async function loginWithPassword(input: {
     throw new AuthError("INVALID_CREDENTIALS");
   }
 
-  await createSession({ userId: user.id, email: user.email, name: user.name });
+  await createSession({ userId: user.id, email: user.email, name: user.name, sessionVersion: user.sessionVersion });
   return user;
 }
 

@@ -1,4 +1,5 @@
 import { PlanStatus, PlanVisibility, type TravelPace } from "@prisma/client";
+import { assertCanCreateTrip } from "@/server/services/user-restriction.service";
 import { prisma } from "@/server/db/client";
 
 import {
@@ -120,7 +121,7 @@ export function listSharedTrips(userId: string) {
   return findTripsSharedWithUser(userId);
 }
 
-export function createTrip(
+export async function createTrip(
   ownerId: string,
   input: {
     name: string;
@@ -135,6 +136,8 @@ export function createTrip(
     travelStyle: string[];
   },
 ) {
+  await assertCanCreateTrip(ownerId);
+
   return createTripRepo({
     ownerId,
     ...input,

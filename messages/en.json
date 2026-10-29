@@ -108,7 +108,10 @@
       "destinationRequired": "Please enter a destination.",
       "endBeforeStart": "End date must be after the start date.",
       "createFailed": "Couldn't create this trip.",
-      "updateFailed": "Couldn't update this trip."
+      "updateFailed": "Couldn't update this trip.",
+      "createSuspended": "Your permission to create trips is temporarily suspended.",
+      "accountSuspended": "Your account is currently suspended.",
+      "accountUnavailable": "This account is currently unavailable."
     },
     "travelers": {
       "heading": "Travelers",
@@ -432,7 +435,10 @@
     "coordinatesInvalid": "Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180.",
     "openingHoursPairRequired": "Please enter both opening and closing times.",
     "openingHoursInvalid": "Opening or closing time is invalid.",
-    "createFailed": "Could not create this tag."
+    "createFailed": "Could not create this tag.",
+    "createSuspended": "Your permission to create Tag & Tip is temporarily suspended.",
+    "accountSuspended": "Your account is currently suspended.",
+    "accountUnavailable": "This account is currently unavailable."
   }
 },
 "map": {

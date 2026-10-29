@@ -109,7 +109,10 @@
       "destinationRequired": "Vui lòng nhập điểm đến.",
       "endBeforeStart": "Ngày kết thúc phải sau ngày bắt đầu.",
       "createFailed": "Không thể tạo trip này.",
-      "updateFailed": "Không thể cập nhật trip này."
+      "updateFailed": "Không thể cập nhật trip này.",
+      "createSuspended": "Bạn đang bị tạm khóa quyền tạo chuyến đi.",
+      "accountSuspended": "Tài khoản của bạn đang bị đình chỉ.",
+      "accountUnavailable": "Tài khoản này hiện không khả dụng."
     },
     "travelers": {
       "heading": "Người tham gia",
@@ -433,7 +436,10 @@
     "coordinatesInvalid": "Toạ độ không hợp lệ. Vĩ độ từ -90 đến 90, kinh độ từ -180 đến 180.",
     "openingHoursPairRequired": "Vui lòng nhập cả giờ mở cửa và giờ đóng cửa.",
     "openingHoursInvalid": "Giờ mở cửa/đóng cửa không hợp lệ.",
-    "createFailed": "Không thể tạo tag này."
+    "createFailed": "Không thể tạo tag này.",
+    "createSuspended": "Bạn đang bị tạm khóa quyền tạo Tag & Tip.",
+    "accountSuspended": "Tài khoản của bạn đang bị đình chỉ.",
+    "accountUnavailable": "Tài khoản này hiện không khả dụng."
   }
 },
 

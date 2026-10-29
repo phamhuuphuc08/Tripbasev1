@@ -1,5 +1,6 @@
 "use server";
 
+import { assertCanCreateTrip } from "@/server/services/user-restriction.service";
 import { uploadTripCoverImage } from "@/server/services/trip-image.service";
 import { PlanStatus, PlanVisibility, TravelPace } from "@prisma/client";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -98,6 +99,34 @@ export async function createTripAction(
 
   const t = await getTranslations("trip.errors");
 
+try {
+  await assertCanCreateTrip(session.userId);
+} catch (error) {
+  if (error instanceof Error) {
+    if (error.message === "TRIP_CREATE_SUSPENDED") {
+      return {
+        error: t("createSuspended"),
+      };
+    }
+
+    if (error.message === "ACCOUNT_SUSPENDED") {
+      return {
+        error: t("accountSuspended"),
+      };
+    }
+
+    if (error.message === "ACCOUNT_UNAVAILABLE") {
+      return {
+        error: t("accountUnavailable"),
+      };
+    }
+  }
+
+  return {
+    error: t("createFailed"),
+  };
+}
+
   const schema = z.object({
     name: z.string().trim().min(1, t("nameRequired")),
     destination: z
@@ -168,26 +197,40 @@ export async function createTripAction(
 
   let trip;
 
-  try {
-    trip = await createTrip(session.userId, {
-      name: parsed.data.name,
-      destination: parsed.data.destination,
-      coverImageUrl,
-      startDate,
-      endDate,
-      visibility: parsed.data.visibility,
-      ...parseTripBuilderFields(formData),
-    });
-  } catch {
-    return {
-      error: t("createFailed"),
-    };
+try {
+  trip = await createTrip(session.userId, {
+    name: parsed.data.name,
+    destination: parsed.data.destination,
+    coverImageUrl,
+    startDate,
+    endDate,
+    visibility: parsed.data.visibility,
+    ...parseTripBuilderFields(formData),
+  });
+} catch (error) {
+  if (error instanceof Error) {
+    if (error.message === "TRIP_CREATE_SUSPENDED") {
+      return {
+        error: t("createSuspended"),
+      };
+    }
+
+    if (error.message === "ACCOUNT_SUSPENDED") {
+      return {
+        error: t("accountSuspended"),
+      };
+    }
+
+    if (error.message === "ACCOUNT_UNAVAILABLE") {
+      return {
+        error: t("accountUnavailable"),
+      };
+    }
   }
 
-  return redirect({
-    href: `/trips/${trip.id}`,
-    locale,
-  });
+  return {
+    error: t("createFailed"),
+  };
 }
 
 export async function updateTripAction(

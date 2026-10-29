@@ -1,13 +1,8 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { env } from "@/config/env";
 
-/**
- * Minimal cookie-session auth for this stage: a signed JWT in an httpOnly
- * cookie, Credentials-only (email + password). No OAuth provider has been
- * picked yet (docs/PRODUCT_SPEC.md mục 15 suggests Clerk/Supabase/Auth.js) —
- * swap this out rather than growing it once that decision is made.
- */
+import { env } from "@/config/env";
+import { prisma } from "@/server/db/client";
 
 const COOKIE_NAME = "tripbase_session";
 const SESSION_TTL = "30d";
@@ -17,6 +12,7 @@ export interface SessionPayload {
   userId: string;
   email: string;
   name: string;
+  sessionVersion: number;
 }
 
 function secretKey() {
@@ -31,6 +27,7 @@ export async function createSession(payload: SessionPayload): Promise<void> {
     .sign(secretKey());
 
   const cookieStore = await cookies();
+
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: env.NODE_ENV === "production",
@@ -48,24 +45,51 @@ export async function destroySession(): Promise<void> {
 export async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
+
   if (!token) return null;
 
   try {
     const { payload } = await jwtVerify(token, secretKey());
+
     if (
       typeof payload.userId !== "string" ||
       typeof payload.email !== "string" ||
-      typeof payload.name !== "string"
+      typeof payload.name !== "string" ||
+      typeof payload.sessionVersion !== "number"
     ) {
       return null;
     }
+
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        sessionVersion: true,
+        suspendedUntil: true,
+        deletedAt: true,
+      },
+    });
+
+    if (!user) return null;
+    if (user.deletedAt) return null;
+
+    if (user.suspendedUntil && user.suspendedUntil > new Date()) {
+      return null;
+    }
+
+    if (user.sessionVersion !== payload.sessionVersion) {
+      return null;
+    }
+
     return {
-      userId: payload.userId,
-      email: payload.email,
-      name: payload.name,
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+      sessionVersion: user.sessionVersion,
     };
   } catch {
-    // Expired or tampered token — treat as logged out rather than throwing.
     return null;
   }
 }
