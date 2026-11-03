@@ -2,6 +2,7 @@
 
 import { getTranslations } from "next-intl/server";
 import { z } from "zod";
+
 import { TAG_CATEGORIES, type TagCategory } from "@/features/tag-tip/categories";
 import { getSession } from "@/server/auth/session";
 import { createTagWithDedupCheck } from "@/server/services/location-tag.service";
@@ -56,7 +57,9 @@ export async function createTagAction(
 
   const submitted: CreateTagFormState["submitted"] = {
     title: rawTitle,
-    category: (TAG_CATEGORIES as readonly string[]).includes(rawCategory) ? rawCategory as TagCategory : "RESTAURANT",
+    category: (TAG_CATEGORIES as readonly string[]).includes(rawCategory)
+      ? rawCategory as TagCategory
+      : "RESTAURANT",
     content: rawContent,
     latitude: rawLatitude,
     longitude: rawLongitude,
@@ -132,6 +135,7 @@ export async function createTagAction(
     if (error instanceof Error) {
       if (error.message === "OPENING_HOURS_INVALID") return { attempt, submitted, error: t("openingHoursInvalid") };
       if (error.message === "TITLE_REQUIRED") return { attempt, submitted, error: t("titleRequired") };
+      if (error.message === "TAG_DAILY_LIMIT_REACHED") return { attempt, submitted, error: t("dailyLimitReached") };
       if (error.message === "TAG_CREATE_SUSPENDED") return { attempt, submitted, error: t("createSuspended") };
       if (error.message === "ACCOUNT_SUSPENDED") return { attempt, submitted, error: t("accountSuspended") };
       if (error.message === "ACCOUNT_UNAVAILABLE") return { attempt, submitted, error: t("accountUnavailable") };

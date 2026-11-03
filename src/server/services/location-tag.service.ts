@@ -1,4 +1,6 @@
 import { toTagCategory, type TagCategory } from "@/features/tag-tip/categories";
+
+import { getAdminSettings } from "@/server/admin/settings.service";
 import {
   createLocationTag,
   findAllLocationTagsForPicker,
@@ -6,11 +8,11 @@ import {
   findLocationTagsByCategory,
   searchLocationTags,
 } from "@/server/repositories/location-tag.repository";
+import { prisma } from "@/server/db/client";
 import { findPossibleDuplicate } from "@/server/services/tag-dedup.service";
 import { assertCanCreateTag } from "@/server/services/user-restriction.service";
 
-const OPENING_HOURS_RE =
-  /^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$/;
+const OPENING_HOURS_RE = /^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$/;
 
 export function searchTags(filter: { query?: string; category?: TagCategory }) {
   return searchLocationTags(filter);
@@ -49,9 +51,7 @@ export type CreateTagResult =
   | { status: "created"; tag: Awaited<ReturnType<typeof createLocationTag>> }
   | { status: "duplicate"; suggestion: { id: string; title: string } };
 
-export function normalizeOpeningHours(
-  value: string | null | undefined,
-): string | null {
+export function normalizeOpeningHours(value: string | null | undefined): string | null {
   const normalized = value?.trim() ?? "";
   if (!normalized) return null;
 
@@ -60,6 +60,12 @@ export function normalizeOpeningHours(
   }
 
   return normalized;
+}
+
+function getStartOfToday() {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return now;
 }
 
 /**
@@ -74,6 +80,19 @@ export async function createTagWithDedupCheck(
   force = false,
 ): Promise<CreateTagResult> {
   await assertCanCreateTag(ownerId);
+
+  const settings = await getAdminSettings();
+
+  const tagsCreatedToday = await prisma.locationTag.count({
+    where: {
+      ownerId,
+      createdAt: { gte: getStartOfToday() },
+    },
+  });
+
+  if (tagsCreatedToday >= settings.maxTagsPerDay) {
+    throw new Error("TAG_DAILY_LIMIT_REACHED");
+  }
 
   const title = input.title.trim();
   if (!title) throw new Error("TITLE_REQUIRED");
@@ -101,7 +120,7 @@ export async function createTagWithDedupCheck(
     longitude: input.longitude,
     openingHours,
     possibleDuplicateOfId: force && duplicate ? duplicate.id : null,
-    approvalStatus: "PENDING",
+    approvalStatus: settings.tagApprovalRequired ? "PENDING" : "APPROVED",
   });
 
   return { status: "created", tag };

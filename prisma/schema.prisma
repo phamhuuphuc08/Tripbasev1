@@ -25,6 +25,19 @@ enum UserRole {
   ADMIN
 }
 
+enum AuditAction {
+  USER_SUSPENDED
+  USER_UNSUSPENDED
+  USER_DELETED
+  TRIP_CREATE_BLOCKED
+  TRIP_CREATE_UNBLOCKED
+  TAG_CREATE_BLOCKED
+  TAG_CREATE_UNBLOCKED
+  TAG_APPROVED
+  TAG_REJECTED
+  SETTINGS_UPDATED
+}
+
 enum PlanVisibility {
   PRIVATE
   FRIENDS
@@ -131,12 +144,40 @@ model User {
   expensesPaid        Expense[]
   checklistAssigned   ChecklistItem[]
   passwordResetTokens PasswordResetToken[]
+  adminAuditLogs      AuditLog[]           @relation("AdminAuditLogs")
 
   @@index([suspendedUntil])
   @@index([tripCreateBlockedUntil])
   @@index([tagCreateBlockedUntil])
   @@index([deletedAt])
   @@map("users")
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  adminId     String?     @map("admin_id")
+  admin       User?       @relation("AdminAuditLogs", fields: [adminId], references: [id])
+  action      AuditAction
+  targetType  String      @map("target_type")
+  targetId    String      @map("target_id")
+  description String?
+  metadata    Json?
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  @@index([adminId])
+  @@index([action])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
 }
 
 model PasswordResetToken {

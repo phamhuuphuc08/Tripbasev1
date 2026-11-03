@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireAdmin } from "@/server/admin/admin-auth";
+import { createAuditLog } from "@/server/admin/audit-log.service";
 import {
   blockTagCreation,
   blockTripCreation,
@@ -15,247 +16,149 @@ import {
   suspendUser,
 } from "@/server/admin/user-admin.service";
 
-export async function listAdminUsersAction(
-  query = "",
-) {
+export async function listAdminUsersAction(query = "") {
   await requireAdmin();
-
   return listAdminUsers(query);
 }
 
-export async function getAdminUserAction(
-  userId: string,
-) {
+export async function getAdminUserAction(userId: string) {
   await requireAdmin();
-
   return getAdminUser(userId);
 }
 
-/**
- * Chuyển số ngày thành thời điểm hết hạn.
- */
 function getUntilDate(days: number) {
   const date = new Date();
-
-  date.setDate(
-    date.getDate() + days,
-  );
-
+  date.setDate(date.getDate() + days);
   return date;
 }
 
-/**
- * Không cho Admin tự đình chỉ / xóa chính mình.
- */
-async function ensureNotSelf(
-  userId: string,
-) {
-  const admin =
-    await requireAdmin();
-
-  if (admin.id === userId) {
-    throw new Error(
-      "ADMIN_CANNOT_MODIFY_SELF",
-    );
-  }
-
+async function ensureNotSelf(userId: string) {
+  const admin = await requireAdmin();
+  if (admin.id === userId) throw new Error("ADMIN_CANNOT_MODIFY_SELF");
   return admin;
 }
 
-/**
- * Đình chỉ toàn bộ tài khoản.
- */
-export async function suspendUserAction(
-  userId: string,
-  days: number,
-  reason = "",
-) {
-  await ensureNotSelf(userId);
-
-  if (
-    !Number.isFinite(days) ||
-    days <= 0
-  ) {
-    throw new Error(
-      "INVALID_SUSPENSION_DURATION",
-    );
-  }
-
-  await suspendUser(
-    userId,
-    getUntilDate(days),
-    reason,
-  );
-
-  revalidatePath(
-    "/[locale]/admin/users",
-    "page",
-  );
-
-  revalidatePath(
-    "/[locale]/admin/users/[userId]",
-    "page",
-  );
+function revalidateUserAdmin() {
+  revalidatePath("/[locale]/admin", "page");
+  revalidatePath("/[locale]/admin/users", "page");
+  revalidatePath("/[locale]/admin/users/[userId]", "page");
+  revalidatePath("/[locale]/admin/audit-logs", "page");
 }
 
-/**
- * Gỡ đình chỉ tài khoản.
- */
-export async function removeUserSuspensionAction(
-  userId: string,
-) {
-  await ensureNotSelf(userId);
+export async function suspendUserAction(userId: string, days: number, reason = "") {
+  const admin = await ensureNotSelf(userId);
+  if (!Number.isFinite(days) || days <= 0) throw new Error("INVALID_SUSPENSION_DURATION");
 
-  await removeUserSuspension(
-    userId,
-  );
+  await suspendUser(userId, getUntilDate(days), reason);
 
-  revalidatePath(
-    "/[locale]/admin/users",
-    "page",
-  );
+  await createAuditLog({
+    adminId: admin.id,
+    action: "USER_SUSPENDED",
+    targetType: "USER",
+    targetId: userId,
+    description: reason.trim() || `Đình chỉ tài khoản trong ${days} ngày.`,
+    metadata: { days, reason: reason.trim() || null },
+  });
 
-  revalidatePath(
-    "/[locale]/admin/users/[userId]",
-    "page",
-  );
+  revalidateUserAdmin();
 }
 
-/**
- * Chặn quyền tạo Trip.
- */
-export async function blockTripCreationAction(
-  userId: string,
-  days: number,
-  reason = "",
-) {
-  await ensureNotSelf(userId);
+export async function removeUserSuspensionAction(userId: string) {
+  const admin = await ensureNotSelf(userId);
 
-  if (
-    !Number.isFinite(days) ||
-    days <= 0
-  ) {
-    throw new Error(
-      "INVALID_TRIP_BLOCK_DURATION",
-    );
-  }
+  await removeUserSuspension(userId);
 
-  await blockTripCreation(
-    userId,
-    getUntilDate(days),
-    reason,
-  );
+  await createAuditLog({
+    adminId: admin.id,
+    action: "USER_UNSUSPENDED",
+    targetType: "USER",
+    targetId: userId,
+    description: "Gỡ đình chỉ tài khoản.",
+  });
 
-  revalidatePath(
-    "/[locale]/admin/users",
-    "page",
-  );
-
-  revalidatePath(
-    "/[locale]/admin/users/[userId]",
-    "page",
-  );
+  revalidateUserAdmin();
 }
 
-/**
- * Gỡ chặn tạo Trip.
- */
-export async function removeTripCreationBlockAction(
-  userId: string,
-) {
-  await ensureNotSelf(userId);
+export async function blockTripCreationAction(userId: string, days: number, reason = "") {
+  const admin = await ensureNotSelf(userId);
+  if (!Number.isFinite(days) || days <= 0) throw new Error("INVALID_TRIP_BLOCK_DURATION");
 
-  await removeTripCreationBlock(
-    userId,
-  );
+  await blockTripCreation(userId, getUntilDate(days), reason);
 
-  revalidatePath(
-    "/[locale]/admin/users",
-    "page",
-  );
+  await createAuditLog({
+    adminId: admin.id,
+    action: "TRIP_CREATE_BLOCKED",
+    targetType: "USER",
+    targetId: userId,
+    description: reason.trim() || `Chặn quyền tạo Trip trong ${days} ngày.`,
+    metadata: { days, reason: reason.trim() || null },
+  });
 
-  revalidatePath(
-    "/[locale]/admin/users/[userId]",
-    "page",
-  );
+  revalidateUserAdmin();
 }
 
-/**
- * Chặn quyền tạo Tag & Tip.
- */
-export async function blockTagCreationAction(
-  userId: string,
-  days: number,
-  reason = "",
-) {
-  await ensureNotSelf(userId);
+export async function removeTripCreationBlockAction(userId: string) {
+  const admin = await ensureNotSelf(userId);
 
-  if (
-    !Number.isFinite(days) ||
-    days <= 0
-  ) {
-    throw new Error(
-      "INVALID_TAG_BLOCK_DURATION",
-    );
-  }
+  await removeTripCreationBlock(userId);
 
-  await blockTagCreation(
-    userId,
-    getUntilDate(days),
-    reason,
-  );
+  await createAuditLog({
+    adminId: admin.id,
+    action: "TRIP_CREATE_UNBLOCKED",
+    targetType: "USER",
+    targetId: userId,
+    description: "Gỡ chặn quyền tạo Trip.",
+  });
 
-  revalidatePath(
-    "/[locale]/admin/users",
-    "page",
-  );
-
-  revalidatePath(
-    "/[locale]/admin/users/[userId]",
-    "page",
-  );
+  revalidateUserAdmin();
 }
 
-/**
- * Gỡ chặn tạo Tag & Tip.
- */
-export async function removeTagCreationBlockAction(
-  userId: string,
-) {
-  await ensureNotSelf(userId);
+export async function blockTagCreationAction(userId: string, days: number, reason = "") {
+  const admin = await ensureNotSelf(userId);
+  if (!Number.isFinite(days) || days <= 0) throw new Error("INVALID_TAG_BLOCK_DURATION");
 
-  await removeTagCreationBlock(
-    userId,
-  );
+  await blockTagCreation(userId, getUntilDate(days), reason);
 
-  revalidatePath(
-    "/[locale]/admin/users",
-    "page",
-  );
+  await createAuditLog({
+    adminId: admin.id,
+    action: "TAG_CREATE_BLOCKED",
+    targetType: "USER",
+    targetId: userId,
+    description: reason.trim() || `Chặn quyền tạo Tag & Tip trong ${days} ngày.`,
+    metadata: { days, reason: reason.trim() || null },
+  });
 
-  revalidatePath(
-    "/[locale]/admin/users/[userId]",
-    "page",
-  );
+  revalidateUserAdmin();
 }
 
-/**
- * Xóa mềm tài khoản.
- */
-export async function softDeleteUserAction(
-  userId: string,
-) {
-  await ensureNotSelf(userId);
+export async function removeTagCreationBlockAction(userId: string) {
+  const admin = await ensureNotSelf(userId);
+
+  await removeTagCreationBlock(userId);
+
+  await createAuditLog({
+    adminId: admin.id,
+    action: "TAG_CREATE_UNBLOCKED",
+    targetType: "USER",
+    targetId: userId,
+    description: "Gỡ chặn quyền tạo Tag & Tip.",
+  });
+
+  revalidateUserAdmin();
+}
+
+export async function softDeleteUserAction(userId: string) {
+  const admin = await ensureNotSelf(userId);
 
   await softDeleteUser(userId);
 
-  revalidatePath(
-    "/[locale]/admin/users",
-    "page",
-  );
+  await createAuditLog({
+    adminId: admin.id,
+    action: "USER_DELETED",
+    targetType: "USER",
+    targetId: userId,
+    description: "Xóa mềm tài khoản khỏi hệ thống.",
+  });
 
-  revalidatePath(
-    "/[locale]/admin/users/[userId]",
-    "page",
-  );
+  revalidateUserAdmin();
 }

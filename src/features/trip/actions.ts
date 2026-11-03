@@ -1,13 +1,14 @@
 "use server";
 
-import { assertCanCreateTrip } from "@/server/services/user-restriction.service";
-import { uploadTripCoverImage } from "@/server/services/trip-image.service";
 import { PlanStatus, PlanVisibility, TravelPace } from "@prisma/client";
 import { getLocale, getTranslations } from "next-intl/server";
 import { z } from "zod";
+
 import { redirect } from "@/i18n/navigation";
 import { toTripStyles } from "@/features/trip/styles";
 import { getSession } from "@/server/auth/session";
+import { assertCanCreateTrip } from "@/server/services/user-restriction.service";
+import { uploadTripCoverImage } from "@/server/services/trip-image.service";
 import {
   addTraveler,
   createTrip,
@@ -33,106 +34,57 @@ function normalizeShareToken(shareToken: string | null) {
 
 function tripHref(tripId: string, shareToken: string | null) {
   const token = normalizeShareToken(shareToken);
-
-  return token
-    ? `/trips/${tripId}?shareToken=${encodeURIComponent(token)}`
-    : `/trips/${tripId}`;
+  return token ? `/trips/${tripId}?shareToken=${encodeURIComponent(token)}` : `/trips/${tripId}`;
 }
 
 function tripLoginHref(tripId: string, shareToken: string | null) {
-  return `/login?callbackUrl=${encodeURIComponent(
-    tripHref(tripId, shareToken),
-  )}`;
+  return `/login?callbackUrl=${encodeURIComponent(tripHref(tripId, shareToken))}`;
 }
 
-/**
- * Trip Builder fields shared by create and update.
- */
 function parseTripBuilderFields(formData: FormData) {
-  const travelerCount = Math.min(
-    50,
-    Math.max(1, Number(formData.get("travelerCount")) || 1),
-  );
-
+  const travelerCount = Math.min(50, Math.max(1, Number(formData.get("travelerCount")) || 1));
   const budgetTargetRaw = formData.get("budgetTarget")?.toString().trim();
-
-  const budgetTarget =
-    budgetTargetRaw && !Number.isNaN(Number(budgetTargetRaw))
-      ? Number(budgetTargetRaw)
-      : null;
-
+  const budgetTarget = budgetTargetRaw && !Number.isNaN(Number(budgetTargetRaw)) ? Number(budgetTargetRaw) : null;
   const paceRaw = formData.get("pace")?.toString();
+  const pace = (Object.values(TravelPace) as string[]).includes(paceRaw ?? "") ? (paceRaw as TravelPace) : TravelPace.NORMAL;
+  const travelStyle = toTripStyles(formData.getAll("travelStyle").map(String));
 
-  const pace = (Object.values(TravelPace) as string[]).includes(
-    paceRaw ?? "",
-  )
-    ? (paceRaw as TravelPace)
-    : TravelPace.NORMAL;
+  return { travelerCount, budgetTarget, pace, travelStyle };
+}
 
-  const travelStyle = toTripStyles(
-    formData.getAll("travelStyle").map(String),
-  );
+function tripCreateErrorMessage(error: unknown, t: Awaited<ReturnType<typeof getTranslations>>) {
+  if (!(error instanceof Error)) return null;
 
-  return {
-    travelerCount,
-    budgetTarget,
-    pace,
-    travelStyle,
-  };
+  if (error.message === "TRIP_CREATE_SUSPENDED") return t("createSuspended");
+  if (error.message === "ACCOUNT_SUSPENDED") return t("accountSuspended");
+  if (error.message === "ACCOUNT_UNAVAILABLE") return t("accountUnavailable");
+  if (error.message === "TRIP_LIMIT_REACHED") return t("limitReached");
+  if (error.message === "PUBLIC_TRIPS_DISABLED") return t("publicTripsDisabled");
+
+  return null;
 }
 
 export async function createTripAction(
   _prevState: TripFormState,
   formData: FormData,
 ): Promise<TripFormState> {
-  const [session, locale] = await Promise.all([
-    getSession(),
-    getLocale(),
-  ]);
+  const [session, locale] = await Promise.all([getSession(), getLocale()]);
 
   if (!session) {
-    return redirect({
-      href: "/login",
-      locale,
-    });
+    return redirect({ href: "/login", locale });
   }
 
   const t = await getTranslations("trip.errors");
 
-try {
-  await assertCanCreateTrip(session.userId);
-} catch (error) {
-  if (error instanceof Error) {
-    if (error.message === "TRIP_CREATE_SUSPENDED") {
-      return {
-        error: t("createSuspended"),
-      };
-    }
-
-    if (error.message === "ACCOUNT_SUSPENDED") {
-      return {
-        error: t("accountSuspended"),
-      };
-    }
-
-    if (error.message === "ACCOUNT_UNAVAILABLE") {
-      return {
-        error: t("accountUnavailable"),
-      };
-    }
+  try {
+    await assertCanCreateTrip(session.userId);
+  } catch (error) {
+    return { error: tripCreateErrorMessage(error, t) || t("createFailed") };
   }
-
-  return {
-    error: t("createFailed"),
-  };
-}
 
   const schema = z.object({
     name: z.string().trim().min(1, t("nameRequired")),
-    destination: z
-      .string()
-      .trim()
-      .min(1, t("destinationRequired")),
+    destination: z.string().trim().min(1, t("destinationRequired")),
     startDate: z.string().optional(),
     endDate: z.string().optional(),
     visibility: z.enum(PlanVisibility),
@@ -141,96 +93,53 @@ try {
   const parsed = schema.safeParse({
     name: formData.get("name"),
     destination: formData.get("destination"),
-    startDate:
-      formData.get("startDate")?.toString() || undefined,
-    endDate:
-      formData.get("endDate")?.toString() || undefined,
+    startDate: formData.get("startDate")?.toString() || undefined,
+    endDate: formData.get("endDate")?.toString() || undefined,
     visibility: formData.get("visibility"),
   });
 
   if (!parsed.success) {
-    return {
-      error:
-        parsed.error.issues[0]?.message ??
-        "Invalid input.",
-    };
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
   const startDate = parseDateInput(parsed.data.startDate);
   const endDate = parseDateInput(parsed.data.endDate);
 
-  if (
-    startDate &&
-    endDate &&
-    endDate < startDate
-  ) {
-    return {
-      error: t("endBeforeStart"),
-    };
+  if (startDate && endDate && endDate < startDate) {
+    return { error: t("endBeforeStart") };
   }
 
-  let coverImageUrl:
-    string | null = null;
+  let coverImageUrl: string | null = null;
+  const coverImage = formData.get("coverImage");
 
-  const coverImage =
-    formData.get(
-      "coverImage",
-    );
-
-  if (
-    coverImage instanceof File &&
-    coverImage.size > 0
-  ) {
+  if (coverImage instanceof File && coverImage.size > 0) {
     try {
-      coverImageUrl =
-        await uploadTripCoverImage(
-          session.userId,
-          coverImage,
-        );
+      coverImageUrl = await uploadTripCoverImage(session.userId, coverImage);
     } catch {
-      return {
-        error:
-          "Không thể tải ảnh đại diện chuyến đi.",
-      };
+      return { error: t("coverUploadFailed") };
     }
   }
 
   let trip;
 
-try {
-  trip = await createTrip(session.userId, {
-    name: parsed.data.name,
-    destination: parsed.data.destination,
-    coverImageUrl,
-    startDate,
-    endDate,
-    visibility: parsed.data.visibility,
-    ...parseTripBuilderFields(formData),
-  });
-} catch (error) {
-  if (error instanceof Error) {
-    if (error.message === "TRIP_CREATE_SUSPENDED") {
-      return {
-        error: t("createSuspended"),
-      };
-    }
-
-    if (error.message === "ACCOUNT_SUSPENDED") {
-      return {
-        error: t("accountSuspended"),
-      };
-    }
-
-    if (error.message === "ACCOUNT_UNAVAILABLE") {
-      return {
-        error: t("accountUnavailable"),
-      };
-    }
+  try {
+    trip = await createTrip(session.userId, {
+      name: parsed.data.name,
+      destination: parsed.data.destination,
+      coverImageUrl,
+      startDate,
+      endDate,
+      visibility: parsed.data.visibility,
+      ...parseTripBuilderFields(formData),
+    });
+  } catch (error) {
+    return { error: tripCreateErrorMessage(error, t) || t("createFailed") };
   }
 
-  return {
-    error: t("createFailed"),
-  };
+  return redirect({
+    href: `/trips/${trip.id}`,
+    locale,
+  });
 }
 
 export async function updateTripAction(
@@ -239,17 +148,11 @@ export async function updateTripAction(
   _prevState: TripFormState,
   formData: FormData,
 ): Promise<TripFormState> {
-  const [session, locale] = await Promise.all([
-    getSession(),
-    getLocale(),
-  ]);
+  const [session, locale] = await Promise.all([getSession(), getLocale()]);
 
   if (!session) {
     return redirect({
-      href: tripLoginHref(
-        tripId,
-        shareToken,
-      ),
+      href: tripLoginHref(tripId, shareToken),
       locale,
     });
   }
@@ -258,10 +161,7 @@ export async function updateTripAction(
 
   const schema = z.object({
     name: z.string().trim().min(1, t("nameRequired")),
-    destination: z
-      .string()
-      .trim()
-      .min(1, t("destinationRequired")),
+    destination: z.string().trim().min(1, t("destinationRequired")),
     startDate: z.string().optional(),
     endDate: z.string().optional(),
     visibility: z.enum(PlanVisibility),
@@ -271,58 +171,31 @@ export async function updateTripAction(
   const parsed = schema.safeParse({
     name: formData.get("name"),
     destination: formData.get("destination"),
-    startDate:
-      formData.get("startDate")?.toString() || undefined,
-    endDate:
-      formData.get("endDate")?.toString() || undefined,
+    startDate: formData.get("startDate")?.toString() || undefined,
+    endDate: formData.get("endDate")?.toString() || undefined,
     visibility: formData.get("visibility"),
     status: formData.get("status"),
   });
 
   if (!parsed.success) {
-    return {
-      error:
-        parsed.error.issues[0]?.message ??
-        "Invalid input.",
-    };
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
   const startDate = parseDateInput(parsed.data.startDate);
   const endDate = parseDateInput(parsed.data.endDate);
 
-  if (
-    startDate &&
-    endDate &&
-    endDate < startDate
-  ) {
-    return {
-      error: t("endBeforeStart"),
-    };
+  if (startDate && endDate && endDate < startDate) {
+    return { error: t("endBeforeStart") };
   }
 
-  let coverImageUrl:
-    string | undefined;
+  let coverImageUrl: string | undefined;
+  const coverImage = formData.get("coverImage");
 
-  const coverImage =
-    formData.get(
-      "coverImage",
-    );
-
-  if (
-    coverImage instanceof File &&
-    coverImage.size > 0
-  ) {
+  if (coverImage instanceof File && coverImage.size > 0) {
     try {
-      coverImageUrl =
-        await uploadTripCoverImage(
-          session.userId,
-          coverImage,
-        );
+      coverImageUrl = await uploadTripCoverImage(session.userId, coverImage);
     } catch {
-      return {
-        error:
-          "Không thể tải ảnh đại diện chuyến đi.",
-      };
+      return { error: t("coverUploadFailed") };
     }
   }
 
@@ -333,9 +206,7 @@ export async function updateTripAction(
       {
         name: parsed.data.name,
         destination: parsed.data.destination,
-        ...(coverImageUrl
-          ? { coverImageUrl }
-          : {}),
+        ...(coverImageUrl ? { coverImageUrl } : {}),
         startDate,
         endDate,
         visibility: parsed.data.visibility,
@@ -344,44 +215,31 @@ export async function updateTripAction(
       },
       normalizeShareToken(shareToken),
     );
-  } catch {
-    return {
-      error: t("updateFailed"),
-    };
+  } catch (error) {
+    if (error instanceof Error && error.message === "PUBLIC_TRIPS_DISABLED") {
+      return { error: t("publicTripsDisabled") };
+    }
+
+    return { error: t("updateFailed") };
   }
 
   return redirect({
-    href: tripHref(
-      tripId,
-      shareToken,
-    ),
+    href: tripHref(tripId, shareToken),
     locale,
   });
 }
 
-export async function deleteTripAction(
-  tripId: string,
-  _formData: FormData,
-) {
+export async function deleteTripAction(tripId: string, _formData: FormData) {
   void _formData;
 
-  const [session, locale] = await Promise.all([
-    getSession(),
-    getLocale(),
-  ]);
+  const [session, locale] = await Promise.all([getSession(), getLocale()]);
 
   if (!session) {
-    return redirect({
-      href: "/login",
-      locale,
-    });
+    return redirect({ href: "/login", locale });
   }
 
   try {
-    await deleteTrip(
-      tripId,
-      session.userId,
-    );
+    await deleteTrip(tripId, session.userId);
   } catch {
     return redirect({
       href: `/trips/${tripId}`,
@@ -400,41 +258,25 @@ export async function addTravelerAction(
   shareToken: string | null,
   formData: FormData,
 ) {
-  const [session, locale] = await Promise.all([
-    getSession(),
-    getLocale(),
-  ]);
+  const [session, locale] = await Promise.all([getSession(), getLocale()]);
 
   if (!session) {
     return redirect({
-      href: tripLoginHref(
-        tripId,
-        shareToken,
-      ),
+      href: tripLoginHref(tripId, shareToken),
       locale,
     });
   }
 
-  const name = formData
-    .get("name")
-    ?.toString()
-    .trim();
+  const name = formData.get("name")?.toString().trim();
 
   if (name) {
-    const ageGroup =
-      formData
-        .get("ageGroup")
-        ?.toString()
-        .trim() || null;
+    const ageGroup = formData.get("ageGroup")?.toString().trim() || null;
 
     try {
       await addTraveler(
         tripId,
         session.userId,
-        {
-          name,
-          ageGroup,
-        },
+        { name, ageGroup },
         normalizeShareToken(shareToken),
       );
     } catch {
@@ -443,10 +285,7 @@ export async function addTravelerAction(
   }
 
   return redirect({
-    href: tripHref(
-      tripId,
-      shareToken,
-    ),
+    href: tripHref(tripId, shareToken),
     locale,
   });
 }
@@ -459,17 +298,11 @@ export async function removeTravelerAction(
 ) {
   void _formData;
 
-  const [session, locale] = await Promise.all([
-    getSession(),
-    getLocale(),
-  ]);
+  const [session, locale] = await Promise.all([getSession(), getLocale()]);
 
   if (!session) {
     return redirect({
-      href: tripLoginHref(
-        tripId,
-        shareToken,
-      ),
+      href: tripLoginHref(tripId, shareToken),
       locale,
     });
   }
@@ -485,10 +318,7 @@ export async function removeTravelerAction(
   }
 
   return redirect({
-    href: tripHref(
-      tripId,
-      shareToken,
-    ),
+    href: tripHref(tripId, shareToken),
     locale,
   });
 }
