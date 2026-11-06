@@ -1,32 +1,25 @@
 import "server-only";
 
+import { TagApprovalStatus } from "@prisma/client";
 import { prisma } from "@/server/db/client";
 
-export async function listAdminTags(
-  query = "",
-) {
+export async function listAdminTags(query = "", status?: TagApprovalStatus) {
   const search = query.trim();
 
   return prisma.locationTag.findMany({
-    where: search
-      ? {
-          OR: [
-            {
-              title: {
-                contains: search,
-                mode: "insensitive",
-              },
-            },
-            {
-              category: {
-                contains: search,
-                mode: "insensitive",
-              },
-            },
-          ],
-        }
-      : undefined,
-
+    where: {
+      ...(status ? { approvalStatus: status } : {}),
+      ...(search
+        ? {
+            OR: [
+              { title: { contains: search, mode: "insensitive" } },
+              { category: { contains: search, mode: "insensitive" } },
+              { owner: { name: { contains: search, mode: "insensitive" } } },
+              { owner: { email: { contains: search, mode: "insensitive" } } },
+            ],
+          }
+        : {}),
+    },
     select: {
       id: true,
       title: true,
@@ -36,36 +29,31 @@ export async function listAdminTags(
       reviewNote: true,
       reviewedAt: true,
       createdAt: true,
-
       owner: {
         select: {
           id: true,
           name: true,
+          email: true,
+        },
+      },
+      _count: {
+        select: {
+          citations: true,
+          itineraryItems: true,
         },
       },
     },
-
     orderBy: [
-      {
-        approvalStatus: "asc",
-      },
-      {
-        createdAt: "desc",
-      },
+      { approvalStatus: "asc" },
+      { createdAt: "desc" },
     ],
-
-    take: 50,
+    take: 100,
   });
 }
 
-export async function getAdminTag(
-  tagId: string,
-) {
+export async function getAdminTag(tagId: string) {
   return prisma.locationTag.findUnique({
-    where: {
-      id: tagId,
-    },
-
+    where: { id: tagId },
     select: {
       id: true,
       title: true,
@@ -75,13 +63,10 @@ export async function getAdminTag(
       longitude: true,
       openingHours: true,
       citeTrustScore: true,
-
       approvalStatus: true,
       reviewNote: true,
       reviewedAt: true,
-
       createdAt: true,
-
       owner: {
         select: {
           id: true,
@@ -89,7 +74,6 @@ export async function getAdminTag(
           email: true,
         },
       },
-
       _count: {
         select: {
           citations: true,
@@ -100,14 +84,9 @@ export async function getAdminTag(
   });
 }
 
-export async function approveAdminTag(
-  tagId: string,
-) {
+export async function approveAdminTag(tagId: string) {
   return prisma.locationTag.update({
-    where: {
-      id: tagId,
-    },
-
+    where: { id: tagId },
     data: {
       approvalStatus: "APPROVED",
       reviewedAt: new Date(),
@@ -116,20 +95,13 @@ export async function approveAdminTag(
   });
 }
 
-export async function rejectAdminTag(
-  tagId: string,
-  reviewNote?: string,
-) {
+export async function rejectAdminTag(tagId: string, reviewNote?: string) {
   return prisma.locationTag.update({
-    where: {
-      id: tagId,
-    },
-
+    where: { id: tagId },
     data: {
       approvalStatus: "REJECTED",
       reviewedAt: new Date(),
-      reviewNote:
-        reviewNote?.trim() || null,
+      reviewNote: reviewNote?.trim() || null,
     },
   });
 }

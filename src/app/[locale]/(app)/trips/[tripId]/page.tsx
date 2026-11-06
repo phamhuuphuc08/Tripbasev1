@@ -24,6 +24,7 @@ import { notFound } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ReportButton } from "@/components/shared/report-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { removeExpenseAction } from "@/features/budget/actions";
@@ -492,29 +493,36 @@ negativeSignalNote: item.locationTagId
         </div>
       )}
 
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
-          <h1 className="text-xl font-semibold">
-            {trip.name}
-          </h1>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-xl font-semibold">
+              {trip.name}
+            </h1>
 
-          <div className="flex items-center gap-2">
-            <Badge variant="outline">
-              {tStatus(
-                trip.status as
-                  | "IDEA"
-                  | "SCHEDULED"
-                  | "COMPLETED",
-              )}
-            </Badge>
-
-            {trip.verifiedByAuthor && (
-              <Badge variant="secondary">
-                {t("verifiedTrip")}
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <Badge variant="outline">
+                {tStatus(
+                  trip.status as
+                    | "IDEA"
+                    | "SCHEDULED"
+                    | "COMPLETED",
+                )}
               </Badge>
-            )}
+
+              {trip.verifiedByAuthor && (
+                <Badge variant="secondary">
+                  {t("verifiedTrip")}
+                </Badge>
+              )}
+
+              {session && !isOwner && (
+                <ReportButton
+                  targetType="TRIP"
+                  targetId={trip.id}
+                />
+              )}
+            </div>
           </div>
-        </div>
 
         <p className="text-muted-foreground flex items-center gap-1.5 text-sm">
           <MapPin className="text-primary size-3.5" />

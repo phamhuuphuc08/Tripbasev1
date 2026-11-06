@@ -36,6 +36,31 @@ enum AuditAction {
   TAG_APPROVED
   TAG_REJECTED
   SETTINGS_UPDATED
+  REPORT_REVIEWING
+  REPORT_RESOLVED
+  REPORT_REJECTED
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWING
+  RESOLVED
+  REJECTED
+}
+
+enum ReportTargetType {
+  USER
+  TRIP
+  TAG
+}
+
+enum ReportReason {
+  SPAM
+  INAPPROPRIATE_CONTENT
+  FALSE_INFORMATION
+  HARASSMENT
+  FRAUD
+  OTHER
 }
 
 enum PlanVisibility {
@@ -145,6 +170,8 @@ model User {
   checklistAssigned   ChecklistItem[]
   passwordResetTokens PasswordResetToken[]
   adminAuditLogs      AuditLog[]           @relation("AdminAuditLogs")
+  reportsCreated      Report[]             @relation("ReportsCreated")
+  reportsReviewed     Report[]             @relation("ReportsReviewed")
 
   @@index([suspendedUntil])
   @@index([tripCreateBlockedUntil])
@@ -178,6 +205,37 @@ model SystemSetting {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("system_settings")
+}
+
+model Report {
+  id String @id @default(cuid())
+
+  reporterId String @map("reporter_id")
+  reporter   User   @relation("ReportsCreated", fields: [reporterId], references: [id])
+
+  targetType ReportTargetType @map("target_type")
+  targetId   String           @map("target_id")
+
+  reason      ReportReason
+  description String?
+
+  status ReportStatus @default(PENDING)
+
+  reviewedById String? @map("reviewed_by_id")
+  reviewedBy   User?   @relation("ReportsReviewed", fields: [reviewedById], references: [id])
+
+  reviewNote String?   @map("review_note")
+  reviewedAt DateTime? @map("reviewed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([reporterId])
+  @@index([reviewedById])
+  @@index([targetType, targetId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("reports")
 }
 
 model PasswordResetToken {

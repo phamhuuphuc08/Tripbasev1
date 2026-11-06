@@ -35,6 +35,10 @@ import {
 } from "@/components/ui/card";
 
 import {
+  ReportButton,
+} from "@/components/shared/report-button";
+
+import {
   Link,
 } from "@/i18n/navigation";
 
@@ -262,27 +266,38 @@ export default async function CreatorProfilePage({
             )}
           </div>
 
-          {isOwner && (
-            <Button
-              render={
-                <Link
-                  href={`/creators/${profile.id}/edit`}
-                />
-              }
-              nativeButton={
-                false
-              }
-              variant="secondary"
-              size="sm"
-              className="shrink-0"
-            >
-              <Pencil className="size-3.5" />
+          <div className="flex shrink-0 items-center gap-2">
+            {isOwner && (
+              <Button
+                render={
+                  <Link
+                    href={`/creators/${profile.id}/edit`}
+                  />
+                }
+                nativeButton={
+                  false
+                }
+                variant="secondary"
+                size="sm"
+                className="shrink-0"
+              >
+                <Pencil className="size-3.5" />
 
-              {t(
-                "editButton",
-              )}
-            </Button>
-          )}
+                {t(
+                  "editButton",
+                )}
+              </Button>
+            )}
+
+            {session && !isOwner && (
+              <ReportButton
+                targetType="USER"
+                targetId={
+                  profile.id
+                }
+              />
+            )}
+          </div>
         </CardContent>
       </Card>
 

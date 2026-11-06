@@ -15,12 +15,14 @@ import {
 import { getFormatter, getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ReportButton } from "@/components/shared/report-button";
 import { Link } from "@/i18n/navigation";
 import {
   type TagCategory,
   toTagCategory,
 } from "@/features/tag-tip/categories";
 import { getTrustTier } from "@/features/tag-tip/trust-tier";
+import { getSession } from "@/server/auth/session";
 import { getLocationTag } from "@/server/services/location-tag.service";
 
 const CATEGORY_ICON: Record<TagCategory, LucideIcon> = {
@@ -40,8 +42,9 @@ export default async function TagDetailPage({
 }) {
   const { tagId } = await params;
 
-  const [tag, tCategory, tTrust, format] = await Promise.all([
+  const [tag, session, tCategory, tTrust, format] = await Promise.all([
     getLocationTag(tagId),
+    getSession(),
     getTranslations("tagCategory"),
     getTranslations("tagTrust"),
     getFormatter(),
@@ -69,6 +72,8 @@ export default async function TagDetailPage({
     );
   }
 
+  const isOwner = session?.userId === tag.owner.id;
+
   const category = toTagCategory(tag.category);
   const Icon = CATEGORY_ICON[category] ?? Sparkles;
   const tier = getTrustTier(tag.citeTrustScore);
@@ -90,7 +95,7 @@ export default async function TagDetailPage({
       </Link>
 
       <Card className="overflow-hidden rounded-2xl border-border/70 shadow-sm sm:rounded-3xl">
-        <CardHeader className="border-b bg-muted/30">
+                <CardHeader className="border-b bg-muted/30">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-3">
               <span className="bg-primary/10 flex size-12 shrink-0 items-center justify-center rounded-2xl">
@@ -120,6 +125,13 @@ export default async function TagDetailPage({
                 </div>
               </div>
             </div>
+
+            {session && !isOwner && (
+              <ReportButton
+                targetType="TAG"
+                targetId={tag.id}
+              />
+            )}
           </div>
         </CardHeader>
 
