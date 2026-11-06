@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # TripBase
 
 Web app lập kế hoạch du lịch tự túc cho người Việt — itinerary builder, bản
@@ -69,3 +70,6 @@ Xem chi tiết ở [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Tóm tắt:
 
 Đây là bản scaffold: cấu trúc, data model, và tooling đã sẵn sàng; logic/UI
 từng module sẽ được lấp dần.
+=======
+# Tripbasev1
+>>>>>>> backupv1/main
